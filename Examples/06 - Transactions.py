@@ -13,11 +13,18 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # apProvider = AlorPy(Config.DemoUserName, Config.DemoRefreshToken, True)  # Подключаемся к демо счету
 
     exchange = 'MOEX'  # Код биржи MOEX или SPBX
+
+    # Для РЦБ
     symbol = 'SBER'  # Тикер
-    # symbol = 'SiH2'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
     tradeServerCode = Config.TradeServerCode  # Торговый сервер РЦБ
     portfolio = Config.PortfolioStocks  # Портфель фондового рынка
     account = Config.AccountStocks  # Счет фондового рынка
+
+    # Для фьючерсов
+    # symbol = 'SiH2'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    # tradeServerCode = Config.FutServerCode  # Торговый сервер фьючерсов
+    # portfolio = Config.PortfolioFutures  # Портфель фьючерсов
+    # account = Config.AccountFutures  # Счет фьючерсов
 
     symbolInfo = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
     minStep = symbolInfo["minstep"]  # Минимальный шаг цены

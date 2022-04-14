@@ -20,8 +20,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     portfolio = Config.PortfolioStocks  # Портфель фондового рынка
     account = Config.AccountStocks  # Счет фондового рынка
 
-    # Для фьючерсов
-    # symbol = 'SiH2'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    # Для фьючерсов нужно указывать не краткое имя, а биржевой индентификатор
+    # symbol = 'Si-6.22'  # Для фьючерсов: <Код тикера>-<Месяц экспирации: 3, 6, 9, 12>.<Две последнии цифры года>
     # tradeServerCode = Config.FutServerCode  # Торговый сервер фьючерсов
     # portfolio = Config.PortfolioFutures  # Портфель фьючерсов
     # account = Config.AccountFutures  # Счет фьючерсов

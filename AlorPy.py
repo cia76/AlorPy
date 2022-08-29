@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
 from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 import uuid  # Номера подписок должны быть уникальными во времени и пространстве
 import json  # Сервер WebSockets работает с JSON сообщениями
@@ -65,18 +66,18 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
 
     def GetRequestId(self):
         """Получение уникального кода запроса"""
-        return f'{self.userName}{int(datetime.now().timestamp())}'  # Логин и текущее время в секундах, прошедших с 01.01.1970 в UTC
+        return f'{self.userName}{time_ns()}'  # Логин и
 
     @staticmethod
     def CheckResult(response):
         """Анализ результата запроса. Возвращает справочник из JSON или None в случае ошибки"""
         if response.status_code != 200:  # Если статус ошибки
-            print('Response Web Error:', response.status_code, response.content, response.request)
+            print('Response Web Error:', response.status_code, response.content.decode('utf-8'), response.request)  # Декодируем и выводим ошибку
             return None  # то возвращаем пустое значение
         try:
             return json.loads(response.content)  # Декодируем JSON в справочник, возвращаем его
         except:  # Если произошла ошибка при декодировании
-            print('Response JSON Error:', response.content)
+            print('Response JSON Error:', response.content.decode('utf-8'))  # Декодируем и выводим ошибку
             return None  # то возвращаем пустое значение
 
     # Работа с WebSocket
@@ -325,7 +326,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         return self.CheckResult(requests.get(url=f'{self.apiServer}/md/v2/Clients/{exchange}/{portfolio}/trades', headers=self.GetHeaders()))
 
-    def GetTrade(self, exchange, portfolio, symbol):
+    def GetTrade(self, portfolio, exchange, symbol):
         """Получение информации о сделках по выбранному инструменту
 
         :param portfolio: Клиентский портфель
@@ -334,7 +335,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         return self.CheckResult(requests.get(url=f'{self.apiServer}/md/v2/Clients/{exchange}/{portfolio}/{symbol}/trades', headers=self.GetHeaders()))
 
-    def GetFortsRisk(self, exchange, portfolio):
+    def GetFortsRisk(self, portfolio, exchange):
         """Получение информации о рисках на срочном рынке
 
         :param portfolio: Клиентский портфель

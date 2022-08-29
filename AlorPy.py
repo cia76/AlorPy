@@ -71,12 +71,12 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def CheckResult(response):
         """Анализ результата запроса. Возвращает справочник из JSON или None в случае ошибки"""
         if response.status_code != 200:  # Если статус ошибки
-            print('Response Web Error:', response.status_code, response.content, response.request)
+            print('Response Web Error:', response.status_code, response.content.decode("utf-8"), response.request)
             return None  # то возвращаем пустое значение
         try:
             return json.loads(response.content)  # Декодируем JSON в справочник, возвращаем его
         except:  # Если произошла ошибка при декодировании
-            print('Response JSON Error:', response.content)
+            print('Response JSON Error:', response.content.decode("utf-8"))
             return None  # то возвращаем пустое значение
 
     # Работа с WebSocket

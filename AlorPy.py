@@ -65,7 +65,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
 
     def GetRequestId(self):
         """Получение уникального кода запроса"""
-        return f'{self.userName}{int(datetime.now().timestamp())}'  # Логин и текущее время в секундах, прошедших с 01.01.1970 в UTC
+        return f'{self.userName}{int(datetime.now().timestamp()*1e3)}'  # Логин и текущее время в секундах, прошедших с 01.01.1970 в UTC
 
     @staticmethod
     def CheckResult(response):

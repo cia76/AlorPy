@@ -325,7 +325,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         return self.CheckResult(requests.get(url=f'{self.apiServer}/md/v2/Clients/{exchange}/{portfolio}/trades', headers=self.GetHeaders()))
 
-    def GetTrade(self, exchange, portfolio, symbol):
+    def GetTrade(self, portfolio, exchange, symbol):
         """Получение информации о сделках по выбранному инструменту
 
         :param portfolio: Клиентский портфель
@@ -334,7 +334,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         return self.CheckResult(requests.get(url=f'{self.apiServer}/md/v2/Clients/{exchange}/{portfolio}/{symbol}/trades', headers=self.GetHeaders()))
 
-    def GetFortsRisk(self, exchange, portfolio):
+    def GetFortsRisk(self, portfolio, exchange):
         """Получение информации о рисках на срочном рынке
 
         :param portfolio: Клиентский портфель

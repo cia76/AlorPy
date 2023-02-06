@@ -1,5 +1,5 @@
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from Config import Config  # Файл конфигурации
+from AlorPy.Config import Config  # Файл конфигурации
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -7,15 +7,16 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # apProvider = AlorPy(Config.DemoUserName, Config.DemoRefreshToken, True)  # Подключаемся к демо счету
 
     exchange = 'MOEX'  # Биржа
-    symbol = 'GAZP'  # Тикер
-    # symbol = 'SiM2'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
-    # symbol = 'RIM2'
+    symbol = 'SBER'  # Тикер
+    # symbol = 'SiH3'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    # symbol = 'RIH3'
 
     # Данные тикера и его торговый счет
-    symbolInfo = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
-    print(f'Информация о тикере {symbolInfo["primary_board"]}.{symbolInfo["symbol"]} ({symbolInfo["shortname"]}) на бирже {symbolInfo["exchange"]}:')
-    print(f'Валюта: {symbolInfo["currency"]}')
-    decimals = max(0, str(symbolInfo["minstep"])[::-1].find("."))  # Из шага цены получаем кол-во знаков после запятой
+    si = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
+    # print(si)
+    print(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}) на бирже {si["exchange"]}:')
+    print(f'Валюта: {si["currency"]}')
+    decimals = max(0, str(si['minstep'])[::-1].find('.'))  # Из шага цены получаем кол-во знаков после запятой
     print(f'Кол-во десятичных знаков: {decimals}')
-    print(f'Лот: {symbolInfo["lotsize"]}')
-    print(f'Шаг цены: {symbolInfo["minstep"]}')
+    print(f'Лот: {si["lotsize"]}')
+    print(f'Шаг цены: {si["minstep"]}')

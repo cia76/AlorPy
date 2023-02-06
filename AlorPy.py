@@ -2,7 +2,7 @@ from datetime import datetime
 from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
 from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 from uuid import uuid4  # Номера подписок должны быть уникальными во времени и пространстве
-from json import loads, dumps  # Сервер WebSockets работает с JSON сообщениями
+from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
 from requests import post, get, put, delete  # Запросы/ответы от сервера запросов
 from websockets import connect, ConnectionClosed  # Работа с сервером WebSockets
 from asyncio import create_task, run, CancelledError  # Работа с асинхронными функциями
@@ -53,13 +53,12 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """Перевод кол-ва секунд, прошедших с 01.01.1970 00:00 UTC в московское время
 
         :param int seconds: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
-        :return: Московское время
+        :return: Московское время без временнОй зоны
         """
         dt_utc = datetime.utcfromtimestamp(seconds)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
-        dt_msk = utc.localize(dt_utc).astimezone(self.tzMsk)  # Переводим UTC в МСК
-        return dt_msk.replace(tzinfo=None)  # Убираем временнУю зону
+        return self.UTCToMskDateTime(dt_utc)  # Переводим время из UTC в московское
 
-    def MskDatetimeToUTCTimestamp(self, dt):
+    def MskDatetimeToUTCTimeStamp(self, dt):
         """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC
 
         :param datetime dt: Московское время
@@ -67,6 +66,15 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         dt_msk = self.tzMsk.localize(dt)  # Заданное время ставим в зону МСК
         return int(dt_msk.timestamp())  # Переводим в кол-во секунд, прошедших с 01.01.1970 в UTC
+
+    def UTCToMskDateTime(self, dt):
+        """Перевод времени из UTC в московское
+
+        :param datetime dt: Время UTC
+        :return: Московское время
+        """
+        dt_msk = utc.localize(dt).astimezone(self.tzMsk)  # Переводим UTC в МСК
+        return dt_msk.replace(tzinfo=None)  # Убираем временнУю зону
 
     def GetHeaders(self):
         """Получение хедеров для запросов"""
@@ -81,16 +89,16 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """Анализ результата запроса
 
         :param response response: Результат запроса
-        :return: Справочник из JSON или None в случае ошибки
+        :return: Справочник из JSON, текст, None в случае веб ошибки
         """
         if response.status_code != 200:  # Если статус ошибки
             print('Response Web Error:', response.status_code, response.content.decode('utf-8'), response.request)  # Декодируем и выводим ошибку
             return None  # то возвращаем пустое значение
+        content = response.content.decode('utf-8')  # Значение
         try:
-            return loads(response.content)  # Декодируем JSON в справочник, возвращаем его
-        except:  # Если произошла ошибка при декодировании
-            print('Response JSON Error:', response.content.decode('utf-8'))  # Декодируем и выводим ошибку
-            return None  # то возвращаем пустое значение
+            return loads(content)  # Декодируем JSON в справочник, возвращаем его. Ошибки также могут приходить в виде JSON
+        except JSONDecodeError:  # Если произошла ошибка при декодировании JSON, например, при удалении заявок
+            return content  # то возвращаем значение в виде текста
 
     # Работа с WebSocket
 
@@ -128,12 +136,12 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                 sub = next((item for item in self.subscriptions if response['guid'] in item), None)  # Поиск подписки по GUID
                 if sub is None:  # Если подписка не найдена
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
-                response['subscription'] = sub[response['guid']]  # Ставим информацию о подписки в ответ
+                response['subscription'] = sub[response['guid']]  # Ставим информацию о подписке в ответ
                 opcode = response['subscription']['opcode']  # Разбираем по типу подписки
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
-                    print(f'DEBUG: {datetime.now()} - {response["data"]}')
+                    # print(f'DEBUG: {datetime.now()} - {response["data"]}')
                     seconds = response['data']['time']  # Время пришедшего бара
                     if sub['mode'] == 0:  # История
                         if seconds != sub['last']:  # Если пришел следующий бар истории
@@ -530,16 +538,17 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
             params['search'] = search
         return self.CheckResult(get(url=f'{self.apiServer}/md/v2/risk/rates', params=params, headers=self.GetHeaders()))
 
-    def GetHistory(self, exchange, symbol, tf, secondsFrom=0, secondsTo=32536799999):
+    def GetHistory(self, exchange, symbol, tf, secondsFrom=0, secondsTo=32536799999, untraded=False):
         """Запрос истории рынка для выбранных биржи и финансового инструмента
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
         :param str tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int secondsFrom: Дата и время UTC в секундах для первого запрашиваемого бара
-        :param int secondsTo: Дата и время UTC в секундах для первого запрашиваемого бара
+        :param int secondsTo: Дата и время UTC в секундах для последнего запрашиваемого бара
+        :paran bool untraded: Флаг для поиска данных по устаревшим или экспирированным инструментам. При использовании требуется точное совпадение тикера
         """
-        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': secondsFrom, 'to': secondsTo}
+        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': secondsFrom, 'to': secondsTo, 'untraded': untraded}
         return self.CheckResult(get(url=f'{self.apiServer}/md/v2/history', params=params, headers=self.GetHeaders()))
 
     # Другое
@@ -584,7 +593,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def CreateStopLossOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice):
         """Создание стоп-лосс заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -601,7 +610,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def CreateTakeProfitOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice):
         """Создание стоп-заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -618,7 +627,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def CreateTakeProfitLimitOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice, limitPrice):
         """Создание стоп-лимит заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -636,7 +645,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def CreateStopLossLimitOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice, limitPrice):
         """Создание стоп-лосс лимит заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -686,7 +695,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def EditStopLossOrder(self, tradeServerCode, account, portfolio, exchange, orderId, symbol, side, quantity, stopPrice):
         """Изменение стоп-лосс заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -704,7 +713,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def EditTakeProfitOrder(self, tradeServerCode, account, portfolio, exchange, orderId, symbol, side, quantity, stopPrice):
         """Изменение стоп-заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -722,7 +731,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def EditTakeProfitLimitOrder(self, tradeServerCode, account, portfolio, exchange, orderId, symbol, side, quantity, stopPrice, limitPrice):
         """Изменение стоп-лимит заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -741,7 +750,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def EditStopLossLimitOrder(self, tradeServerCode, account, portfolio, exchange, orderId, symbol, side, quantity, stopPrice, limitPrice):
         """Изменение стоп-лосс лимит заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str account: Счет
         :param str portfolio: Клиентский портфель
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -773,7 +782,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     def DeleteStopOrder(self, tradeServerCode, portfolio, orderId, stop):
         """Снятие стоп-заявки
 
-        :param str tradeServerCode: Код торгового сервера 'TRADE', 'ITRADE', 'FUT1', 'OPT1', 'FX1'
+        :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)
         :param str portfolio: Клиентский портфель
         :param int orderId: Номер заявки
         :param bool stop: Является ли стоп-заявкой

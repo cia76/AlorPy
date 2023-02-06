@@ -1,11 +1,21 @@
-import time
+from time import sleep  # Задержка в секундах перед выполнением операций
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from Config import Config  # Файл конфигурации
+from AlorPy.Config import Config  # Файл конфигурации
 
+
+opcodes = {'OrdersGetAndSubscribeV2': 'Заявка',
+           'StopOrdersGetAndSubscribe': 'Стоп заявка',
+           'PositionsGetAndSubscribeV2': 'Позиция',
+           'TradesGetAndSubscribeV2': 'Сделка'}
 
 def PrintCallback(response):
-    print(response)
+    """"Обработчик подписок"""
+    opcode = response['subscription']['opcode']  # Тип подписки
+    exchange = response['subscription']['exchange']  # Код биржи
+    portfolio = response['subscription']['portfolio']  # Портфель
+    data = response['data']  # Данные подписки
+    print(f'{opcodes[opcode]}({exchange}, {portfolio}) - {data}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -18,58 +28,94 @@ if __name__ == '__main__':  # Точка входа при запуске это
     symbol = 'SBER'  # Тикер
     tradeServerCode = Config.TradeServerCode  # Торговый сервер РЦБ
     portfolio = Config.PortfolioStocks  # Портфель фондового рынка
-    account = Config.AccountStocks  # Счет фондового рынка
+    account = Config.AccountStocks  # Счет фондового рынка (для стоп заявок)
 
-    # Для фьючерсов нужно указывать не краткое имя, а биржевой индентификатор
-    # symbol = 'Si-6.22'  # Для фьючерсов: <Код тикера>-<Месяц экспирации: 3, 6, 9, 12>.<Две последнии цифры года>
+    # Для фьючерсов
+    # symbol = 'SiH3'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    # symbol = 'RIH3'
     # tradeServerCode = Config.FutServerCode  # Торговый сервер фьючерсов
     # portfolio = Config.PortfolioFutures  # Портфель фьючерсов
     # account = Config.AccountFutures  # Счет фьючерсов
 
-    symbolInfo = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
-    minStep = symbolInfo["minstep"]  # Минимальный шаг цены
+    si = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
+    minStep = si['minstep']  # Минимальный шаг цены
 
     quotes = apProvider.GetQuotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
-    lastPrice = quotes["last_price"]  # Последняя цена сделки
+    lastPrice = quotes['last_price']  # Последняя цена сделки
     print(f'Последняя цена сделки {exchange}.{symbol}: {lastPrice}')
 
-    apProvider.OnOrder = PrintCallback  # Заявки
-    apProvider.OnStopOrder = PrintCallback  # Стоп заявки
-    apProvider.OnPosition = PrintCallback  # Позиции
-    apProvider.OnTrade = PrintCallback  # Сделки
-    ordersGuid = apProvider.OrdersGetAndSubscribeV2(portfolio, exchange)  # Заявки
-    stopOrderGuid = apProvider.StopOrdersGetAndSubscribe(portfolio, exchange)  # Стоп заявки
-    positionsGuid = apProvider.PositionsGetAndSubscribeV2(portfolio, exchange)  # Позиции
-    tradesGuid = apProvider.TradesGetAndSubscribeV2(portfolio, exchange)  # Сделки
+    # Обработчики подписок
+    apProvider.OnOrder = PrintCallback  # Обработка заявок
+    apProvider.OnStopOrder = PrintCallback  # Обработка стоп заявок
+    apProvider.OnPosition = PrintCallback  # Обработка позиций
+    apProvider.OnTrade = PrintCallback  # Обработка сделок
+
+    # Создание подписок
+    ordersGuid = apProvider.OrdersGetAndSubscribeV2(portfolio, exchange)  # Подписка на заявки
+    print(f'Подписка на заявки {ordersGuid} создана')
+    stopOrdersGuid = apProvider.StopOrdersGetAndSubscribe(portfolio, exchange)  # Подписка на стоп заявки
+    print(f'Подписка на стоп заявки {stopOrdersGuid} создана')
+    positionsGuid = apProvider.PositionsGetAndSubscribeV2(portfolio, exchange)  # Подписка на позиции
+    print(f'Подписка на позиции {positionsGuid} создана')
+    tradesGuid = apProvider.TradesGetAndSubscribeV2(portfolio, exchange)  # Подписка на сделки
+    print(f'Подписка на сделки {tradesGuid} создана')
+
+    sleep(10)  # Ждем 10 секунд
+
+    # Новая рыночная заявка (открытие позиции)
+    # print(f'Заявка {exchange}.{symbol} на покупку минимального лота по рыночной цене')
+    # response = apProvider.CreateMarketOrder(portfolio, exchange, symbol, 'buy', 1)
+    # print(response)
+
+    # sleep(10)  # Ждем 10 секунд
+
+    # Новая рыночная заявка (закрытие позиции)
+    # print(f'Заявка {exchange}.{symbol} на продажу минимального лота по рыночной цене')
+    # response = apProvider.CreateMarketOrder(portfolio, exchange, symbol, 'sell', 1)
+    # print(response)
+    #
+    # sleep(10)  # Ждем 10 секунд
 
     # Новая лимитная заявка
     limitPrice = lastPrice * 0.99  # Лимитная цена на 1% ниже последней цены сделки
-    limitPrice = round(limitPrice / minStep) * minStep  # Округляем цену кратно минимальному шагу цены
+    limitPrice = limitPrice // minStep * minStep  # Округляем цену кратно минимальному шагу цены
     print(f'Заявка {exchange}.{symbol} на покупку минимального лота по лимитной цене {limitPrice}')
     response = apProvider.CreateLimitOrder(portfolio, exchange, symbol, 'buy', 1, limitPrice)
     orderId = response['orderNumber']  # Номер заявки
     print(f'Номер заявки: {orderId}')
-    time.sleep(10)
+
+    sleep(10)  # Ждем 10 секунд
 
     # Удаление существующей лимитной заявки
     print(f'Удаление заявки: {orderId}')
     response = apProvider.DeleteOrder(portfolio, exchange, orderId, False)
-    time.sleep(10)
+    print(f'Статус: {response}')
+
+    sleep(10)  # Ждем 10 секунд
 
     # Новая стоп заявка
     stopPrice = lastPrice * 1.01  # Стоп цена на 1% выше последней цены сделки
-    stopPrice = round(stopPrice / minStep) * minStep  # Округляем цену кратно минимальному шагу цены
+    stopPrice = stopPrice // minStep * minStep  # Округляем цену кратно минимальному шагу цены
     print(f'Заявка {exchange}.{symbol} на покупку минимального лота по стоп цене {stopPrice}')
     response = apProvider.CreateStopLossOrder(tradeServerCode, account, portfolio, exchange, symbol, 'buy', 1, stopPrice)
     orderId = response['orderNumber']  # Номер заявки
-    time.sleep(10)
+
+    sleep(10)  # Ждем 10 секунд
 
     # Удаление существующей стоп заявки
     print(f'Удаление заявки: {orderId}')
     response = apProvider.DeleteStopOrder(tradeServerCode, portfolio, orderId, True)
-    time.sleep(10)
+    print(f'Статус: {response}')
 
-    # Выход
+    sleep(10)  # Ждем 10 секунд
+
+    # Отмена подписок
+    print(f'Подписка на заявки {apProvider.Unsubscribe(ordersGuid)} отменена')
+    print(f'Подписка на стоп заявки {apProvider.Unsubscribe(stopOrdersGuid)} отменена')
+    print(f'Подписка на позиции {apProvider.Unsubscribe(positionsGuid)} отменена')
+    print(f'Подписка на сделки {apProvider.Unsubscribe(tradesGuid)} отменена')
+
+    # Сброс обработчиков подписок
     apProvider.OnOrder = apProvider.DefaultHandler  # Заявки
     apProvider.OnStopOrder = apProvider.DefaultHandler  # Стоп заявки
     apProvider.OnPosition = apProvider.DefaultHandler  # Позиции

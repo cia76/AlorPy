@@ -1,7 +1,7 @@
 import time  # Подписка на события по времени
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from Config import Config  # Файл конфигурации
+from AlorPy.Config import Config  # Файл конфигурации
 
 
 def PrintCallback(response):
@@ -20,7 +20,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(f'Текущий стакан {exchange}.{symbol}')
     orderBook = apProvider.GetOrderBook(exchange, symbol)  # Текущий стакан с максимальной глубиной 20 получаем через запрос
     print(orderBook)
-    print(f'bids от {orderBook["bids"][0]} до {orderBook["bids"][-1]}, asks от {orderBook["asks"][0]} до {orderBook["asks"][-1]}')
+    if orderBook['bids'] and orderBook['asks']:
+        print(f'bids от {orderBook["bids"][0]} до {orderBook["bids"][-1]}, asks от {orderBook["asks"][0]} до {orderBook["asks"][-1]}')
 
     sleepSec = 5  # Кол-во секунд получения стакана
     print(f'Подписка на стакан {exchange}.{symbol}')

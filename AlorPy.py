@@ -587,7 +587,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         headers = self.GetHeaders()
         headers['X-ALOR-REQID'] = f'{portfolio};{self.GetRequestId()}'  # Портфель с уникальным идентификатором запроса
-        j = {'side': side, 'type': 'limit', 'quantity': quantity, 'price': limitPrice, 'instrument': {'symbol': symbol, 'exchange': exchange}, 'user': {'portfolio': portfolio}}
+        j = {'side': side, 'type': 'limit', 'quantity': abs(quantity), 'price': limitPrice, 'instrument': {'symbol': symbol, 'exchange': exchange}, 'user': {'portfolio': portfolio}}
         return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/limit', headers=headers, json=j))
 
     def CreateStopLossOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice):

@@ -16,21 +16,31 @@ class Config:
     # 2. Выписать токен
     UserName = 'P000000'
     RefreshToken = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    PortfolioStocks = 'D00000'  # Фондовый рынок
-    AccountStocks = 'L01-00000F00'
-    PortfolioFutures = '0000PST'  # Срочный рынок
-    AccountFutures = '0000PST'
-    PortfolioFx = 'G00000'  # Валютный рынок
-    AccountFx = 'MB0000000000'
+
+    # Как заполнять переменные портфелей/счетов:
+    # 1. Запустить скрипт "02 - Accounts.py"
+    # 2. Получить портфели/счета для всех рынков
+    # 3. Заполнить переменные полученными значениями. Иначе, заявки выставляться не будут
+    PortfolioStocks = 'D00000'  # Фондовый рынок - Портфель
+    AccountStocks = 'L01-00000F00'  # Фондовый рынок - Счет
+    PortfolioFutures = '0000PST'  # Срочный рынок - Портфель
+    AccountFutures = '0000PST'  # Срочный рынок - Счет
+    PortfolioFx = 'G00000'  # Валютный рынок - Портфель
+    AccountFx = 'MB0000000000'  # Валютный рынок - Счет
 
     # Для демо счета:
     # 1. Пройти по ссылке "Токены для ведения торгов в тестовом контуре" - "Begin OAuth authorization flow"
     # 2. Ввести тестовый логин/пароль. Нажать "Разрешить"
     DemoUserName = 'P000000'
     DemoRefreshToken = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    PortfolioStocks = 'D00000'  # Фондовый рынок
-    DemoAccountStocks = 'L01-00000F00'
-    DemoPortfolioFutures = '0000000'  # Срочный рынок
-    DemoAccountFutures = '0000000'
-    DemoPortfolioFx = 'G00000'  # Валютный рынок
-    DemoAccountFx = 'MB0000000000'
+
+    # Как заполнять переменные портфелей/счетов:
+    # 1. Запустить скрипт "02 - Accounts.py"
+    # 2. Получить портфели/счета для всех рынков
+    # 3. Заполнить переменные полученными значениями. Иначе, заявки выставляться не будут
+    PortfolioStocks = 'D00000'  # Фондовый рынок - Портфель
+    DemoAccountStocks = 'L01-00000F00'  # Фондовый рынок - Счет
+    DemoPortfolioFutures = '0000000'  # Срочный рынок - Портфель
+    DemoAccountFutures = '0000000'  # Срочный рынок - Счет
+    DemoPortfolioFx = 'G00000'  # Валютный рынок - Портфель
+    DemoAccountFx = 'MB0000000000'  # Валютный рынок - Счет

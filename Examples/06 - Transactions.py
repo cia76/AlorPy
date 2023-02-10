@@ -28,14 +28,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
     symbol = 'SBER'  # Тикер
     tradeServerCode = Config.TradeServerCode  # Торговый сервер РЦБ
     portfolio = Config.PortfolioStocks  # Портфель фондового рынка
-    account = Config.AccountStocks  # Счет фондового рынка (для стоп заявок)
 
     # Для фьючерсов
     # symbol = 'SiH3'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
     # symbol = 'RIH3'
     # tradeServerCode = Config.FutServerCode  # Торговый сервер фьючерсов
     # portfolio = Config.PortfolioFutures  # Портфель фьючерсов
-    # account = Config.AccountFutures  # Счет фьючерсов
 
     si = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
     minStep = si['minstep']  # Минимальный шаг цены
@@ -94,6 +92,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
     sleep(10)  # Ждем 10 секунд
 
     # Новая стоп заявка
+    portfolios = apProvider.GetPortfolios()  # Получаем все портфели
+    account = None  # Счет получим из портфеля
+    for p in portfolios:  # Пробегаемся по всем портфелям
+        if portfolios[p][0]['portfolio'] == portfolio:  # Если это наш портфель
+            account = portfolios[p][0]['tks']  # то получаем из него счет
+            break  # Счет найден, дальше поиск вести не нужно
     stopPrice = lastPrice * 1.01  # Стоп цена на 1% выше последней цены сделки
     stopPrice = stopPrice // minStep * minStep  # Округляем цену кратно минимальному шагу цены
     print(f'Заявка {exchange}.{symbol} на покупку минимального лота по стоп цене {stopPrice}')

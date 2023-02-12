@@ -808,7 +808,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param str symbol: Тикер
         :param float price: Цена покупки
         :param int quantity: Кол-во в лотах
-        :param str board: Режим торгов (борд) TODO Какие значения она принимает?
+        :param str board: Режим торгов (борд). TQBR - акции, TQOB - облигации, RFUD - фьючерсы, ...
         """
         j = {'portfolio': portfolio, 'ticker': symbol, 'exchange': exchange, 'price': price, 'lotQuantity': quantity, 'board': board}
         return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/estimate', json=j))

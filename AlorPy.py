@@ -666,6 +666,27 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         j = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': stopPrice, 'Price': limitPrice, 'Instrument': {'Symbol': symbol, 'Exchange': exchange}, 'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': secondsOrderEnd}
         return self.CheckResult(post(url=f'{self.apiServer}/warptrans/{tradeServerCode}/v2/client/orders/actions/takeProfitLimit', headers=headers, json=j))
 
+    def CreateTakeProfitLimitOrderV2(self, portfolio, exchange, symbol, classCode, side, quantity, stopPrice, limitPrice, condition='Less', secondsOrderEnd=0):
+        """Создание стоп-лимит заявки V2
+        :param str portfolio: Клиентский портфель
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str symbol: Тикер
+        :param str classCode: Класс инструмента
+        :param str side: Покупка 'buy' или продажа 'sell'
+        :param int quantity: Кол-во в лотах
+        :param float stopPrice: Стоп цена
+        :param float limitPrice: Лимитная цена
+        :param float condition: Условие 'More' или 'Less'
+        :param int secondsOrderEnd: Дата и время UTC в секундах завершения сделки
+        """
+        headers = self.GetHeaders()
+        headers['X-ALOR-REQID'] = f'{portfolio};{self.GetRequestId()}'  # Портфель с уникальным идентификатором запроса
+        j = {'side': side, 'condition': condition, 'triggerPrice': stopPrice, 'stopEndUnixTime': secondsOrderEnd,
+             'price': limitPrice, 'quantity': abs(quantity),
+             'instrument': {'symbol': symbol, 'exchange': exchange, 'instrumentGroup': classCode},
+             'user': {'portfolio': portfolio, 'exchange': exchange}}
+        return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit', headers=headers, json=j))
+
     def CreateStopLossLimitOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice, limitPrice, secondsOrderEnd=0):
         """Создание стоп-лосс лимит заявки
 

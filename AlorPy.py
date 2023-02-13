@@ -645,6 +645,25 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         j = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': stopPrice, 'Price': limitPrice, 'Instrument': {'Symbol': symbol, 'Exchange': exchange}, 'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': secondsOrderEnd}
         return self.CheckResult(post(url=f'{self.apiServer}/warptrans/{tradeServerCode}/v2/client/orders/actions/takeProfitLimit', headers=headers, json=j))
 
+    def CreateTakeProfitOrderV2(self, portfolio, exchange, symbol, classCode, side, quantity, stopPrice, condition='Less', secondsOrderEnd=0):
+        """Создание стоп заявки V2
+
+        :param str portfolio: Клиентский портфель
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str symbol: Тикер
+        :param str classCode: Класс инструмента
+        :param str side: Покупка 'buy' или продажа 'sell'
+        :param int quantity: Кол-во в лотах
+        :param float stopPrice: Стоп цена
+        :param str condition: условие more/less
+        :param int secondsOrderEnd: Дата и время UTC в секундах завершения сделки
+        """
+        headers = self.GetHeaders()
+        headers['X-ALOR-REQID'] = f'{portfolio};{self.GetRequestId()}'  # Портфель с уникальным идентификатором запроса
+        j = {'side': side, 'condition': condition, 'triggerPrice': stopPrice, 'stopEndUnixTime': secondsOrderEnd, 'quantity': abs(quantity),
+             'instrument': {'symbol': symbol, 'exchange': exchange, 'instrumentGroup': classCode}, 'user': {'portfolio': portfolio, 'exchange': exchange}}
+        return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/stop', headers=headers, json=j))
+
     def CreateTakeProfitLimitOrderV2(self, portfolio, exchange, symbol, classCode, side, quantity, stopPrice, limitPrice, condition='Less', secondsOrderEnd=0):
         """Создание стоп-лимит заявки V2
         :param str portfolio: Клиентский портфель
@@ -655,7 +674,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param int quantity: Кол-во в лотах
         :param float stopPrice: Стоп цена
         :param float limitPrice: Лимитная цена
-        :param float condition: Условие 'More' или 'Less'
+        :param str condition: Условие 'More' или 'Less'
         :param int secondsOrderEnd: Дата и время UTC в секундах завершения сделки
         """
         headers = self.GetHeaders()
@@ -786,7 +805,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param int quantity: Кол-во в лотах
         :param float stopPrice: Стоп цена
         :param float limitPrice: Лимитная цена
-        :param float condition: Условие 'More' или 'Less'
+        :param str condition: Условие 'More' или 'Less'
         :param int secondsOrderEnd: Дата и время UTC в секундах завершения сделки
         """
         headers = self.GetHeaders()

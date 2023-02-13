@@ -795,7 +795,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
              'price': limitPrice, 'quantity': abs(quantity),
              'instrument': {'symbol': symbol, 'exchange': exchange, 'instrumentGroup': classCode},
              'user': {'portfolio': portfolio, 'exchange': exchange}}
-        return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit/{orderId}', headers=headers, json=j))
+        return self.CheckResult(put(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit/{orderId}', headers=headers, json=j))
 
     def EditStopLossLimitOrder(self, tradeServerCode, account, portfolio, exchange, orderId, symbol, side, quantity, stopPrice, limitPrice, secondsOrderEnd=0):
         """Изменение стоп-лосс лимит заявки

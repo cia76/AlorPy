@@ -183,6 +183,8 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                     self.OnTrade(response)
                 elif opcode == 'StopOrdersGetAndSubscribe':  # Стоп заявки
                     self.OnStopOrder(response)
+                elif opcode == 'StopOrdersGetAndSubscribeV2':  # Стоп заявки
+                    self.OnStopOrderV2(response)
                 elif opcode == 'OrdersGetAndSubscribeV2':  # Заявки
                     self.OnOrder(response)
                 elif opcode == 'InstrumentsGetAndSubscribeV2':  # Информация о финансовых инструментах
@@ -270,6 +272,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         self.OnSpectraRisk = self.DefaultHandler  # Риски срочного рынка (FORTS)
         self.OnTrade = self.DefaultHandler  # Сделки
         self.OnStopOrder = self.DefaultHandler  # Стоп заявки
+        self.OnStopOrderV2 = self.DefaultHandler  # Стоп заявки v2
         self.OnOrder = self.DefaultHandler  # Заявки
         self.OnSymbol = self.DefaultHandler  # Информация о финансовых инструментах
 

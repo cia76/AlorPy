@@ -608,27 +608,6 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         j = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': stopPrice, 'Instrument': {'Symbol': symbol, 'Exchange': exchange}, 'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': secondsOrderEnd}
         return self.CheckResult(post(url=f'{self.apiServer}/warptrans/{tradeServerCode}/v2/client/orders/actions/stopLoss', headers=headers, json=j))
 
-    def CreateTakeProfitLimitOrderV2(self, portfolio, exchange, symbol, classCode, side, quantity, stopPrice, limitPrice, condition='Less', secondsOrderEnd=0):
-        """Создание стоп-лимит заявки V2
-
-        :param str portfolio: Клиентский портфель
-        :param str exchange: Биржа 'MOEX' или 'SPBX'        
-        :param str symbol: Тикер
-        :param str classCode: Класс инструмента
-        :param str side: Покупка 'buy' или продажа 'sell'
-        :param int quantity: Кол-во в лотах
-        :param float stopPrice: Стоп цена
-        :param float limitPrice: Лимитная цена
-        :param float condition: условие more/less
-        :param int secondsOrderEnd: Дата и время UTC в секундах завершения сделки
-        """
-        headers = self.GetHeaders()
-        headers['X-ALOR-REQID'] = f'{portfolio};{self.GetRequestId()}'  # Портфель с уникальным идентификатором запроса
-        j = {'side': side, 'condition': condition, 'triggerPrice': stopPrice, 'stopEndUnixTime': secondsOrderEnd, 'price': limitPrice, 'quantity': abs(quantity),
-             'instrument': {'symbol': symbol, 'exchange': exchange, 'instrumentGroup': classCode}, 'user': {'portfolio': portfolio, 'exchange': exchange}}
-        print(j)
-        return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit', headers=headers, json=j))
-    
     def CreateTakeProfitOrder(self, tradeServerCode, account, portfolio, exchange, symbol, side, quantity, stopPrice, secondsOrderEnd=0):
         """Создание стоп-заявки
 
@@ -795,6 +774,28 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         headers['X-ALOR-REQID'] = self.GetRequestId()  # Уникальный идентификатор запроса
         j = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': stopPrice, 'Price': limitPrice, 'Instrument': {'Symbol': symbol, 'Exchange': exchange}, 'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': secondsOrderEnd}
         return self.CheckResult(put(url=f'{self.apiServer}/warptrans/{tradeServerCode}/v2/client/orders/actions/takeProfitLimit/{orderId}', headers=headers, json=j))
+
+    def EditTakeProfitLimitOrderV2(self, portfolio, exchange, orderId, symbol, classCode, side, quantity, stopPrice, limitPrice, condition='Less', secondsOrderEnd=0):
+        """Изменение стоп-лимит заявки V2
+        :param str portfolio: Клиентский портфель
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param int orderId: Номер заявки
+        :param str symbol: Тикер
+        :param str classCode: Класс инструмента
+        :param str side: Покупка 'buy' или продажа 'sell'
+        :param int quantity: Кол-во в лотах
+        :param float stopPrice: Стоп цена
+        :param float limitPrice: Лимитная цена
+        :param float condition: Условие 'More' или 'Less'
+        :param int secondsOrderEnd: Дата и время UTC в секундах завершения сделки
+        """
+        headers = self.GetHeaders()
+        headers['X-ALOR-REQID'] = f'{portfolio};{self.GetRequestId()}'  # Портфель с уникальным идентификатором запроса
+        j = {'side': side, 'condition': condition, 'triggerPrice': stopPrice, 'stopEndUnixTime': secondsOrderEnd,
+             'price': limitPrice, 'quantity': abs(quantity),
+             'instrument': {'symbol': symbol, 'exchange': exchange, 'instrumentGroup': classCode},
+             'user': {'portfolio': portfolio, 'exchange': exchange}}
+        return self.CheckResult(post(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit/{orderId}', headers=headers, json=j))
 
     def EditStopLossLimitOrder(self, tradeServerCode, account, portfolio, exchange, orderId, symbol, side, quantity, stopPrice, limitPrice, secondsOrderEnd=0):
         """Изменение стоп-лосс лимит заявки

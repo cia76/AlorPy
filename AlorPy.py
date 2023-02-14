@@ -109,64 +109,65 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
             print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Connected')
             if len(self.subscriptions) > 0:  # Если есть подписки
                 print(f'Возобновление подписок ({len(self.subscriptions)})')
-                resubscribe = self.subscriptions.copy()  # Подписки, которые были до этого, удалим
+                old_subscriptions = self.subscriptions.copy()  # Подписки, которые были до этого, удалим
                 self.subscriptions.clear()  # Удаляем подписки из списка
-                for s in resubscribe:  # Пробегаемся по всем подпискам
-                    request = list(s.values())[0]  # Извлекаем запрос из подписки
+                for old_subscription in old_subscriptions:  # Пробегаемся по всем подпискам
+                    request = list(old_subscription.values())[0]  # Извлекаем запрос из подписки
                     # Дублируем функционал WebSocketSend, чтобы не попасть в петлю сервера/запросов при переподключении
                     guid = str(uuid4())  # Уникальный идентификатор создаваемой подписки
-                    subscriptionRequest = request.copy()  # Копируем запрос в подписку
-                    sub = {guid: subscriptionRequest}
-                    if subscriptionRequest['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
-                        sub['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
-                        sub['last'] = 0  # Время последнего бара
-                        sub['same'] = 1  # Кол-во повторяющихся баров
-                        sub['prev'] = None  # Предыдущий ответ
-                    self.subscriptions.append(sub)  # Заносим подписку в список
+                    subscription_request = request.copy()  # Копируем запрос в подписку
+                    new_subscription = {guid: subscription_request}  # Новая подписка на основе старой
+                    if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
+                        new_subscription['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
+                        new_subscription['last'] = 0  # Время последнего бара
+                        new_subscription['same'] = 1  # Кол-во повторяющихся баров
+                        new_subscription['prev'] = None  # Предыдущий ответ
+                    self.subscriptions.append(new_subscription)  # Заносим подписку в список
                     request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
                     request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
                     await self.webSocket.send(dumps(request))  # Отправляем запрос
             self.webSocketReady = True  # Готов принимать запросы
             print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Listening')
             while True:  # Слушаем ответ до отмены
-                responseJson = await self.webSocket.recv()  # Ожидаем следующую строку в виде JSON
-                response = loads(responseJson)  # Переводим JSON в словарь
+                response_json = await self.webSocket.recv()  # Ожидаем следующую строку в виде JSON
+                response = loads(response_json)  # Переводим JSON в словарь
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
-                sub = next((item for item in self.subscriptions if response['guid'] in item), None)  # Поиск подписки по GUID
-                if sub is None:  # Если подписка не найдена
+                subscriptions = self.subscriptions.copy()  # Поиск будем вести по копии подписки, т.к. подписки могут изменяться
+                subscription = next((item for item in subscriptions if response['guid'] in item), None)  # Поиск подписки по GUID
+                if not subscription:  # Если подписка не найдена
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
-                response['subscription'] = sub[response['guid']]  # Ставим информацию о подписке в ответ
+                response['subscription'] = subscription[response['guid']]  # Ставим информацию о подписке в ответ
                 opcode = response['subscription']['opcode']  # Разбираем по типу подписки
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
                     # print(f'DEBUG: {datetime.now()} - {response["data"]}')
                     seconds = response['data']['time']  # Время пришедшего бара
-                    if sub['mode'] == 0:  # История
-                        if seconds != sub['last']:  # Если пришел следующий бар истории
-                            sub['last'] = seconds  # то запоминаем его
-                            if sub['prev'] is not None:  # Мы не знаем, когда придет первый дубль
-                                self.OnNewBar(sub['prev'])  # Поэтому, выдаем бар с задержкой на 1
+                    if subscription['mode'] == 0:  # История
+                        if seconds != subscription['last']:  # Если пришел следующий бар истории
+                            subscription['last'] = seconds  # то запоминаем его
+                            if subscription['prev'] is not None:  # Мы не знаем, когда придет первый дубль
+                                self.OnNewBar(subscription['prev'])  # Поэтому, выдаем бар с задержкой на 1
                         else:  # Если пришел дубль
-                            sub['same'] = 2  # Есть 2 одинаковых бара
-                            sub['mode'] = 1  # Переходим к обработке первого несформированного бара
-                    elif sub['mode'] == 1:  # Первый несформированный бар
-                        if sub['same'] < 3:  # Если уже есть 2 одинаковых бара
-                            sub['same'] += 1  # то следующий бар будет таким же. 3 одинаковых бара
+                            subscription['same'] = 2  # Есть 2 одинаковых бара
+                            subscription['mode'] = 1  # Переходим к обработке первого несформированного бара
+                    elif subscription['mode'] == 1:  # Первый несформированный бар
+                        if subscription['same'] < 3:  # Если уже есть 2 одинаковых бара
+                            subscription['same'] += 1  # то следующий бар будет таким же. 3 одинаковых бара
                         else:  # Если пришел следующий бар
-                            sub['last'] = seconds  # то запоминаем бар
-                            sub['same'] = 1  # Повторов нет
-                            sub['mode'] = 2  # Переходим к обработке новых баров
-                            self.OnNewBar(sub['prev'])
-                    elif sub['mode'] == 2:  # Новый бар
-                        if sub['same'] < 2:  # Если нет повторов
-                            sub['same'] += 1  # то следующий бар будет таким же. 2 одинаковых бара
+                            subscription['last'] = seconds  # то запоминаем бар
+                            subscription['same'] = 1  # Повторов нет
+                            subscription['mode'] = 2  # Переходим к обработке новых баров
+                            self.OnNewBar(subscription['prev'])
+                    elif subscription['mode'] == 2:  # Новый бар
+                        if subscription['same'] < 2:  # Если нет повторов
+                            subscription['same'] += 1  # то следующий бар будет таким же. 2 одинаковых бара
                         else:  # Если пришел следующий бар
-                            sub['last'] = seconds  # то запоминаем бар
-                            sub['same'] = 1  # Повторов нет
-                            self.OnNewBar(sub['prev'])
-                    sub['prev'] = response  # Запоминаем пришедший бар
+                            subscription['last'] = seconds  # то запоминаем бар
+                            subscription['same'] = 1  # Повторов нет
+                            self.OnNewBar(subscription['prev'])
+                    subscription['prev'] = response  # Запоминаем пришедший бар
                 elif opcode == 'QuotesSubscribe':  # Котировки
                     self.OnNewQuotes(response)
                 elif opcode == 'AllTradesGetAndSubscribe':  # Все сделки
@@ -183,7 +184,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                     self.OnTrade(response)
                 elif opcode == 'StopOrdersGetAndSubscribe':  # Стоп заявки
                     self.OnStopOrder(response)
-                elif opcode == 'StopOrdersGetAndSubscribeV2':  # Стоп заявки
+                elif opcode == 'StopOrdersGetAndSubscribeV2':  # Стоп заявки v2
                     self.OnStopOrderV2(response)
                 elif opcode == 'OrdersGetAndSubscribeV2':  # Заявки
                     self.OnOrder(response)

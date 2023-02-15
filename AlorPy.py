@@ -133,11 +133,11 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                 response = loads(response_json)  # Переводим JSON в словарь
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
-                subscriptions = self.subscriptions.copy()  # Поиск будем вести по копии подписки, т.к. подписки могут изменяться
-                subscription = next((item for item in subscriptions if response['guid'] in item), None)  # Поиск подписки по GUID
+                guid = response['guid']  # GUID подписки
+                subscription = next((item for item in self.subscriptions if guid in item), None)  # Поиск подписки по GUID
                 if not subscription:  # Если подписка не найдена
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
-                response['subscription'] = subscription[response['guid']]  # Ставим информацию о подписке в ответ
+                response['subscription'] = subscription[guid]  # Ставим информацию о подписке по GUID в ответ
                 opcode = response['subscription']['opcode']  # Разбираем по типу подписки
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
@@ -192,12 +192,12 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                     self.OnSymbol(response)
         except CancelledError:  # Если задачу отменили
             print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Canceled')
-            raise   # Передаем исключение на уровень WebSocketHandler
+            raise   # Передаем исключение на родительский уровень WebSocketHandler
         except ConnectionClosed:  # При отключении от сервера WebSockets
             print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Disconnected')
-        except OSError:  # Если был таймаут на websockets
-            print('WebSocket Task: Timeout')
-        except Exception as ex:  # Другие типы ошибок
+        except OSError:  # При таймауте на websockets
+            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Timeout')
+        except Exception as ex:  # При других типах ошибок
             print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Error', ex)
         finally:
             self.webSocketReady = False  # Не готов принимать запросы

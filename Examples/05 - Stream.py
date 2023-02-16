@@ -22,6 +22,23 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(orderBook)
     if orderBook['bids'] and orderBook['asks']:
         print(f'bids от {orderBook["bids"][0]} до {orderBook["bids"][-1]}, asks от {orderBook["asks"][0]} до {orderBook["asks"][-1]}')
+        
+    print("\nСтакан котировок: визуализируем...\n")    
+    asks = orderBook['asks'][::-1]
+    for i in range(len(asks)):
+        volume = asks[i]['volume']
+        price = asks[i]['price']
+        print(f"{volume:7} \t {price:9}")
+    
+    bids = orderBook['bids']
+    for i in range(len(bids)):
+        volume = bids[i]['volume']
+        price = bids[i]['price']
+        print(f"\t\t\t {price:9} \t {volume:7}")
+
+    closest_ask_to_sell = asks[-1]
+    closest_bid_to_buy = bids[0]
+    print(f"\nЛучшее предложение, продажа по: {closest_ask_to_sell}, покупка по: {closest_bid_to_buy}\n")
 
     sleepSec = 5  # Кол-во секунд получения стакана
     print(f'Подписка на стакан {exchange}.{symbol}')

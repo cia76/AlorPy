@@ -40,6 +40,24 @@ if __name__ == '__main__':  # Точка входа при запуске это
     closest_bid_to_buy = bids[0]
     print(f"\nЛучшее предложение, продажа по: {closest_ask_to_sell}, покупка по: {closest_bid_to_buy}\n")
 
+    print('\nВизуализация стакана котировок')
+    asks = orderBook['asks'][::-1]  # Продажи
+    for i in range(len(asks)):  # Пробегаемся по всем продажам
+        volume = asks[i]['volume']  # Объем
+        price = asks[i]['price']  # Цена
+        print(f"{volume:7} \t {price:9}")
+
+    bids = orderBook['bids']  # Покупки
+    for i in range(len(bids)):  # Пробегаемся по всем покупкам
+        volume = bids[i]['volume']  # Объем
+        price = bids[i]['price']  # Цена
+        print(f"\t\t\t {price:9} \t {volume:7}")
+
+    if len(asks) > 0 and len(bids) > 0:  # Если в стакане что-то есть
+        closest_ask_to_sell = asks[-1]  # Лучшая цена продажи
+        closest_bid_to_buy = bids[0]  # Лучшая цена покупки
+        print(f'\nЛучшее предложение, продажа по: {closest_ask_to_sell}, покупка по: {closest_bid_to_buy}\n')
+
     sleepSec = 5  # Кол-во секунд получения стакана
     print(f'Подписка на стакан {exchange}.{symbol}')
     apProvider.OnChangeOrderBook = PrintCallback  # Перехватываем обработку события изменения стакана

@@ -29,7 +29,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     jwtTokenTTL = 60  # Время жизни токена JWT в секундах
     exchanges = ('MOEX', 'SPBX',)  # Биржи
 
-    def DefaultHandler(self, response):
+    def DefaultHandler(self, response=None):
         """Пустой обработчик события по умолчанию. Его можно заменить на пользовательский"""
         pass
 
@@ -41,7 +41,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         if self.jwtToken is None or now - self.jwtTokenIssued > self.jwtTokenTTL:  # Если токен JWT не был выдан или был просрочен
             response = post(url=f'{self.oauthServer}/refresh', params={'token': self.refreshToken})  # Запрашиваем новый JWT токен с сервера аутентификации
             if response.status_code != 200:  # Если при получение возникла ошибка
-                print(f'Ошибка получения JWT токена: {response.status_code}')
+                self.OnError(f'Ошибка получения JWT токена: {response.status_code}')  # Событие ошибки
                 self.jwtToken = None  # Сбрасываем токен JWT
                 self.jwtTokenIssued = 0  # Сбрасываем время выдачи токена JWT
             token = response.json()  # Читаем данные JSON
@@ -84,15 +84,14 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """Получение уникального кода запроса"""
         return f'{self.userName}{time_ns()}'  # Логин и текущее время в наносекундах, прошедших с 01.01.1970 в UTC
 
-    @staticmethod
-    def CheckResult(response):
+    def CheckResult(self, response):
         """Анализ результата запроса
 
         :param response response: Результат запроса
         :return: Справочник из JSON, текст, None в случае веб ошибки
         """
         if response.status_code != 200:  # Если статус ошибки
-            print('Response Web Error:', response.status_code, response.content.decode('utf-8'), response.request)  # Декодируем и выводим ошибку
+            self.OnError(f'Ошибка сервера: {response.status_code} {response.content.decode("utf-8")} {response.request}')  # Событие ошибки
             return None  # то возвращаем пустое значение
         content = response.content.decode('utf-8')  # Значение
         try:
@@ -106,43 +105,39 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """Подключение к серверу WebSocket и получение с него подписок"""
         try:
             self.webSocket = await connect(self.wsServer)  # Подключаемся к серверу WebSocket
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Connected')
-            if len(self.subscriptions) > 0:  # Если есть подписки
-                print(f'Возобновление подписок ({len(self.subscriptions)})')
-                old_subscriptions = self.subscriptions.copy()  # Подписки, которые были до этого, удалим
-                self.subscriptions.clear()  # Удаляем подписки из списка
-                for old_subscription in old_subscriptions:  # Пробегаемся по всем подпискам
-                    request = list(old_subscription.values())[0]  # Извлекаем запрос из подписки
+            self.OnConnect()  # Событие подключения к серверу (Task)
+            if len(self.subscriptions) > 0:  # Если есть подписки, то будем их возобновлять
+                self.OnResubscribe()  # Событие возобновления подписок (Task)
+                old_subscriptions = self.subscriptions.copy()  # Создаем копию подписок. По ним будем создавать новые подписки
+                self.subscriptions = {}  # Удаляем подписки
+                for request in old_subscriptions.values():  # Пробегаемся по значениям всех подписок
                     # Дублируем функционал WebSocketSend, чтобы не попасть в петлю сервера/запросов при переподключении
                     guid = str(uuid4())  # Уникальный идентификатор создаваемой подписки
                     subscription_request = request.copy()  # Копируем запрос в подписку
-                    new_subscription = {guid: subscription_request}  # Новая подписка на основе старой
                     if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
-                        new_subscription['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
-                        new_subscription['last'] = 0  # Время последнего бара
-                        new_subscription['same'] = 1  # Кол-во повторяющихся баров
-                        new_subscription['prev'] = None  # Предыдущий ответ
-                    self.subscriptions.append(new_subscription)  # Заносим подписку в список
+                        subscription_request['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
+                        subscription_request['last'] = 0  # Время последнего бара
+                        subscription_request['same'] = 1  # Кол-во повторяющихся баров
+                        subscription_request['prev'] = None  # Предыдущий ответ
+                    self.subscriptions[guid] = request.copy()  # Заносим копию подписки в справочник
                     request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
                     request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
                     await self.webSocket.send(dumps(request))  # Отправляем запрос
             self.webSocketReady = True  # Готов принимать запросы
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Listening')
+            self.OnReady()  # Событие готовности к работе (Task)
             while True:  # Слушаем ответ до отмены
                 response_json = await self.webSocket.recv()  # Ожидаем следующую строку в виде JSON
                 response = loads(response_json)  # Переводим JSON в словарь
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
                 guid = response['guid']  # GUID подписки
-                subscription = next((item for item in self.subscriptions if guid in item), None)  # Поиск подписки по GUID
-                if not subscription:  # Если подписка не найдена
+                if guid not in self.subscriptions:  # Если подписка не найдена
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
-                response['subscription'] = subscription[guid]  # Ставим информацию о подписке по GUID в ответ
-                opcode = response['subscription']['opcode']  # Разбираем по типу подписки
+                subscription = self.subscriptions[guid]  # Поиск подписки по GUID
+                opcode = subscription['opcode']  # Разбираем по типу подписки
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
-                    # print(f'DEBUG: {datetime.now()} - {response["data"]}')
                     seconds = response['data']['time']  # Время пришедшего бара
                     if subscription['mode'] == 0:  # История
                         if seconds != subscription['last']:  # Если пришел следующий бар истории
@@ -191,29 +186,28 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                 elif opcode == 'InstrumentsGetAndSubscribeV2':  # Информация о финансовых инструментах
                     self.OnSymbol(response)
         except CancelledError:  # Если задачу отменили
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Canceled')
+            self.OnCancel()  # Событие отмены и завершения (Task)
             raise   # Передаем исключение на родительский уровень WebSocketHandler
         except ConnectionClosed:  # При отключении от сервера WebSockets
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Disconnected')
+            self.OnDisconnect()  # Событие отключения от сервера (Task)
         except OSError:  # При таймауте на websockets
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Timeout')
+            self.OnTimeout()  # Событие таймаута (Task)
         except Exception as ex:  # При других типах ошибок
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Task: Error', ex)
+            self.OnError(f'Ошибка {ex}')  # Событие ошибки (Task)
         finally:
             self.webSocketReady = False  # Не готов принимать запросы
             self.webSocket = None  # Сбрасываем подключение
 
     async def WebSocketHandler(self):
         """Запуск и управление задачей подписок"""
-        print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Thread: Started')
+        self.OnEnter()  # Событие входа (Thread)
         while True:  # Будем держать соединение с сервером WebSocket до отмены
             self.webSocketTask = create_task(self.WebSocketAsync())  # Запускаем задачу подключения к серверу WebSocket и получения с него подписок
             try:
                 await self.webSocketTask  # Ожидаем отмены задачи
             except CancelledError:  # Если задачу отменили
                 break  # то выходим, дальше не продолжаем
-        dt = datetime.now(self.tzMsk)  # Берем текущее время на рынке
-        print(dt.strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Thread: Completed')
+        self.OnExit()  # Событие выхода (Thread)
 
     def WebSocketSend(self, request):
         """Отправка запроса подписки на сервер WebSocket
@@ -222,19 +216,18 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :return: Уникальный идентификатор подписки
         """
         if not self.webSocketReady:  # Если WebSocket не готов принимать запросы
-            print(datetime.now(self.tzMsk).strftime("%d.%m.%Y %H:%M:%S"), '- WebSocket Thread: Starting')
+            self.OnEntering()  # Событие начала входа (Thread)
             Thread(target=run, args=(self.WebSocketHandler(),)).start()  # то создаем и запускаем поток управления подписками
         while not self.webSocketReady:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             pass  # Подождем, пока WebSocket не будет готов принимать запросы
-        guid = str(uuid4())  # Уникальный идентификатор создаваемой подписки для сообщений
-        subscriptionRequest = request.copy()  # Копируем запрос в подписку
-        sub = {guid: subscriptionRequest}
-        if subscriptionRequest['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
-            sub['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
-            sub['last'] = 0  # Время последнего бара
-            sub['same'] = 1  # Кол-во повторяющихся баров
-            sub['prev'] = None  # Предыдущий ответ
-        self.subscriptions.append(sub)  # Заносим подписку в список
+        guid = str(uuid4())  # Уникальный идентификатор создаваемой подписки
+        subscription_request = request.copy()  # Копируем запрос в подписку
+        if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты (алгоритм Игоря Чечета)
+            subscription_request['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
+            subscription_request['last'] = 0  # Время последнего бара
+            subscription_request['same'] = 1  # Кол-во повторяющихся баров
+            subscription_request['prev'] = None  # Предыдущий ответ
+        self.subscriptions[guid] = subscription_request  # Заносим копию подписки в справочник
         request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
         request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
         run(self.webSocket.send(dumps(request)))  # Отправляем запрос
@@ -261,8 +254,9 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         self.webSocketTask = None  # Задача управления подписками WebSocket
         self.webSocket = None  # Подключение к серверу WebSocket
         self.webSocketReady = False  # WebSocket готов принимать запросы
-        self.subscriptions = []  # Список подписок
+        self.subscriptions = {}  # Справочник подписок
 
+        # События Alor OpenAPI V2
         self.OnChangeOrderBook = self.DefaultHandler  # Биржевой стакан
         self.OnNewBar = self.DefaultHandler  # Новый бар
         self.OnNewQuotes = self.DefaultHandler  # Котировки
@@ -276,6 +270,18 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         self.OnStopOrderV2 = self.DefaultHandler  # Стоп заявки v2
         self.OnOrder = self.DefaultHandler  # Заявки
         self.OnSymbol = self.DefaultHandler  # Информация о финансовых инструментах
+
+        # События WebSocket Thread/Task
+        self.OnEntering = self.DefaultHandler  # Начало входа (Thread)
+        self.OnEnter = self.DefaultHandler  # Вход (Thread)
+        self.OnConnect = self.DefaultHandler  # Подключение к серверу (Task)
+        self.OnResubscribe = self.DefaultHandler  # Возобновление подписок (Task)
+        self.OnReady = self.DefaultHandler  # Готовность к работе (Task)
+        self.OnDisconnect = self.DefaultHandler  # Отключение от сервера (Task)
+        self.OnTimeout = self.DefaultHandler  # Таймаут (Task)
+        self.OnError = self.DefaultHandler  # Ошибка (Task)
+        self.OnCancel = self.DefaultHandler  # Отмена (Task)
+        self.OnExit = self.DefaultHandler  # Выход (Thread)
 
     def __enter__(self):
         """Вход в класс, например, с with"""
@@ -917,7 +923,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param str tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
+        :param tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int secondsFrom: Дата и время UTC в секундах для первого запрашиваемого бара
         """
         # Ответ ALOR OpenAPI Support: Чтобы получать последний бар сессии на первом тике следующей сессии, нужно использовать скрытый параметр frequency в ms с очень большим значением
@@ -1033,6 +1039,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         """
         request = {'opcode': 'unsubscribe', 'token': str(self.GetJWTToken()), 'guid': str(guid)}  # Запрос на отмену подписки
         run(self.webSocket.send(dumps(request)))  # Отправляем запрос
+        del self.subscriptions[guid]  # Удаляем подписку из справочника
         return guid  # Возвращаем GUID отмененной подписки
 
     # Выход и закрытие

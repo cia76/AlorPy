@@ -4,20 +4,6 @@ from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config  # Файл конфигурации
 
 
-opcodes = {'OrdersGetAndSubscribeV2': 'Заявка',
-           'StopOrdersGetAndSubscribe': 'Стоп заявка',
-           'PositionsGetAndSubscribeV2': 'Позиция',
-           'TradesGetAndSubscribeV2': 'Сделка'}
-
-def PrintCallback(response):
-    """"Обработчик подписок"""
-    opcode = response['subscription']['opcode']  # Тип подписки
-    exchange = response['subscription']['exchange']  # Код биржи
-    portfolio = response['subscription']['portfolio']  # Портфель
-    data = response['data']  # Данные подписки
-    print(f'{opcodes[opcode]}({exchange}, {portfolio}) - {data}')
-
-
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     apProvider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету. Логин и Refresh Token берутся из файла Config.py
     # apProvider = AlorPy(Config.DemoUserName, Config.DemoRefreshToken, True)  # Подключаемся к демо счету
@@ -43,10 +29,10 @@ if __name__ == '__main__':  # Точка входа при запуске это
     print(f'Последняя цена сделки {exchange}.{symbol}: {lastPrice}')
 
     # Обработчики подписок
-    apProvider.OnOrder = PrintCallback  # Обработка заявок
-    apProvider.OnStopOrder = PrintCallback  # Обработка стоп заявок
-    apProvider.OnPosition = PrintCallback  # Обработка позиций
-    apProvider.OnTrade = PrintCallback  # Обработка сделок
+    apProvider.OnOrder = lambda response: print(f'Заявка - {response["data"]}')  # Обработка заявок
+    apProvider.OnStopOrder = lambda response: print(f'Стоп заявка - {response["data"]}')  # Обработка стоп заявок
+    apProvider.OnPosition = lambda response: print(f'Позиция - {response["data"]}')  # Обработка позиций
+    apProvider.OnTrade = lambda response: print(f'Сделка - {response["data"]}')  # Обработка сделок
 
     # Создание подписок
     ordersGuid = apProvider.OrdersGetAndSubscribeV2(portfolio, exchange)  # Подписка на заявки

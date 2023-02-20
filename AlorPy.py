@@ -119,7 +119,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                         subscription_request['last'] = 0  # Время последнего бара
                         subscription_request['same'] = 1  # Кол-во повторяющихся баров
                         subscription_request['prev'] = None  # Предыдущий ответ
-                    self.subscriptions[guid] = request.copy()  # Заносим копию подписки в справочник
+                    self.subscriptions[guid] = subscription_request  # Заносим копию подписки в справочник
                     request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
                     request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
                     await self.webSocket.send(dumps(request))  # Отправляем запрос

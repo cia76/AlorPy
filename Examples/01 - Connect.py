@@ -6,7 +6,9 @@ from AlorPy.Config import Config  # Файл конфигурации
 def PrintNewBar(response):
     seconds = response['data']['time']  # Время в Alor OpenAPI V2 передается в секундах, прошедших с 01.01.1970 00:00 UTC
     dtMsk = datetime.utcfromtimestamp(seconds) if type(tf) is str else apProvider.UTCTimeStampToMskDatetime(seconds)  # Дневные бары и выше ставим на начало дня по UTC. Остальные - по МСК
-    print(f'{datetime.now().strftime("%d.%m.%Y %H:%M:%S")} - {dtMsk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
+    guid = response['guid']  # Код подписки
+    subscription = apProvider.subscriptions[guid]  # Подписка
+    print(f'{datetime.now().strftime("%d.%m.%Y %H:%M:%S")} - {subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {dtMsk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -43,6 +45,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     apProvider.OnNewBar = PrintNewBar  # Перед подпиской перехватим ответы
     guid = apProvider.BarsGetAndSubscribe(exchange, symbol, tf, secondsFrom)  # Подписываемся на бары, получаем guid подписки
     subscription = apProvider.subscriptions[guid]  # Получаем данные подписки
+    print('Подписка на сервере:', guid, subscription)
     print(f'На бирже {subscription["exchange"]} тикер {subscription["code"]} подписан на новые бары через WebSocket на временнОм интервале {subscription["tf"]}. Код подписки {guid}')
 
     # Выход

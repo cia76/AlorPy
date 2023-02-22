@@ -213,10 +213,10 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
             Thread(target=run, args=(self.WebSocketHandler(),)).start()  # то создаем и запускаем поток управления подписками
         while not self.web_socket_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             pass  # Подождем, пока WebSocket не будет готов принимать запросы
-        guid = run(self.subscribe(request))  # Отправляем запрос подписки на сервер WebSocket. Пполучаем уникальный идентификатор подписки
+        guid = run(self.subscribe(request, str(uuid4())))  # Отправляем запрос подписки на сервер WebSocket. Пполучаем уникальный идентификатор подписки
         return guid
 
-    async def subscribe(self, request, guid=str(uuid4())):
+    async def subscribe(self, request, guid):
         """Отправка запроса подписки на сервер WebSocket
 
         :param request request: Запрос

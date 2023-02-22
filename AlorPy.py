@@ -102,31 +102,24 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
     # Работа с WebSocket
 
     async def WebSocketAsync(self):
-        """Подключение к серверу WebSocket и получение с него подписок"""
+        """
+        Подключение к серверу WebSocket
+        Возобновление подписок если требуется
+        Получение подписок до отмены
+        """
         try:
-            self.webSocket = await connect(self.wsServer)  # Подключаемся к серверу WebSocket
+            self.web_socket = await connect(self.wsServer)  # Пробуем подключиться к серверу WebSocket
             self.OnConnect()  # Событие подключения к серверу (Task)
+
             if len(self.subscriptions) > 0:  # Если есть подписки, то будем их возобновлять
                 self.OnResubscribe()  # Событие возобновления подписок (Task)
-                old_subscriptions = self.subscriptions.copy()  # Создаем копию подписок. По ним будем создавать новые подписки
-                self.subscriptions = {}  # Удаляем подписки
-                for request in old_subscriptions.values():  # Пробегаемся по значениям всех подписок
-                    # Дублируем функционал WebSocketSend, чтобы не попасть в петлю сервера/запросов при переподключении
-                    guid = str(uuid4())  # Уникальный идентификатор создаваемой подписки
-                    subscription_request = request.copy()  # Копируем запрос в подписку
-                    if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
-                        subscription_request['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
-                        subscription_request['last'] = 0  # Время последнего бара
-                        subscription_request['same'] = 1  # Кол-во повторяющихся баров
-                        subscription_request['prev'] = None  # Предыдущий ответ
-                    self.subscriptions[guid] = subscription_request  # Заносим копию подписки в справочник
-                    request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
-                    request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
-                    await self.webSocket.send(dumps(request))  # Отправляем запрос
-            self.webSocketReady = True  # Готов принимать запросы
+                for guid, request in self.subscriptions:  # Пробегаемся по всем подпискам
+                    await self.subscribe(request, guid)  # Переподписываемся с тем же уникальным идентификатором
+            self.web_socket_ready = True  # Готов принимать запросы
             self.OnReady()  # Событие готовности к работе (Task)
-            while True:  # Слушаем ответ до отмены
-                response_json = await self.webSocket.recv()  # Ожидаем следующую строку в виде JSON
+
+            while True:  # Получаем подписки до отмены
+                response_json = await self.web_socket.recv()  # Ожидаем следующую строку в виде JSON
                 response = loads(response_json)  # Переводим JSON в словарь
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
@@ -185,44 +178,53 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
                     self.OnOrder(response)
                 elif opcode == 'InstrumentsGetAndSubscribeV2':  # Информация о финансовых инструментах
                     self.OnSymbol(response)
-        except CancelledError:  # Если задачу отменили
+        except CancelledError:  # Задачу отменили
             self.OnCancel()  # Событие отмены и завершения (Task)
             raise   # Передаем исключение на родительский уровень WebSocketHandler
-        except ConnectionClosed:  # При отключении от сервера WebSockets
+        except ConnectionClosed:  # Отключились от сервера WebSockets
             self.OnDisconnect()  # Событие отключения от сервера (Task)
         except OSError:  # При таймауте на websockets
             self.OnTimeout()  # Событие таймаута (Task)
         except Exception as ex:  # При других типах ошибок
             self.OnError(f'Ошибка {ex}')  # Событие ошибки (Task)
         finally:
-            self.webSocketReady = False  # Не готов принимать запросы
-            self.webSocket = None  # Сбрасываем подключение
+            self.web_socket_ready = False  # Не готов принимать запросы
+            self.web_socket = None  # Сбрасываем подключение
 
     async def WebSocketHandler(self):
         """Запуск и управление задачей подписок"""
         self.OnEnter()  # Событие входа (Thread)
         while True:  # Будем держать соединение с сервером WebSocket до отмены
-            self.webSocketTask = create_task(self.WebSocketAsync())  # Запускаем задачу подключения к серверу WebSocket и получения с него подписок
+            self.web_socket_task = create_task(self.WebSocketAsync())  # Запускаем задачу (Task) подключения к серверу WebSocket и получения с него подписок
             try:
-                await self.webSocketTask  # Ожидаем отмены задачи
+                await self.web_socket_task  # Ожидаем отмены задачи
             except CancelledError:  # Если задачу отменили
                 break  # то выходим, дальше не продолжаем
         self.OnExit()  # Событие выхода (Thread)
 
-    def WebSocketSend(self, request):
-        """Отправка запроса подписки на сервер WebSocket
+    def try_to_subscribe(self, request):
+        """Запуск WebSocket, если не запущен. Отправка запроса подписки на сервер WebSocket
 
         :param request request: Запрос
         :return: Уникальный идентификатор подписки
         """
-        if not self.webSocketReady:  # Если WebSocket не готов принимать запросы
+        if not self.web_socket_ready:  # Если WebSocket не готов принимать запросы
             self.OnEntering()  # Событие начала входа (Thread)
             Thread(target=run, args=(self.WebSocketHandler(),)).start()  # то создаем и запускаем поток управления подписками
-        while not self.webSocketReady:  # Подключение к серверу WebSocket выполняется в отдельном потоке
+        while not self.web_socket_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             pass  # Подождем, пока WebSocket не будет готов принимать запросы
-        guid = str(uuid4())  # Уникальный идентификатор создаваемой подписки
+        guid = run(self.subscribe(request))  # Отправляем запрос подписки на сервер WebSocket. Пполучаем уникальный идентификатор подписки
+        return guid
+
+    async def subscribe(self, request, guid=str(uuid4())):
+        """Отправка запроса подписки на сервер WebSocket
+
+        :param request request: Запрос
+        :param str guid: Уникальный идентификатор подписки
+        :return: Уникальный идентификатор подписки
+        """
         subscription_request = request.copy()  # Копируем запрос в подписку
-        if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты (алгоритм Игоря Чечета)
+        if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
             subscription_request['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
             subscription_request['last'] = 0  # Время последнего бара
             subscription_request['same'] = 1  # Кол-во повторяющихся баров
@@ -230,7 +232,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         self.subscriptions[guid] = subscription_request  # Заносим копию подписки в справочник
         request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
         request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
-        run(self.webSocket.send(dumps(request)))  # Отправляем запрос
+        await self.web_socket.send(dumps(request))  # Отправляем запрос
         return guid
 
     # Инициализация и вход
@@ -251,9 +253,9 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         self.jwtToken = None  # Токен JWT
         self.jwtTokenIssued = 0  # UNIX время в секундах выдачи токена JWT
 
-        self.webSocketTask = None  # Задача управления подписками WebSocket
-        self.webSocket = None  # Подключение к серверу WebSocket
-        self.webSocketReady = False  # WebSocket готов принимать запросы
+        self.web_socket = None  # Подключение к серверу WebSocket
+        self.web_socket_task = None  # Задача управления подписками WebSocket
+        self.web_socket_ready = False  # WebSocket готов принимать запросы
         self.subscriptions = {}  # Справочник подписок
 
         # События Alor OpenAPI V2
@@ -916,7 +918,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param int depth: Глубина стакана. Стандартное и максимальное значение - 20 (20х20)
         """
         request = {'opcode': 'OrderBookGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'depth': depth, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def BarsGetAndSubscribe(self, exchange, symbol, tf, secondsFrom):
         """Подписка на историю цен (свечи) для выбранных биржи и финансового инструмента
@@ -930,7 +932,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         request = {'opcode': 'BarsGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'tf': tf, 'from': int(secondsFrom), 'delayed': False, 'frequency': 1000000000, 'format': 'Simple'}  # Запрос на подписку
         # if type(tf) is not str:  # Для внутридневных баров
         #     request['frequency'] = (tf + 10) * 1000  # Задержка в ms. Позволяет получать новый бар не на каждом тике, а на первом и последнем тике. Последний бар сессии придет через 10 секунд после закрытия биржи
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def QuotesSubscribe(self, exchange, symbol):
         """Подписка на информацию о котировках для выбранных инструментов и бирж
@@ -939,7 +941,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param str symbol: Тикер
         """
         request = {'opcode': 'QuotesSubscribe', 'exchange': exchange, 'code': symbol, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def AllTradesSubscribe(self, exchange, symbol, depth=0):
         """Подписка на все сделки
@@ -949,7 +951,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param int depth: Если указать, то перед актуальными данными придут данные о последних N сделках. Максимум 5000
         """
         request = {'opcode': 'AllTradesGetAndSubscribe', 'code': symbol, 'exchange': exchange, 'format': 'Simple', 'depth': depth}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def PositionsGetAndSubscribeV2(self, portfolio, exchange):
         """Подписка на информацию о текущих позициях по ценным бумагам и деньгам
@@ -958,7 +960,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'PositionsGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def SummariesGetAndSubscribeV2(self, portfolio, exchange):
         """Подписка на сводную информацию по портфелю
@@ -967,7 +969,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'SummariesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def RisksGetAndSubscribe(self, portfolio, exchange):
         """Подписка на сводную информацию по портфельным рискам
@@ -976,7 +978,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'RisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def SpectraRisksGetAndSubscribe(self, portfolio, exchange):
         """Подписка на информацию по рискам срочного рынка (FORTS)
@@ -985,7 +987,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'SpectraRisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def TradesGetAndSubscribeV2(self, portfolio, exchange):
         """Подписка на информацию о сделках
@@ -994,7 +996,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'TradesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def StopOrdersGetAndSubscribe(self, portfolio, exchange):
         """Подписка на информацию о текущих стоп заявках на рынке для выбранных биржи и финансового инструмента
@@ -1003,7 +1005,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'StopOrdersGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def StopOrdersGetAndSubscribeV2(self, portfolio, exchange):
         """Подписка на информацию о текущих стоп заявках V2 на рынке для выбранных биржи и финансового инструмента
@@ -1012,7 +1014,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'StopOrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def OrdersGetAndSubscribeV2(self, portfolio, exchange):
         """Подписка на информацию о текущих заявках на рынке для выбранных биржи и финансового инструмента
@@ -1021,7 +1023,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param exchange: Биржа 'MOEX' или 'SPBX'
         """
         request = {'opcode': 'OrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def InstrumentsGetAndSubscribeV2(self, exchange, symbol):
         """Подписка на изменение информации о финансовых инструментах на выбранной бирже
@@ -1030,7 +1032,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param str symbol: Тикер
         """
         request = {'opcode': 'InstrumentsGetAndSubscribeV2', 'code': symbol, 'exchange': exchange, 'format': 'Simple'}  # Запрос на подписку
-        return self.WebSocketSend(request)  # Отправляем запрос, возвращаем GUID подписки
+        return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки
 
     def Unsubscribe(self, guid):
         """Отмена существующей подписки
@@ -1038,7 +1040,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param guid: Код подписки
         """
         request = {'opcode': 'unsubscribe', 'token': str(self.GetJWTToken()), 'guid': str(guid)}  # Запрос на отмену подписки
-        run(self.webSocket.send(dumps(request)))  # Отправляем запрос
+        run(self.web_socket.send(dumps(request)))  # Отправляем запрос
         del self.subscriptions[guid]  # Удаляем подписку из справочника
         return guid  # Возвращаем GUID отмененной подписки
 
@@ -1046,8 +1048,8 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
 
     def CloseWebSocket(self):
         """Закрытие соединения с сервером WebSocket"""
-        if self.webSocket is not None:  # Если запущена задача управления подписками WebSocket
-            self.webSocketTask.cancel()  # то отменяем задачу. Генерируем на ней исключение asyncio.CancelledError
+        if self.web_socket is not None:  # Если запущена задача управления подписками WebSocket
+            self.web_socket_task.cancel()  # то отменяем задачу. Генерируем на ней исключение asyncio.CancelledError
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Выход из класса, например, с with"""

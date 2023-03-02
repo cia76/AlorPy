@@ -4,6 +4,7 @@ from pytz import timezone, utc  # Работаем с временнОй зон�
 from uuid import uuid4  # Номера подписок должны быть уникальными во времени и пространстве
 from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
 from requests import post, get, put, delete  # Запросы/ответы от сервера запросов
+from urllib3.exceptions import MaxRetryError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения
 from websockets import connect, ConnectionClosed  # Работа с сервером WebSockets
 from asyncio import create_task, run, CancelledError  # Работа с асинхронными функциями
 from threading import Thread  # Подписки сервера WebSockets будем получать в отдельном потоке
@@ -183,8 +184,8 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
             raise   # Передаем исключение на родительский уровень WebSocketHandler
         except ConnectionClosed:  # Отключились от сервера WebSockets
             self.OnDisconnect()  # Событие отключения от сервера (Task)
-        except OSError:  # При таймауте на websockets
-            self.OnTimeout()  # Событие таймаута (Task)
+        except (OSError, MaxRetryError):  # При таймауте на websockets/максимальном кол-ве попыток подключения
+            self.OnTimeout()  # Событие таймаута/максимального кол-ва попыток подключения (Task)
         except Exception as ex:  # При других типах ошибок
             self.OnError(f'Ошибка {ex}')  # Событие ошибки (Task)
         finally:
@@ -280,7 +281,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         self.OnResubscribe = self.DefaultHandler  # Возобновление подписок (Task)
         self.OnReady = self.DefaultHandler  # Готовность к работе (Task)
         self.OnDisconnect = self.DefaultHandler  # Отключение от сервера (Task)
-        self.OnTimeout = self.DefaultHandler  # Таймаут (Task)
+        self.OnTimeout = self.DefaultHandler  # Таймаут/максимальное кол-во попыток подключения (Task)
         self.OnError = self.DefaultHandler  # Ошибка (Task)
         self.OnCancel = self.DefaultHandler  # Отмена (Task)
         self.OnExit = self.DefaultHandler  # Выход (Thread)

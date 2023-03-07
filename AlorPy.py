@@ -114,7 +114,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
 
             if len(self.subscriptions) > 0:  # Если есть подписки, то будем их возобновлять
                 self.OnResubscribe()  # Событие возобновления подписок (Task)
-                for guid, request in self.subscriptions:  # Пробегаемся по всем подпискам
+                for guid, request in self.subscriptions.items():  # Пробегаемся по всем подпискам
                     await self.subscribe(request, guid)  # Переподписываемся с тем же уникальным идентификатором
             self.web_socket_ready = True  # Готов принимать запросы
             self.OnReady()  # Событие готовности к работе (Task)
@@ -559,7 +559,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
         :param str tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int secondsFrom: Дата и время UTC в секундах для первого запрашиваемого бара
         :param int secondsTo: Дата и время UTC в секундах для последнего запрашиваемого бара
-        :paran bool untraded: Флаг для поиска данных по устаревшим или экспирированным инструментам. При использовании требуется точное совпадение тикера
+        :param bool untraded: Флаг для поиска данных по устаревшим или экспирированным инструментам. При использовании требуется точное совпадение тикера
         """
         params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': secondsFrom, 'to': secondsTo, 'untraded': untraded}
         return self.CheckResult(get(url=f'{self.apiServer}/md/v2/history', params=params, headers=self.GetHeaders()))

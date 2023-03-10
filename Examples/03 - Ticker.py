@@ -3,8 +3,7 @@ from AlorPy.Config import Config  # Файл конфигурации
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    apProvider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету. Логин и Refresh Token берутся из файла Config.py
-    # apProvider = AlorPy(Config.DemoUserName, Config.DemoRefreshToken, True)  # Подключаемся к демо счету
+    ap_provider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету
 
     exchange = 'MOEX'  # Биржа
     symbol = 'SBER'  # Тикер
@@ -14,7 +13,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # symbol = 'RTS-3.23'
 
     # Данные тикера и его торговый счет
-    si = apProvider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
+    si = ap_provider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
     print('Ответ от сервера:', si)
     print(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}, {si["type"]}) на бирже {si["exchange"]}:')
     print(f'Валюта: {si["currency"]}')

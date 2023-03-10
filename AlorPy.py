@@ -10,21 +10,7 @@ from asyncio import create_task, run, CancelledError  # Работа с асин
 from threading import Thread  # Подписки сервера WebSockets будем получать в отдельном потоке
 
 
-class Singleton(type):
-    """Метакласс для создания Singleton классов"""
-    def __init__(cls, *args, **kwargs):
-        """Инициализация класса"""
-        super(Singleton, cls).__init__(*args, **kwargs)
-        cls._singleton = None  # Экземпляра класса еще нет
-
-    def __call__(cls, *args, **kwargs):
-        """Вызов класса"""
-        if cls._singleton is None:  # Если класса нет в экземплярах класса
-            cls._singleton = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._singleton  # Возвращаем экземпляр класса
-
-
-class AlorPy(metaclass=Singleton):  # Singleton класс
+class AlorPy:
     """Работа с Alor OpenAPI V2 из Python https://alor.dev/docs"""
     tzMsk = timezone('Europe/Moscow')  # Время UTC в Alor OpenAPI будем приводить к московскому времени
     jwtTokenTTL = 60  # Время жизни токена JWT в секундах
@@ -244,6 +230,7 @@ class AlorPy(metaclass=Singleton):  # Singleton класс
 
     def __init__(self, UserName, RefreshToken, Demo=False):
         """Инициализация
+
         :param str UserName: Имя пользователя
         :param str RefreshToken: Токен
         :param bool Demo: Режим демо торговли. По умолчанию установлен режим реальной торговли

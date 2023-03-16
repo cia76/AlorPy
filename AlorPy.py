@@ -111,7 +111,10 @@ class AlorPy:
 
             while True:  # Получаем подписки до отмены
                 response_json = await self.web_socket.recv()  # Ожидаем следующую строку в виде JSON
-                response = loads(response_json)  # Переводим JSON в словарь
+                try:
+                    response = loads(response_json)  # Переводим JSON в словарь
+                except JSONDecodeError:  # Если вместо JSON сообщений получаем текст
+                    continue  # то его не разбираем, пропускаем
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
                 guid = response['guid']  # GUID подписки

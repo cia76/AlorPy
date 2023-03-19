@@ -113,7 +113,7 @@ class AlorPy:
                 response_json = await self.web_socket.recv()  # Ожидаем следующую строку в виде JSON
                 try:
                     response = loads(response_json)  # Переводим JSON в словарь
-                except JSONDecodeError:  # Если вместо JSON сообщений получаем текст
+                except JSONDecodeError:  # Если вместо JSON сообщений получаем текст (проверка на всякий случай)
                     continue  # то его не разбираем, пропускаем
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
@@ -177,7 +177,7 @@ class AlorPy:
             raise   # Передаем исключение на родительский уровень WebSocketHandler
         except ConnectionClosed:  # Отключились от сервера WebSockets
             self.OnDisconnect()  # Событие отключения от сервера (Task)
-        except (OSError, MaxRetryError):  # При таймауте на websockets/максимальном кол-ве попыток подключения
+        except (OSError, TimeoutError, MaxRetryError):  # При системной ошибке, таймауте на websockets, достижении максимального кол-ва попыток подключения
             self.OnTimeout()  # Событие таймаута/максимального кол-ва попыток подключения (Task)
         except Exception as ex:  # При других типах ошибок
             self.OnError(f'Ошибка {ex}')  # Событие ошибки (Task)

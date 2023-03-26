@@ -208,7 +208,8 @@ class AlorPy:
             thread.start()  # Запускаем его TODO Бывает ошибка cannot schedule new futures after shutdown
         while not self.web_socket_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             pass  # Подождем, пока WebSocket не будет готов принимать запросы
-        guid = run(self.subscribe(request, str(uuid4())))  # Отправляем запрос подписки на сервер WebSocket. Пполучаем уникальный идентификатор подписки
+        guid = str(uuid4())  # Уникальный идентификатор подписки
+        Thread(target=run, args=(self.subscribe(request, guid),)).start()  # Запускаем поток подписки
         return guid
 
     async def subscribe(self, request, guid):
@@ -216,7 +217,6 @@ class AlorPy:
 
         :param request request: Запрос
         :param str guid: Уникальный идентификатор подписки
-        :return: Уникальный идентификатор подписки
         """
         subscription_request = request.copy()  # Копируем запрос в подписку
         if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем атрибуты
@@ -228,7 +228,6 @@ class AlorPy:
         request['token'] = self.GetJWTToken()  # Получаем JWT токен, ставим его в запрос
         request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
         await self.web_socket.send(dumps(request))  # Отправляем запрос
-        return guid
 
     # Инициализация и вход
 

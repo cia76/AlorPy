@@ -209,7 +209,9 @@ class AlorPy:
         while not self.web_socket_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             pass  # Подождем, пока WebSocket не будет готов принимать запросы
         guid = str(uuid4())  # Уникальный идентификатор подписки
-        Thread(target=run, args=(self.subscribe(request, guid),)).start()  # Запускаем поток подписки
+        thread = Thread(target=run, args=(self.subscribe(request, guid),))  # Поток подписки
+        thread.start()  # Запускаем
+        thread.join()  # Ожидаем завершения
         return guid
 
     async def subscribe(self, request, guid):

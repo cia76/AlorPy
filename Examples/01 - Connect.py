@@ -43,8 +43,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     seconds_from = ap_provider.MskDatetimeToUTCTimeStamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
     guid = ap_provider.BarsGetAndSubscribe(exchange, symbol, tf, seconds_from)  # Подписываемся на бары, получаем guid подписки
-    while guid not in ap_provider.subscriptions:  # Подписка идет в отдельном потоке. Возможно, ее еще нет
-        pass  # Ждем, пока она не появится в справочнике подписок
     subscription = ap_provider.subscriptions[guid]  # Получаем данные подписки
     print('\nПодписка на сервере:', guid, subscription)
     print(f'На бирже {subscription["exchange"]} тикер {subscription["code"]} подписан на новые бары через WebSocket на временнОм интервале {subscription["tf"]}. Код подписки {guid}')

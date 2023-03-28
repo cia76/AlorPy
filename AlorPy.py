@@ -1,5 +1,7 @@
 from datetime import datetime
 from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
+
+import requests.adapters
 from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 from uuid import uuid4  # Номера подписок должны быть уникальными во времени и пространстве
 from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
@@ -240,6 +242,8 @@ class AlorPy:
         :param str RefreshToken: Токен
         :param bool Demo: Режим демо торговли. По умолчанию установлен режим реальной торговли
         """
+        requests.adapters.DEFAULT_RETRIES = 10  # Кол-во попыток (недокументированная команда)
+        requests.adapters.DEFAULT_POOL_TIMEOUT = 10  # Таймаут запроса в секундах (недокументированная команда)
         self.oauthServer = f'https://oauth{"dev" if Demo else ""}.alor.ru'  # Сервер аутентификации
         self.apiServer = f'https://api{"dev" if Demo else ""}.alor.ru'  # Сервер запросов
         self.wsServer = f'wss://api{"dev" if Demo else ""}.alor.ru/ws'  # Сервер подписок и событий WebSocket

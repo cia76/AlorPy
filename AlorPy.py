@@ -257,7 +257,7 @@ class AlorPy:
         self.web_socket = None  # Подключение к серверу WebSocket
         self.web_socket_task = None  # Задача управления подписками WebSocket
         self.web_socket_ready = False  # WebSocket готов принимать запросы
-        self.subscriptions = {}  # Справочник подписок
+        self.subscriptions = {}  # Справочник подписок. Для возобновления всех подписок после перезагрузки сервера Алор
 
         # События Alor OpenAPI V2
         self.OnChangeOrderBook = self.DefaultHandler  # Биржевой стакан

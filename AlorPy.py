@@ -929,8 +929,10 @@ class AlorPy:
         :param tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int secondsFrom: Дата и время UTC в секундах для первого запрашиваемого бара
         """
-        # Ответ ALOR OpenAPI Support: Чтобы получать последний бар сессии на первом тике следующей сессии, нужно использовать скрытый параметр frequency в ms с очень большим значением
-        request = {'opcode': 'BarsGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'tf': tf, 'from': int(secondsFrom), 'delayed': False, 'frequency': 1_000_000_000, 'format': 'Simple'}  # Запрос на подписку
+        # Ответ ALOR OpenAPI Support: Чтобы получать последний бар сессии на первом тике следующей сессии, нужно использовать скрытый параметр frequency в ms с очень большим значением (1_000_000_000)
+        # Проблема заключается в том, что с 09:00 до 10:00 Алор перезапускает сервер, и подписка на последний бар предыдущей сессии по фьючерсам пропадает.
+        # Поэтому, параметр frequency заменили на расписание биржи. Отслеживаем его в ALData
+        request = {'opcode': 'BarsGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'tf': tf, 'from': int(secondsFrom), 'delayed': False, 'format': 'Simple'}  # Запрос на подписку
         # if type(tf) is not str:  # Для внутридневных баров
         #     request['frequency'] = (tf + 10) * 1000  # Задержка в ms. Позволяет получать новый бар не на каждом тике, а на первом и последнем тике. Последний бар сессии придет через 10 секунд после закрытия биржи
         return self.try_to_subscribe(request)  # Отправляем запрос, возвращаем GUID подписки

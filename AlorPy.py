@@ -851,7 +851,7 @@ class AlorPy:
         j = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': stopPrice, 'Price': limitPrice, 'Instrument': {'Symbol': symbol, 'Exchange': exchange}, 'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': secondsOrderEnd}
         return self.CheckResult(put(url=f'{self.apiServer}/warptrans/{tradeServerCode}/v2/client/orders/actions/stopLossLimit/{orderId}', headers=headers, json=j))
 
-    def DeleteOrder(self, portfolio, exchange, orderId, stop):
+    def DeleteOrder(self, portfolio, exchange, orderId, stop=False):
         """Снятие заявки
 
         :param str portfolio: Клиентский портфель
@@ -864,7 +864,7 @@ class AlorPy:
         params = {'portfolio': portfolio, 'exchange': exchange, 'stop': stop, 'jsonResponse': True, 'format': 'Simple'}
         return self.CheckResult(delete(url=f'{self.apiServer}/commandapi/warptrans/TRADE/v2/client/orders/{orderId}', headers=headers, params=params))
 
-    def DeleteStopOrder(self, tradeServerCode, portfolio, orderId, stop):
+    def DeleteStopOrder(self, tradeServerCode, portfolio, orderId, stop=True):
         """Снятие стоп заявки
 
         :param str tradeServerCode: Код торгового сервера 'TRADE' (ценные бумаги), 'ITRADE' (ипотечные ценные бумаги), 'FUT1' (фьючерсы), 'OPT1' (опционы), 'FX1' (валюта)

@@ -24,7 +24,20 @@ OptServerCode = 'OPT1'  # Опционы
 FxServerCode = 'FX1'  # Валютный рынок
 
 
-class Config:
+class ConfigBase:
+    """Заготовка счета"""
+    UserName: str  # Имя пользователя
+    RefreshToken: str  # Токен
+
+    PortfolioStocks: str  # Портфель фондового рынка
+    PortfolioFutures: str  # Портфель срочного рынка
+    PortfolioFx: str  # Портфель валютного рынка
+
+    Accounts = {}  # Привязка портфелей к биржам
+    Boards = {}  # Привязка портфелей/серверов для стоп заявок к площадкам
+
+
+class Config(ConfigBase):
     """Торговый счет"""
     UserName = 'P000000'
     RefreshToken = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
@@ -38,7 +51,6 @@ class Config:
         PortfolioFutures: ('MOEX',),  # Срочный рынок на Московской Бирже (RUB)
         PortfolioFx: ('MOEX',),  # Валютный рынок на Московской Бирже (RUB)
     }  # Привязка портфелей к биржам
-
     Boards = {
         'TQBR': (PortfolioStocks, TradeServerCode),  # Т+ Акции и ДР
         'TQOB': (PortfolioStocks, TradeServerCode),  # МБ ФР: Т+: Гособлигации
@@ -47,7 +59,7 @@ class Config:
         }  # Привязка портфелей/серверов для стоп заявок к площадкам
 
 
-class ConfigIIA:
+class ConfigIIA(ConfigBase):
     """Индивидуальный инвестиционный счет (ИИС)"""
     UserName = 'P000000'
     RefreshToken = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
@@ -61,7 +73,6 @@ class ConfigIIA:
         PortfolioFutures: ('MOEX',),  # Срочный рынок на Московской Бирже (RUB)
         PortfolioFx: ('MOEX',),  # Валютный рынок на Московской Бирже (RUB)
     }  # Привязка портфелей к биржам
-
     Boards = {
         'TQBR': (PortfolioStocks, TradeServerCode),  # Т+ Акции и ДР
         'TQOB': (PortfolioStocks, TradeServerCode),  # МБ ФР: Т+: Гособлигации
@@ -70,7 +81,7 @@ class ConfigIIA:
     }  # Привязка портфелей/серверов для стоп заявок к площадкам
 
 
-class ConfigDemo:
+class ConfigDemo(ConfigBase):
     """Демо счет для тестирования"""
     UserName = 'P000000'
     RefreshToken = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
@@ -84,7 +95,6 @@ class ConfigDemo:
         PortfolioFutures: ('MOEX',),  # Срочный рынок на Московской Бирже (RUB)
         PortfolioFx: ('MOEX',),  # Валютный рынок на Московской Бирже (RUB)
     }  # Привязка портфелей к биржам
-
     Boards = {
         'TQBR': (PortfolioStocks, TradeServerCode),  # Т+ Акции и ДР
         'TQOB': (PortfolioStocks, TradeServerCode),  # МБ ФР: Т+: Гособлигации

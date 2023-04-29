@@ -1052,7 +1052,7 @@ class AlorPy:
         return self.symbols[(exchange, symbol)]  # Возвращаем значение из справочника
 
     @staticmethod
-    def data_name_to_exchange_symbol(dataname) -> tuple[str, str]:
+    def dataname_to_exchange_symbol(dataname) -> tuple[str, str]:
         """Биржа и код тикера из названия тикера. Если задается без биржи, то по умолчанию ставится MOEX
 
         :param str dataname: Название тикера
@@ -1068,7 +1068,7 @@ class AlorPy:
         return exchange, symbol  # Возвращаем биржу и код тикера
 
     @staticmethod
-    def exchange_symbol_to_data_name(exchange, symbol) -> str:
+    def exchange_symbol_to_dataname(exchange, symbol) -> str:
         """Название тикера из биржи и кода тикера
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'

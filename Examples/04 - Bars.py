@@ -31,11 +31,11 @@ def save_candles_to_file(exchange='MOEX', symbols=('SBER',), time_frame='D', sec
             print(f'- Первая запись файла: {file_bars.index[0]}')
             print(f'- Последняя запись файла: {file_bars.index[-1]}')
             print(f'- Кол-во записей в файле: {len(file_bars)}')
-        new_bars = ap_provider.GetHistory(exchange, symbol, time_frame, seconds_from)['history']  # Получаем все бары
+        new_bars = ap_provider.get_history(exchange, symbol, time_frame, seconds_from)['history']  # Получаем все бары
         pd_bars = pd.DataFrame.from_dict(pd.json_normalize(new_bars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
         pd_bars['datetime'] = pd.to_datetime(pd_bars['time'], unit='s')  # Дата и время в UTC для дневных бар и выше
         if type(time_frame) is not str:  # Для внутридневных баров (timeFmame число)
-            pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tzMsk).dt.tz_localize(None)  # Переводим в рыночное время МСК
+            pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
         pd_bars.index = pd_bars['datetime']  # Это будет индексом
         pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки
         pd_bars.index.name = 'datetime'  # Ставим название индекса даты/времени
@@ -74,7 +74,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                'SNGSP', 'PIKK', 'ISKJ', 'OZON', 'POLY', 'HYDR', 'RASP', 'IRAO', 'SIBN', 'FESH')  # TOP 40 акций ММВБ
 
     # seconds_from = 0  # В первый раз нужно взять всю историю по этим тикерам. Скрипт будет выполняться около 15-и минут!
-    seconds_from = int(ap_provider.tzMsk.localize(datetime(2023, 2, 20)).timestamp())  # В дальнейшем можно обновляться с нужной даты. Это займет около 10-и минут из-за больших объемов истории
+    seconds_from = int(ap_provider.tz_msk.localize(datetime(2023, 2, 20)).timestamp())  # В дальнейшем можно обновляться с нужной даты. Это займет около 10-и минут из-за больших объемов истории
     skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
     # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
     save_candles_to_file(symbols=symbols, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем дневные бары (с начала)

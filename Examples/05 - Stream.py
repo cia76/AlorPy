@@ -13,7 +13,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     # Стакан
     print(f'Текущий стакан {exchange}.{symbol}')
-    order_book = ap_provider.GetOrderBook(exchange, symbol)  # Текущий стакан с максимальной глубиной 20 получаем через запрос
+    order_book = ap_provider.get_order_book(exchange, symbol)  # Текущий стакан с максимальной глубиной 20 получаем через запрос
     print(order_book)
     if order_book['bids'] and order_book['asks']:
         print(f'bids от {order_book["bids"][0]} до {order_book["bids"][-1]}, asks от {order_book["asks"][0]} до {order_book["asks"][-1]}')
@@ -39,28 +39,28 @@ if __name__ == '__main__':  # Точка входа при запуске это
     sleep_secs = 5  # Кол-во секунд получения стакана
     print(f'Подписка на стакан {exchange}.{symbol}')
     ap_provider.OnChangeOrderBook = lambda response: print(response)  # Перехватываем обработку события изменения стакана
-    guid = ap_provider.OrderBookGetAndSubscribe(exchange, symbol)  # Получаем код пописки
+    guid = ap_provider.order_book_get_and_subscribe(exchange, symbol)  # Получаем код пописки
     print(f'Код подписки: {guid}')
     print(f'{sleep_secs} секунд стакана')
     time.sleep(sleep_secs)  # Ждем кол-во секунд получения стакана
-    print(f'Отмена подписки на стакан: {ap_provider.Unsubscribe(guid)}')  # Отписываеся от стакана
-    ap_provider.OnChangeOrderBook = ap_provider.DefaultHandler  # Возвращаем обработчик по умолчанию
+    print(f'Отмена подписки на стакан: {ap_provider.unsubscribe(guid)}')  # Отписываеся от стакана
+    ap_provider.OnChangeOrderBook = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 
     # Котировки
     print(f'Текущие котировки {exchange}.{symbol}')
-    quotes = ap_provider.GetQuotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
+    quotes = ap_provider.get_quotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
     print(quotes)
     print(f'Последняя цена сделки: {quotes["last_price"]}')
 
     sleep_secs = 5  # Кол-во секунд получения котировок
     print(f'Подписка на котировки {exchange}.{symbol}')
     ap_provider.OnNewQuotes = lambda response: print(response)  # Перехватываем обработку события прихода новой котировки
-    guid = ap_provider.QuotesSubscribe(exchange, symbol)  # Получаем код пописки
+    guid = ap_provider.quotes_subscribe(exchange, symbol)  # Получаем код пописки
     print(f'Код подписки: {guid}')
     print(f'{sleep_secs} секунд котировок')
     time.sleep(sleep_secs)  # Ждем кол-во секунд получения обезличенных сделок
-    print(f'Отмена подписки на котировки: {ap_provider.Unsubscribe(guid)}')  # Отписываеся от стакана
-    ap_provider.OnNewQuotes = ap_provider.DefaultHandler  # Возвращаем обработчик по умолчанию
+    print(f'Отмена подписки на котировки: {ap_provider.unsubscribe(guid)}')  # Отписываеся от стакана
+    ap_provider.OnNewQuotes = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 
     # Выход
-    ap_provider.CloseWebSocket()  # Перед выходом закрываем соединение с WebSocket
+    ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

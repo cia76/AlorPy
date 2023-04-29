@@ -13,7 +13,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # symbol = 'RTS-3.23'
 
     # Данные тикера и его торговый счет
-    si = ap_provider.GetSymbol(exchange, symbol)  # Получаем информацию о тикере
+    si = ap_provider.get_symbol(exchange, symbol)  # Получаем информацию о тикере
     print('Ответ от сервера:', si)
     print(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}, {si["type"]}) на бирже {si["exchange"]}:')
     print(f'Валюта: {si["currency"]}')

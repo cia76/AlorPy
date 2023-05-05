@@ -7,11 +7,12 @@ from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config  # Файл конфигурации
 
 
-def save_candles_to_file(exchange='MOEX', symbols=('SBER',), time_frame='D', seconds_from=0,
+def save_candles_to_file(exchange='MOEX', board='TQBR', symbols=('SBER',), time_frame='D', seconds_from=0,
                          skip_first_date=False, skip_last_date=False, four_price_doji=False):
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str board: Код площадки
         :param tuple symbols: Коды тикеров в виде кортежа
         :param time_frame: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int seconds_from: Дата и время UTC в секундах для первого запрашиваемого бара
@@ -20,19 +21,21 @@ def save_candles_to_file(exchange='MOEX', symbols=('SBER',), time_frame='D', sec
         :param bool four_price_doji: Оставить бары с дожи 4-х цен
         """
     for symbol in symbols:  # Пробегаемся по всем тикерам
-        file_name = f'..\\..\\DataAlor\\{exchange}.{symbol}_{time_frame}.txt'
+        file_bars = None  # Дальше будем пытаться получить бары из файла
+        tf = f'{time_frame}1' if time_frame in ('D', 'W', 'Y') else f'MN1' if time_frame == 'M' else f'M{int(time_frame) // 60}'  # Временной интервал для файла
+        file_name = f'{datapath}{board}.{symbol}_{tf}.txt'
         file_exists = os.path.isfile(file_name)  # Существует ли файл
-        if not file_exists:  # Если файл не существует
-            print(f'Файл {file_name} не найден и будет создан')
-        else:  # Файл существует
+        if file_exists:  # Если файл существует
             print(f'Получение файла {file_name}')
             file_bars = pd.read_csv(file_name, sep='\t', index_col='datetime')  # Считываем файл в DataFrame
             file_bars.index = pd.to_datetime(file_bars.index, format='%d.%m.%Y %H:%M')  # Переводим индекс в формат datetime
             print(f'- Первая запись файла: {file_bars.index[0]}')
             print(f'- Последняя запись файла: {file_bars.index[-1]}')
             print(f'- Кол-во записей в файле: {len(file_bars)}')
-        new_bars = ap_provider.get_history(exchange, symbol, time_frame, seconds_from)['history']  # Получаем все бары
-        pd_bars = pd.DataFrame.from_dict(pd.json_normalize(new_bars), orient='columns')  # Внутренние колонки даты/времени разворачиваем в отдельные колонки
+        else:  # Файл не существует
+            print(f'Файл {file_name} не найден и будет создан')
+        new_bars = ap_provider.get_history(exchange, symbol, time_frame, seconds_from)['history']  # Получаем все бары из Alor
+        pd_bars = pd.json_normalize(new_bars)  # Переводим список баров в pandas DataFrame
         pd_bars['datetime'] = pd.to_datetime(pd_bars['time'], unit='s')  # Дата и время в UTC для дневных бар и выше
         if type(time_frame) is not str:  # Для внутридневных баров (timeFmame число)
             pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
@@ -67,19 +70,24 @@ if __name__ == '__main__':  # Точка входа при запуске это
     start_time = time()  # Время начала запуска скрипта
     ap_provider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету
 
-    # symbols = ('SBER', 'GAZP',)
-    symbols = ('GAZP', 'LKOH', 'SBER', 'NVTK', 'YNDX', 'GMKN', 'ROSN', 'MTLR', 'MGNT', 'CHMF',
-               'PHOR', 'VTBR', 'TCSG', 'PLZL', 'ALRS', 'MAGN', 'CBOM', 'SMLT', 'MVID', 'AFLT',
-               'SNGS', 'SBERP', 'NLMK', 'RUAL', 'MTSS', 'TATN', 'MOEX', 'VKCO', 'MTLRP', 'AFKS',
-               'SNGSP', 'PIKK', 'ISKJ', 'OZON', 'POLY', 'HYDR', 'RASP', 'IRAO', 'SIBN', 'FESH')  # TOP 40 акций ММВБ
+    board = 'TQBR'  # Акции ММВБ
+    # board = 'SPBFUT'  # Фьючерсы
+    symbols = ('SBER', 'GAZP', 'VTBR', 'LKOH', 'MTLR', 'GMKN', 'YNDX', 'AFLT', 'PLZL', 'SBERP',
+               'NVTK', 'AFKS', 'SMLT', 'GECO', 'CHMF', 'MGNT', 'POLY', 'TATN', 'ROSN', 'MAGN',
+               'ALRS', 'SNGS', 'NLMK', 'MTSS', 'BELU', 'TRNFP', 'UPRO', 'BANEP', 'SNGSP', 'RUAL',
+               'BSPB', 'CBOM', 'RNFT', 'MOEX', 'FEES', 'IRAO', 'ISKJ', 'PHOR', 'FLOT', 'RTKM')  # TOP 40 акций ММВБ
+    # symbols = ('SBER',)  # Для тестов
+    # symbols = ('SiM3', 'RIM3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    datapath = '..\\..\\DataAlor\\'  # Путь к файлам (Windows)
 
-    # seconds_from = 0  # В первый раз нужно взять всю историю по этим тикерам. Скрипт будет выполняться около 15-и минут!
-    seconds_from = int(ap_provider.tz_msk.localize(datetime(2023, 2, 20)).timestamp())  # В дальнейшем можно обновляться с нужной даты. Это займет около 10-и минут из-за больших объемов истории
+    seconds_from = 0  # В первый раз нужно взять всю историю по этим тикерам. Скрипт будет выполняться около 15-и минут!
+    # seconds_from = int(ap_provider.tz_msk.localize(datetime(2023, 5, 3)).timestamp())  # В дальнейшем можно обновляться с нужной даты. Это займет около 10-и минут из-за больших объемов истории
     skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
     # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
-    save_candles_to_file(symbols=symbols, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем дневные бары (с начала)
-    # save_candles_to_file(symbols=symbols, time_frame=3600, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем часовые бары (с 11.12.2007)
-    # save_candles_to_file(symbols=symbols, time_frame=300, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем 5-и минутные бары (с 11.12.2007)
-    # save_candles_to_file(symbols=symbols, time_frame=60, four_price_doji=True)  # Получаем минутные бары (с 11.12.2007)
+    save_candles_to_file(board=board, symbols=symbols, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем дневные бары (с начала)
+    save_candles_to_file(symbols=symbols, time_frame=3600, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем часовые бары (с 11.12.2007)
+    save_candles_to_file(symbols=symbols, time_frame=900, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем 15-и минутные бары (с 11.12.2007)
+    save_candles_to_file(symbols=symbols, time_frame=300, seconds_from=seconds_from, skip_last_date=skip_last_date)  # Получаем 5-и минутные бары (с 11.12.2007)
+    save_candles_to_file(symbols=symbols, time_frame=60, four_price_doji=True)  # Получаем минутные бары (с 11.12.2007)
 
     print(f'Скрипт выполнен за {(time() - start_time):.2f} с')

@@ -357,17 +357,17 @@ class AlorPy:
         """
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/actualFuturesQuote', headers=self.get_headers()))
 
-    def get_risk_rates(self, exchange, symbol=None, risk_category_id=None, search=None):
+    def get_risk_rates(self, exchange, ticker=None, risk_category_id=None, search=None):
         """Запрос ставок риска
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
-        :param str symbol: Тикер, код инструмента, ISIN для облигаций
+        :param str ticker: Тикер, код инструмента, ISIN для облигаций
         :param int risk_category_id: Id вашей (или той которая интересует) категории риска. Можно получить из запроса информации по клиенту или через кабинет клиента
         :param str search: Часть Тикера, кода инструмента, ISIN для облигаций. Вернет все совпадения, начинающиеся с
         """
         params = {'exchange': exchange}
-        if symbol is not None:
-            params['symbol'] = symbol
+        if ticker is not None:
+            params['ticker'] = ticker
         if risk_category_id is not None:
             params['riskCategoryId'] = risk_category_id
         if search is not None:
@@ -1107,7 +1107,7 @@ class AlorPy:
             price *= 10  # цену умножаем на 10
         return price
 
-    def utc_time_stamp_to_msk_datetime(self, seconds) -> datetime:
+    def utc_timestamp_to_msk_datetime(self, seconds) -> datetime:
         """Перевод кол-ва секунд, прошедших с 01.01.1970 00:00 UTC в московское время
 
         :param int seconds: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
@@ -1116,7 +1116,7 @@ class AlorPy:
         dt_utc = datetime.utcfromtimestamp(seconds)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
         return self.utc_to_msk_datetime(dt_utc)  # Переводим время из UTC в московское
 
-    def msk_datetime_to_utc_time_stamp(self, dt) -> int:
+    def msk_datetime_to_utc_timestamp(self, dt) -> int:
         """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC
 
         :param datetime dt: Московское время
@@ -1125,11 +1125,13 @@ class AlorPy:
         dt_msk = self.tz_msk.localize(dt)  # Заданное время ставим в зону МСК
         return int(dt_msk.timestamp())  # Переводим в кол-во секунд, прошедших с 01.01.1970 в UTC
 
-    def utc_to_msk_datetime(self, dt) -> datetime:
+    def utc_to_msk_datetime(self, dt, tzinfo=False) -> datetime:
         """Перевод времени из UTC в московское
 
         :param datetime dt: Время UTC
+        :param bool tzinfo: Отображать временнУю зону
         :return: Московское время
         """
-        dt_msk = utc.localize(dt).astimezone(self.tz_msk)  # Переводим UTC в МСК
-        return dt_msk.replace(tzinfo=None)  # Убираем временнУю зону
+        dt_utc = utc.localize(dt)  # Задаем временнУю зону UTC
+        dt_msk = dt_utc.astimezone(self.tz_msk)  # Переводим в МСК
+        return dt_msk if tzinfo else dt_msk.replace(tzinfo=None)

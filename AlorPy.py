@@ -379,12 +379,14 @@ class AlorPy:
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param str tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
+        :param int|str tf: Длительность временнОго интервала в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int seconds_from: Дата и время UTC в секундах для первого запрашиваемого бара
         :param int seconds_to: Дата и время UTC в секундах для последнего запрашиваемого бара
         :param bool untraded: Флаг для поиска данных по устаревшим или экспирированным инструментам. При использовании требуется точное совпадение тикера
         """
-        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': seconds_from, 'to': seconds_to, 'untraded': untraded}
+        # Если на from подаем точное время начала бара, то этот бар из Алор не передается. Возможно, проблема в том, что сервис Алора смотрит все даты >, а >= from
+        # Временное решение, вычитать 1 секунду
+        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': seconds_from - 1, 'to': seconds_to, 'untraded': untraded}
         return self.check_result(get(url=f'{self.api_server}/md/v2/history', params=params, headers=self.get_headers()))
 
     # Другое
@@ -749,7 +751,7 @@ class AlorPy:
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param tf: Длительность таймфрейма в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
+        :param tf: Длительность временнОго интервала в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int seconds_from: Дата и время UTC в секундах для первого запрашиваемого бара
         """
         # Ответ ALOR OpenAPI Support: Чтобы получать последний бар сессии на первом тике следующей сессии, нужно использовать скрытый параметр frequency в ms с очень большим значением (1_000_000_000)

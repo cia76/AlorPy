@@ -374,7 +374,7 @@ class AlorPy:
             params['search'] = search
         return self.check_result(get(url=f'{self.api_server}/md/v2/risk/rates', params=params, headers=self.get_headers()))
 
-    def get_history(self, exchange, symbol, tf, seconds_from=0, seconds_to=32536799999, untraded=False):
+    def get_history(self, exchange, symbol, tf, seconds_from=1, seconds_to=32536799999, untraded=False):
         """Запрос истории рынка для выбранных биржи и финансового инструмента
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'

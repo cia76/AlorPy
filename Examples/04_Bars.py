@@ -46,7 +46,7 @@ def save_candles_to_file(exchange='MOEX', board='TQBR', symbols=('SBER',), time_
             continue  # то переходим к следующему тикеру, дальше не продолжаем
         pd_bars = pd.json_normalize(new_bars)  # Переводим список баров в pandas DataFrame
         pd_bars['datetime'] = pd.to_datetime(pd_bars['time'], unit='s')  # Дата и время в UTC для дневных бар и выше
-        if type(time_frame) is not str:  # Для внутридневных баров (timeFmame число)
+        if type(time_frame) is not str:  # Для внутридневных баров (time_fmame число)
             pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
         pd_bars.index = pd_bars['datetime']  # Это будет индексом
         pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки

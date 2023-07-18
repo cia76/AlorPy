@@ -66,6 +66,9 @@ def save_candles_to_file(exchange='MOEX', board='TQBR', symbols=('SBER',), time_
             len_with_doji = len(pd_bars)  # Кол-во баров до удаления дожи
             pd_bars.drop(pd_bars[(pd_bars.high == pd_bars.low)].index, inplace=True)  # Удаляем их по условия High == Low
             print('- Удалено дожи 4-х цен:', len_with_doji - len(pd_bars))
+        if len(pd_bars) == 0:  # Если нечего объединять
+            print('Новых записей нет')
+            continue  # то переходим к следующему тикеру, дальше не продолжаем
         print(f'- Первая запись в Alor: {pd_bars.index[0]}')
         print(f'- Последняя запись в Alor: {pd_bars.index[-1]}')
         print(f'- Кол-во записей в Alor: {len(pd_bars)}')
@@ -81,17 +84,17 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     board = 'TQBR'  # Акции ММВБ
     # board = 'SPBFUT'  # Фьючерсы
-    symbols = ('SBER', 'GAZP', 'VTBR', 'LKOH', 'MTLR', 'GMKN', 'YNDX', 'AFLT', 'PLZL', 'SBERP',
-               'NVTK', 'AFKS', 'SMLT', 'GECO', 'CHMF', 'MGNT', 'POLY', 'TATN', 'ROSN', 'MAGN',
-               'ALRS', 'SNGS', 'NLMK', 'MTSS', 'BELU', 'TRNFP', 'UPRO', 'BANEP', 'SNGSP', 'RUAL',
-               'BSPB', 'CBOM', 'RNFT', 'MOEX', 'FEES', 'IRAO', 'ISKJ', 'PHOR', 'FLOT', 'RTKM')  # TOP 40 акций ММВБ
+    symbols = ('SBER', 'VTBR', 'GAZP', 'MTLR', 'LKOH', 'PLZL', 'SBERP', 'BSPB', 'POLY', 'RNFT',
+               'GMKN', 'AFLT', 'NVTK', 'TATN', 'YNDX', 'MGNT', 'ROSN', 'AFKS', 'NLMK', 'ALRS',
+               'MOEX', 'SMLT', 'MAGN', 'CHMF', 'CBOM', 'MTLRP', 'SNGS', 'BANEP', 'MTSS', 'IRAO',
+               'SNGSP', 'SELG', 'UPRO', 'RUAL', 'TRNFP', 'FEES', 'SGZH', 'BANE', 'PHOR', 'PIKK')  # TOP 40 акций ММВБ
     # symbols = ('SBER',)  # Для тестов
     # symbols = ('SiU3', 'RIU3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     # datapath = '../../DataAlor/'  # Путь к файлам (Linux)
     datapath = '..\\..\\DataAlor\\'  # Путь к файлам (Windows)
 
-    # skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
-    skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
+    skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
+    # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
     save_candles_to_file(board=board, symbols=symbols, skip_last_date=skip_last_date, four_price_doji=True)  # Получаем дневные бары (с начала)
     save_candles_to_file(board=board, symbols=symbols, time_frame=3600, skip_last_date=skip_last_date)  # Получаем часовые бары (с 11.12.2007)
     save_candles_to_file(board=board, symbols=symbols, time_frame=900, skip_last_date=skip_last_date)  # Получаем 15-и минутные бары (с 11.12.2007)

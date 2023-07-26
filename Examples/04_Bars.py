@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from time import time
 import os.path
-
 import pandas as pd
+
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config  # Файл конфигурации
 
@@ -14,7 +14,7 @@ def save_candles_to_file(exchange='MOEX', board='TQBR', symbols=('SBER',), time_
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str board: Код площадки
         :param tuple symbols: Коды тикеров в виде кортежа
-        :param str|int time_frame: Длительность таймфрейма в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
+        :param int|str time_frame: Длительность таймфрейма в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param bool skip_first_date: Убрать бары на первую полученную дату
         :param bool skip_last_date: Убрать бары на последнюю полученную дату
         :param bool four_price_doji: Оставить бары с дожи 4-х цен
@@ -90,8 +90,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                'SNGSP', 'SELG', 'UPRO', 'RUAL', 'TRNFP', 'FEES', 'SGZH', 'BANE', 'PHOR', 'PIKK')  # TOP 40 акций ММВБ
     # symbols = ('SBER',)  # Для тестов
     # symbols = ('SiU3', 'RIU3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    # datapath = '../../DataAlor/'  # Путь к файлам (Linux)
-    datapath = '..\\..\\DataAlor\\'  # Путь к файлам (Windows)
+    datapath = os.path.join('..', '..', 'DataAlor', '')  # Путь сохранения файлов для Windows/Linux
 
     skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
     # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары

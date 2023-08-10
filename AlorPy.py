@@ -1,3 +1,4 @@
+from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 from datetime import datetime
 from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
 
@@ -1092,7 +1093,7 @@ class AlorPy:
         if primary_board == 'TQOB':  # Для рынка облигаций
             price /= 10  # цену делим на 10
         min_step = si['minstep']  # Минимальный шаг цены
-        decimals = max(0, str(min_step)[::-1].find('.'))  # Из шага цены получаем кол-во знаков после запятой
+        decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
         return round(price, decimals)  # Округляем цену
 
     def alor_price_to_price(self, exchange, symbol, price) -> float:

@@ -82,13 +82,14 @@ class AlorPy:
         now = int(datetime.timestamp(datetime.now()))  # Текущая дата/время в виде UNIX времени в секундах
         if self.jwt_token is None or now - self.jwt_token_issued > self.jwt_token_ttl:  # Если токен JWT не был выдан или был просрочен
             response = post(url=f'{self.oauth_server}/refresh', params={'token': self.refresh_token})  # Запрашиваем новый JWT токен с сервера аутентификации
-            if response.status_code != 200:  # Если при получение возникла ошибка
+            if response.status_code != 200:  # Если при получении токена возникла ошибка
                 self.OnError(f'Ошибка получения JWT токена: {response.status_code}')  # Событие ошибки
                 self.jwt_token = None  # Сбрасываем токен JWT
                 self.jwt_token_issued = 0  # Сбрасываем время выдачи токена JWT
-            token = response.json()  # Читаем данные JSON
-            self.jwt_token = token.get('AccessToken')  # Получаем токен JWT
-            self.jwt_token_issued = now  # Дата выдачи токена JWT
+            else:  # Токен получен
+                token = response.json()  # Читаем данные JSON
+                self.jwt_token = token.get('AccessToken')  # Получаем токен JWT
+                self.jwt_token_issued = now  # Дата выдачи токена JWT
         return self.jwt_token
 
     def get_headers(self):

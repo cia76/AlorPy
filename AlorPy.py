@@ -86,9 +86,10 @@ class AlorPy:
                 self.OnError(f'Ошибка получения JWT токена: {response.status_code}')  # Событие ошибки
                 self.jwt_token = None  # Сбрасываем токен JWT
                 self.jwt_token_issued = 0  # Сбрасываем время выдачи токена JWT
-            token = response.json()  # Читаем данные JSON
-            self.jwt_token = token.get('AccessToken')  # Получаем токен JWT
-            self.jwt_token_issued = now  # Дата выдачи токена JWT
+            else:
+                token = response.json()  # Читаем данные JSON
+                self.jwt_token = token.get('AccessToken')  # Получаем токен JWT
+                self.jwt_token_issued = now  # Дата выдачи токена JWT
         return self.jwt_token
 
     def get_headers(self):

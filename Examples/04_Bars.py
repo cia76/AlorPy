@@ -7,14 +7,18 @@ from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config  # Файл конфигурации
 
 
-def save_candles_to_file(exchange='MOEX', board='TQBR', symbols=('SBER',), time_frame='D',
+def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken),
+                         exchange='MOEX', board='TQBR', symbols=('SBER',), time_frame='D',
+                         datapath=os.path.join('..', '..', 'DataAlor', ''),
                          skip_first_date=False, skip_last_date=False, four_price_doji=False):
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
 
+        :param AlorPy ap_provider: Провайдер Alor
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str board: Код площадки
         :param tuple symbols: Коды тикеров в виде кортежа
         :param int|str time_frame: Длительность таймфрейма в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
+        :param str datapath: Путь сохранения файла '..\\..\\DataAlor\\' - Windows, '../../DataAlor/' - Linux
         :param bool skip_first_date: Убрать бары на первую полученную дату
         :param bool skip_last_date: Убрать бары на последнюю полученную дату
         :param bool four_price_doji: Оставить бары с дожи 4-х цен
@@ -80,7 +84,6 @@ def save_candles_to_file(exchange='MOEX', board='TQBR', symbols=('SBER',), time_
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     start_time = time()  # Время начала запуска скрипта
-    ap_provider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету
 
     board = 'TQBR'  # Акции ММВБ
     # board = 'SPBFUT'  # Фьючерсы
@@ -90,7 +93,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
                'SNGSP', 'SELG', 'UPRO', 'RUAL', 'TRNFP', 'FEES', 'SGZH', 'BANE', 'PHOR', 'PIKK')  # TOP 40 акций ММВБ
     # symbols = ('SBER',)  # Для тестов
     # symbols = ('SiU3', 'RIU3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    datapath = os.path.join('..', '..', 'DataAlor', '')  # Путь сохранения файлов для Windows/Linux
 
     skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
     # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары

@@ -35,7 +35,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
             file_bars = pd.read_csv(file_name, sep='\t')  # Считываем файл в DataFrame
             file_bars['datetime'] = pd.to_datetime(file_bars['datetime'], format='%d.%m.%Y %H:%M')  # Переводим дату/время в формат datetime
             file_bars.index = file_bars['datetime']  # Она и будет индексом
-            last_date: datetime = file_bars.index[-1]  # Дата/время последнего бара
+            last_date: datetime = file_bars.index[-1]  # Дата и время последнего бара
             print(f'- Первая запись файла: {file_bars.index[0]}')
             print(f'- Последняя запись файла: {last_date}')
             print(f'- Кол-во записей в файле: {len(file_bars)}')
@@ -54,7 +54,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         if type(time_frame) is not str:  # Для внутридневных баров (time_fmame число)
             pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
         pd_bars.index = pd_bars['datetime']  # Это будет индексом
-        pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата/время нужна, чтобы не удалять одинаковые OHLCV на разное время
+        pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время нужна, чтобы не удалять одинаковые OHLCV на разное время
         pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
         if not file_exists and skip_first_date:  # Если файла нет, и убираем бары на первую дату
             len_with_first_date = len(pd_bars)  # Кол-во баров до удаления на первую дату
@@ -78,7 +78,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         print(f'- Кол-во записей в Alor: {len(pd_bars)}')
         if file_exists:  # Если файл существует
             pd_bars = pd.concat([file_bars, pd_bars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из Alor, убираем дубликаты, сортируем заново
-        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата/время будет экспортирована как индекс
+        pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время будет экспортирована как индекс
         pd_bars.to_csv(file_name, sep='\t', date_format='%d.%m.%Y %H:%M')
         print(f'- В файл {file_name} сохранено записей: {len(pd_bars)}')
 

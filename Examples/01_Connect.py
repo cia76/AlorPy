@@ -42,7 +42,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     ap_provider.OnNewBar = print_new_bar  # Перед подпиской перехватим ответы
 
     seconds_from = ap_provider.msk_datetime_to_utc_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
-    guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from)  # Подписываемся на бары, получаем guid подписки
+    guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from, 1_000_000)  # Подписываемся на бары, получаем guid подписки
     subscription = ap_provider.subscriptions[guid]  # Получаем данные подписки
     print('\nПодписка на сервере:', guid, subscription)
     print(f'На бирже {subscription["exchange"]} тикер {subscription["code"]} подписан на новые бары через WebSocket на временнОм интервале {subscription["tf"]}. Код подписки {guid}')

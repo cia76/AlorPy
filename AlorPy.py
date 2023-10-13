@@ -700,7 +700,7 @@ class AlorPy:
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit', headers=headers, json=j))
 
     def edit_stop_order_v2(self, portfolio, exchange, order_id, symbol, class_code, side, quantity, stop_price, condition='Less', seconds_order_end=0, activate=True):
-        """Изменение стоп-лимитной заявки
+        """Изменение стоп-заявки
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int order_id: Номер заявки
@@ -717,7 +717,7 @@ class AlorPy:
         headers['X-ALOR-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         j = {'side': side, 'condition': condition, 'triggerPrice': stop_price, 'stopEndUnixTime': seconds_order_end, 'quantity': abs(quantity),
              'instrument': {'symbol': symbol, 'exchange': exchange, 'instrumentGroup': class_code}, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'activate': activate}
-        return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit/{order_id}', headers=headers, json=j))
+        return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stop/{order_id}', headers=headers, json=j))
 
     def edit_stop_limit_order_v2(self, portfolio, exchange, order_id, symbol, class_code, side, quantity, stop_price, limit_price, condition='Less', seconds_order_end=0,
                                  time_in_force='GoodTillCancelled', iceberg_fixed=None, iceberg_variance=None, activate=True):

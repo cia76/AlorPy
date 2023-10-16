@@ -96,7 +96,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # symbols = ('SiZ3', 'RIZ3')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
 
     skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
-    skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
+    # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
     save_candles_to_file(board=board, symbols=symbols, skip_last_date=skip_last_date, four_price_doji=True)  # Получаем дневные бары (с начала)
     # save_candles_to_file(board=board, symbols=symbols, time_frame=3600, skip_last_date=skip_last_date)  # Получаем часовые бары (с 11.12.2017)
     # save_candles_to_file(board=board, symbols=symbols, time_frame=900, skip_last_date=skip_last_date)  # Получаем 15-и минутные бары (с 11.12.2017)

@@ -25,16 +25,13 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         """
     tf = f'{time_frame}1' if time_frame in ('D', 'W', 'Y') else f'MN1' if time_frame == 'M' else f'M{int(time_frame) // 60}'  # Временной интервал для файла
     intraday = tf != 'MN1' and tf.startswith('M')  # Внутридневные интервалы начинаются с M, кроме MN1 (месяц)
-
     for symbol in symbols:  # Пробегаемся по всем тикерам
         file_bars = None  # Дальше будем пытаться получить бары из файла
         file_name = f'{datapath}{board}.{symbol}_{tf}.txt'
         file_exists = os.path.isfile(file_name)  # Существует ли файл
         if file_exists:  # Если файл существует
             print(f'Получение файла {file_name}')
-            file_bars = pd.read_csv(file_name, sep='\t')  # Считываем файл в DataFrame
-            file_bars['datetime'] = pd.to_datetime(file_bars['datetime'], format='%d.%m.%Y %H:%M')  # Переводим дату/время в формат datetime
-            file_bars.index = file_bars['datetime']  # Она и будет индексом
+            file_bars = pd.read_csv(file_name, sep='\t', parse_dates=['datetime'], date_format='%d.%m.%Y %H:%M', index_col='datetime')  # Считываем файл в DataFrame
             last_date: datetime = file_bars.index[-1]  # Дата и время последнего бара
             print(f'- Первая запись файла: {file_bars.index[0]}')
             print(f'- Последняя запись файла: {last_date}')

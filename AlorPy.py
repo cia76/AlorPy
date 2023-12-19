@@ -13,6 +13,7 @@ from threading import Thread  # Подписки сервера WebSockets бу�
 from websockets import connect, ConnectionClosed  # Работа с сервером WebSockets
 
 
+# noinspection PyShadowingBuiltins
 class AlorPy:
     """Работа с Alor OpenAPI V2 из Python https://alor.dev/docs"""
     requests.adapters.DEFAULT_RETRIES = 10  # Кол-во попыток (недокументированная команда)
@@ -79,67 +80,80 @@ class AlorPy:
 
     # ClientInfo - Информация о клиенте
 
-    def get_portfolio_summary(self, portfolio, exchange):
+    def get_portfolio_summary(self, portfolio, exchange, format='Simple'):
         """Получение информации о портфеле
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/summary', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/summary', params=params, headers=self.get_headers()))
 
-    def get_positions(self, portfolio, exchange, without_currency=False):
+    def get_positions(self, portfolio, exchange, without_currency=False, format='Simple'):
         """Получение информации о позициях
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param bool without_currency: Исключить из ответа все денежные инструменты, по умолчанию false
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {'withoutCurrency': without_currency}
+        params = {'withoutCurrency': without_currency, 'format': format}
         return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/positions', params=params, headers=self.get_headers()))
 
-    def get_position(self, portfolio, exchange, symbol):
+    def get_position(self, portfolio, exchange, symbol, format='Simple'):
         """Получение информации о позициях выбранного инструмента
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/positions/{symbol}', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/positions/{symbol}', params=params, headers=self.get_headers()))
 
-    def get_trades(self, portfolio, exchange):
+    def get_trades(self, portfolio, exchange, format='Simple'):
         """Получение информации о сделках
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/trades', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/trades', params=params, headers=self.get_headers()))
 
-    def get_trade(self, portfolio, exchange, symbol):
+    def get_trade(self, portfolio, exchange, symbol, format='Simple'):
         """Получение информации о сделках по выбранному инструменту
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/{symbol}/trades', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/{symbol}/trades', params=params, headers=self.get_headers()))
 
-    def get_forts_risk(self, portfolio, exchange):
+    def get_forts_risk(self, portfolio, exchange, format='Simple'):
         """Получение информации о рисках на срочном рынке
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/fortsrisk', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/fortsrisk', params=params, headers=self.get_headers()))
 
-    def get_risk(self, portfolio, exchange):
+    def get_risk(self, portfolio, exchange, format='Simple'):
         """Получение информации о рисках
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/risk', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/risk', params=params, headers=self.get_headers()))
 
-    def get_trades_history(self, portfolio, exchange, date_from=None, id_from=None, limit=None, descending=None):
+    def get_trades_history(self, portfolio, exchange, date_from=None, id_from=None, limit=None, descending=None, format='Simple'):
         """Получение истории сделок
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -148,8 +162,9 @@ class AlorPy:
         :param int id_from: Начиная с какого ID (номера сделки) отдавать историю сделок
         :param int limit: Ограничение на количество выдаваемых результатов поиска
         :param bool descending: Флаг обратной сортировки выдачи
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {}
+        params = {'format': format}
         if date_from:
             params['dateFrom'] = date_from
         if id_from:
@@ -158,11 +173,11 @@ class AlorPy:
             params['limit'] = limit
         if descending:
             params['descending'] = descending
-        if params == {}:
+        if params == {'format': format}:
             return self.check_result(get(url=f'{self.api_server}/md/stats/{exchange}/{portfolio}/history/trades', headers=self.get_headers()))
         return self.check_result(get(url=f'{self.api_server}/md/stats/{exchange}/{portfolio}/history/trades', params=params, headers=self.get_headers()))
 
-    def get_trades_symbol(self, portfolio, exchange, symbol, date_from=None, id_from=None, limit=None, descending=None):
+    def get_trades_symbol(self, portfolio, exchange, symbol, date_from=None, id_from=None, limit=None, descending=None, format='Simple'):
         """Получение истории сделок (один тикер)
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -172,8 +187,9 @@ class AlorPy:
         :param int id_from: Начиная с какого ID (номера сделки) отдавать историю сделок
         :param int limit: Ограничение на количество выдаваемых результатов поиска
         :param bool descending: Флаг загрузки элементов с конца списка
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {}
+        params = {'format': format}
         if date_from:
             params['dateFrom'] = date_from
         if id_from:
@@ -182,13 +198,13 @@ class AlorPy:
             params['limit'] = limit
         if descending:
             params['descending'] = descending
-        if params == {}:
+        if params == {'format': format}:
             return self.check_result(get(url=f'{self.api_server}/md/stats/{exchange}/{portfolio}/history/trades/{symbol}', headers=self.get_headers()))
         return self.check_result(get(url=f'{self.api_server}/md/stats/{exchange}/{portfolio}/history/trades/{symbol}', params=params, headers=self.get_headers()))
 
     # Instruments - Ценные бумаги / инструменты
 
-    def get_securities(self, symbol, limit=None, offset=None, sector=None, cficode=None, exchange=None):
+    def get_securities(self, symbol, limit=None, offset=None, sector=None, cficode=None, exchange=None, format='Simple'):
         """Получение информации о торговых инструментах
 
         :param str symbol: Маска тикера. Например SB выведет SBER, SBERP, SBRB ETF и пр.
@@ -197,8 +213,9 @@ class AlorPy:
         :param str sector: Рынок на бирже. FOND, FORTS, CURR
         :param str cficode: Код финансового инструмента по стандарту ISO 10962. EXXXXX
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {'query': symbol}
+        params = {'query': symbol, 'format': format}
         if limit:
             params['limit'] = limit
         if offset:
@@ -211,40 +228,47 @@ class AlorPy:
             params['exchange'] = exchange
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities', params=params, headers=self.get_headers()))
 
-    def get_securities_exchange(self, exchange):
+    def get_securities_exchange(self, exchange, format='Simple'):
         """Получение информации о торговых инструментах на выбранной бирже
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}', params=params, headers=self.get_headers()))
 
-    def get_symbol(self, exchange, symbol):
+    def get_symbol(self, exchange, symbol, format='Simple'):
         """Получение информации о выбранном финансовом инструменте
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}', params=params, headers=self.get_headers()))
 
-    def get_quotes(self, symbols):
+    def get_quotes(self, symbols, format='Simple'):
         """Получение информации о котировках для выбранных инструментов
 
         :param str symbols: Принимает несколько пар биржа-тикер. Пары отделены запятыми. Биржа и тикер разделены двоеточием.
         Пример: MOEX:SBER,MOEX:GAZP,SPBX:AAPL
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{symbols}/quotes', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{symbols}/quotes', params=params, headers=self.get_headers()))
 
-    def get_order_book(self, exchange, symbol, depth=20):
+    def get_order_book(self, exchange, symbol, depth=20, format='Simple'):
         """Получение информации о биржевом стакане
 
         :param exchange: Биржа 'MOEX' или 'SPBX'
         :param symbol: Тикер
         :param depth: Глубина стакана. Стандартное и максимальное значение - 20 (20х20)
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {'depth': depth}
+        params = {'depth': depth, 'format': format}
         return self.check_result(get(url=f'{self.api_server}/md/v2/orderbooks/{exchange}/{symbol}', params=params, headers=self.get_headers()))
 
-    def get_all_trades(self, exchange, symbol, seconds_from=None, seconds_to=None, id_from=None, id_to=None, take=None, descending=None):
+    def get_all_trades(self, exchange, symbol, seconds_from=None, seconds_to=None, id_from=None, id_to=None, take=None, descending=None, format='Simple'):
         """Получение информации о всех сделках по ценным бумагам за сегодня
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -255,8 +279,9 @@ class AlorPy:
         :param int id_to: Конечный номер сделки для фильтра результатов
         :param int take: Количество загружаемых элементов
         :param bool descending: Флаг загрузки элементов с конца списка
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {}
+        params = {'format': format}
         if seconds_from:
             params['from'] = seconds_from
         if seconds_to:
@@ -269,11 +294,11 @@ class AlorPy:
             params['take'] = take
         if descending:
             params['descending'] = descending
-        if params == {}:
+        if params == {'format': format}:
             return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/alltrades', headers=self.get_headers()))
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/alltrades', params=params, headers=self.get_headers()))
 
-    def get_all_trades_history(self, exchange, symbol, seconds_from=None, seconds_to=None, limit=50000, offset=None):
+    def get_all_trades_history(self, exchange, symbol, seconds_from=None, seconds_to=None, limit=50000, offset=None, format='Simple'):
         """Получение исторической информации о всех сделках по ценным бумагам
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -282,8 +307,9 @@ class AlorPy:
         :param int seconds_to: Начало отрезка времени UTC в секундах для фильтра результатов
         :param int limit: Ограничение на количество выдаваемых результатов поиска (1-50000)
         :param int offset: Смещение начала выборки (для постраничного вывода)
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        params = {'limit': limit}
+        params = {'limit': limit, 'format': format}
         if seconds_from:
             params['from'] = seconds_from
         if seconds_to:
@@ -292,13 +318,15 @@ class AlorPy:
             params['offset'] = offset
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/alltrades/history', params=params, headers=self.get_headers()))
 
-    def get_actual_futures_quote(self, exchange, symbol):
+    def get_actual_futures_quote(self, exchange, symbol, format='Simple'):
         """Получение котировки по ближайшему фьючерсу (код)
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/actualFuturesQuote', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/actualFuturesQuote', params=params, headers=self.get_headers()))
 
     def get_risk_rates(self, exchange, ticker=None, risk_category_id=None, search=None):
         """Запрос ставок риска
@@ -317,7 +345,7 @@ class AlorPy:
             params['search'] = search
         return self.check_result(get(url=f'{self.api_server}/md/v2/risk/rates', params=params, headers=self.get_headers()))
 
-    def get_history(self, exchange, symbol, tf, seconds_from=1, seconds_to=32536799999, untraded=False):
+    def get_history(self, exchange, symbol, tf, seconds_from=1, seconds_to=32536799999, untraded=False, format='Simple'):
         """Запрос истории рынка для выбранных биржи и финансового инструмента
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -326,10 +354,11 @@ class AlorPy:
         :param int seconds_from: Дата и время UTC в секундах для первого запрашиваемого бара
         :param int seconds_to: Дата и время UTC в секундах для последнего запрашиваемого бара
         :param bool untraded: Флаг для поиска данных по устаревшим или экспирированным инструментам. При использовании требуется точное совпадение тикера
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
         # Если на from подаем точное время начала бара, то этот бар из Алор не передается. Возможно, проблема в том, что сервис Алора смотрит все даты >, а >= from
         # Временное решение, вычитать 1 секунду
-        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': seconds_from - 1, 'to': seconds_to, 'untraded': untraded}
+        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': seconds_from - 1, 'to': seconds_to, 'untraded': untraded, 'format': format}
         return self.check_result(get(url=f'{self.api_server}/md/v2/history', params=params, headers=self.get_headers()))
 
     # Other - Другое
@@ -342,22 +371,26 @@ class AlorPy:
 
     # Orders Работа с заявками
 
-    def get_orders(self, portfolio, exchange):
+    def get_orders(self, portfolio, exchange, format='Simple'):
         """Получение информации о всех заявках
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders', params=params, headers=self.get_headers()))
 
-    def get_order(self, portfolio, exchange, order_id):
+    def get_order(self, portfolio, exchange, order_id, format='Simple'):
         """Получение информации о выбранной заявке
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int order_id: Номер заявки на бирже
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders/{order_id}', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders/{order_id}', params=params, headers=self.get_headers()))
 
     def create_market_order(self, portfolio, exchange, symbol, side, quantity):
         """Создание рыночной заявки
@@ -456,34 +489,36 @@ class AlorPy:
         """
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/estimate/all', json=orders))
 
-    def delete_order(self, portfolio, exchange, order_id, stop=False):
+    def delete_order(self, portfolio, exchange, order_id, stop=False, format='Simple'):
         """Снятие заявки
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int order_id: Номер заявки
         :param bool stop: Является ли стоп заявкой
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
         headers = self.get_headers()
         headers['X-ALOR-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
-        params = {'portfolio': portfolio, 'exchange': exchange, 'stop': stop, 'jsonResponse': True, 'format': 'Simple'}
-        return self.check_result(delete(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/{order_id}', headers=headers, params=params))
+        params = {'portfolio': portfolio, 'exchange': exchange, 'stop': stop, 'jsonResponse': True, 'format': format}
+        return self.check_result(delete(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/{order_id}', params=params, headers=headers))
 
     # Subscriptions - Подписки и события (WebSocket)
 
-    def order_book_get_and_subscribe(self, exchange, symbol, depth=20, frequency=0) -> str:
+    def order_book_get_and_subscribe(self, exchange, symbol, depth=20, frequency=0, format='Simple') -> str:
         """Подписка на информацию о биржевом стакане для выбранных биржи и финансового инструмента
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
         :param int depth: Глубина стакана. Стандартное и максимальное значение - 20 (20х20)
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'OrderBookGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'depth': depth, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'OrderBookGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'depth': depth, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def bars_get_and_subscribe(self, exchange, symbol, tf, seconds_from, frequency=0) -> str:
+    def bars_get_and_subscribe(self, exchange, symbol, tf, seconds_from, frequency=0, format='Simple') -> str:
         """Подписка на историю цен (свечи) для выбранных биржи и финансового инструмента
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -491,23 +526,25 @@ class AlorPy:
         :param tf: Длительность временнОго интервала в секундах или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param int seconds_from: Дата и время UTC в секундах для первого запрашиваемого бара
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'BarsGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'tf': tf, 'from': int(seconds_from), 'delayed': False, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'BarsGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'tf': tf, 'from': int(seconds_from), 'delayed': False, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def quotes_subscribe(self, exchange, symbol, frequency=0) -> str:
+    def quotes_subscribe(self, exchange, symbol, frequency=0, format='Simple') -> str:
         """Подписка на информацию о котировках для выбранных инструментов и бирж
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'QuotesSubscribe', 'exchange': exchange, 'code': symbol, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'QuotesSubscribe', 'exchange': exchange, 'code': symbol, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def all_trades_subscribe(self, exchange, symbol, depth=0, include_virtual_trades=False, frequency=0) -> str:
+    def all_trades_subscribe(self, exchange, symbol, depth=0, include_virtual_trades=False, frequency=0, format='Simple') -> str:
         """Подписка на информацию о всех сделках
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -515,67 +552,73 @@ class AlorPy:
         :param int depth: Если указать, то перед актуальными данными придут данные о последних N сделках. Максимум 5000
         :param bool include_virtual_trades: Указывает, нужно ли отправлять виртуальные (индикативные) сделки
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'AllTradesGetAndSubscribe', 'code': symbol, 'exchange': exchange, 'depth': depth, 'includeVirtualTrades': include_virtual_trades, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'AllTradesGetAndSubscribe', 'code': symbol, 'exchange': exchange, 'depth': depth, 'includeVirtualTrades': include_virtual_trades, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def positions_get_and_subscribe_v2(self, portfolio, exchange, frequency=0) -> str:
+    def positions_get_and_subscribe_v2(self, portfolio, exchange, frequency=0, format='Simple') -> str:
         """Подписка на информацию о текущих позициях по ценным бумагам и деньгам
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'PositionsGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'PositionsGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def summaries_get_and_subscribe_v2(self, portfolio, exchange, frequency=0) -> str:
+    def summaries_get_and_subscribe_v2(self, portfolio, exchange, frequency=0, format='Simple') -> str:
         """Подписка на сводную информацию по портфелю
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'SummariesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'SummariesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def risks_get_and_subscribe(self, portfolio, exchange, frequency=0) -> str:
+    def risks_get_and_subscribe(self, portfolio, exchange, frequency=0, format='Simple') -> str:
         """Подписка на сводную информацию по портфельным рискам
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'RisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'RisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def spectra_risks_get_and_subscribe(self, portfolio, exchange, frequency=0) -> str:
+    def spectra_risks_get_and_subscribe(self, portfolio, exchange, frequency=0, format='Simple') -> str:
         """Подписка на информацию по рискам срочного рынка (FORTS)
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'SpectraRisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'SpectraRisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def trades_get_and_subscribe_v2(self, portfolio, exchange, frequency=0) -> str:
+    def trades_get_and_subscribe_v2(self, portfolio, exchange, frequency=0, format='Simple') -> str:
         """Подписка на информацию о сделках
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'TradesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'TradesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def orders_get_and_subscribe_v2(self, portfolio, exchange, order_statuses=None, frequency=0) -> str:
+    def orders_get_and_subscribe_v2(self, portfolio, exchange, order_statuses=None, frequency=0, format='Simple') -> str:
         """Подписка на информацию о текущих заявках на рынке для выбранных биржи и финансового инструмента
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -587,22 +630,24 @@ class AlorPy:
             'canceled' - Отменена
             'rejected' - Отклонена
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'OrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'OrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         if order_statuses:
             request['orderStatuses'] = order_statuses
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def instruments_get_and_subscribe_v2(self, exchange, symbol, frequency=0) -> str:
+    def instruments_get_and_subscribe_v2(self, exchange, symbol, frequency=0, format='Simple') -> str:
         """Подписка на изменение информации о финансовых инструментах на выбранной бирже
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'InstrumentsGetAndSubscribeV2', 'code': symbol, 'exchange': exchange, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'InstrumentsGetAndSubscribeV2', 'code': symbol, 'exchange': exchange, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def unsubscribe(self, guid) -> str:
@@ -616,38 +661,40 @@ class AlorPy:
         del self.subscriptions[guid]  # Удаляем подписку из справочника
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    def stop_orders_get_and_subscribe_v2(self, portfolio, exchange, frequency=0) -> str:
+    def stop_orders_get_and_subscribe_v2(self, portfolio, exchange, frequency=0, format='Simple') -> str:
         """Подписка на информацию о текущих стоп заявках на рынке для выбранных биржи и финансового инструмента
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int frequency: Максимальная частота отдачи данных сервером в миллисекундах
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         :return: Уникальный идентификатор подписки
         """
-        request = {'opcode': 'StopOrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': 'Simple'}  # Запрос на подписку
+        request = {'opcode': 'StopOrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'frequency': frequency, 'format': format}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     # StopOrdersV2 - Стоп-заявки v2
 
-    def get_stop_orders(self, portfolio, exchange):
+    def get_stop_orders(self, portfolio, exchange, format='Simple'):
         """Получение информации о стоп-заявках
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(
-            get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/stoporders', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/stoporders', params=params, headers=self.get_headers()))
 
-    def get_stop_order(self, portfolio, exchange, order_id):
+    def get_stop_order(self, portfolio, exchange, order_id, format='Simple'):
         """Получение информации о выбранной стоп-заявке
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param int order_id: Номер заявки на бирже
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(
-            get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/stoporders/{order_id}',
-                headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/stoporders/{order_id}', params=params, headers=self.get_headers()))
 
     def create_stop_order(self, portfolio, exchange, symbol, class_code, side, quantity, stop_price, condition='Less', seconds_order_end=0, activate=True):
         """Создание стоп-заявки
@@ -1037,13 +1084,15 @@ class AlorPy:
         # TODO Перевести на декодирование base64 полей agreements и portfolios токена JWT
         return self.check_result(get(url=f'{self.api_server}/client/v1.0/users/{self.user_name}/portfolios', headers=self.get_headers()))
 
-    def get_money(self, portfolio, exchange):
+    def get_money(self, portfolio, exchange, format='Simple'):
         """Получение информации по деньгам для выбранного портфеля
 
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/legacy/{exchange}/{portfolio}/money', headers=self.get_headers()))
+        params = {'format': format}
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/legacy/{exchange}/{portfolio}/money', params=params, headers=self.get_headers()))
 
     def create_stop_loss_order(self, trade_server_code, account, portfolio, exchange, symbol, side, quantity, stop_price, seconds_order_end=0):
         """Создание стоп-лосс заявки

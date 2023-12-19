@@ -17,7 +17,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str board: Код площадки
         :param tuple symbols: Коды тикеров в виде кортежа
-        :param int|str time_frame: Длительность таймфрейма в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
+        :param int|str time_frame: Временной интервал в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
         :param str datapath: Путь сохранения файла '..\\..\\DataAlor\\' - Windows, '../../DataAlor/' - Linux
         :param bool skip_first_date: Убрать бары на первую полученную дату
         :param bool skip_last_date: Убрать бары на последнюю полученную дату
@@ -50,7 +50,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         pd_bars['datetime'] = pd.to_datetime(pd_bars['time'], unit='s')  # Дата и время в UTC для дневных бар и выше
         si = ap_provider.get_symbol(exchange, symbol)  # Получаем информацию о тикере
         pd_bars['volume'] *= si['lotsize']  # Объемы из лотов переводим в штуки
-        if type(time_frame) is not str:  # Для внутридневных баров (time_fmame число)
+        if type(time_frame) is not str:  # Для внутридневных баров (time_frame число)
             pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
         pd_bars.index = pd_bars['datetime']  # Это будет индексом
         pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время нужна, чтобы не удалять одинаковые OHLCV на разное время

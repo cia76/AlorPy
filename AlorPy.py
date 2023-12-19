@@ -79,23 +79,6 @@ class AlorPy:
 
     # ClientInfo - Информация о клиенте
 
-    def get_orders(self, portfolio, exchange):
-        """Получение информации о всех заявках
-
-        :param str portfolio: Идентификатор клиентского портфеля
-        :param str exchange: Биржа 'MOEX' или 'SPBX'
-        """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders', headers=self.get_headers()))
-
-    def get_order(self, portfolio, exchange, order_id):
-        """Получение информации о выбранной заявке
-
-        :param str portfolio: Идентификатор клиентского портфеля
-        :param str exchange: Биржа 'MOEX' или 'SPBX'
-        :param int order_id: Номер заявки на бирже
-        """
-        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders/{order_id}', headers=self.get_headers()))
-
     def get_portfolio_summary(self, portfolio, exchange):
         """Получение информации о портфеле
 
@@ -359,6 +342,23 @@ class AlorPy:
 
     # Orders Работа с заявками
 
+    def get_orders(self, portfolio, exchange):
+        """Получение информации о всех заявках
+
+        :param str portfolio: Идентификатор клиентского портфеля
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        """
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders', headers=self.get_headers()))
+
+    def get_order(self, portfolio, exchange, order_id):
+        """Получение информации о выбранной заявке
+
+        :param str portfolio: Идентификатор клиентского портфеля
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param int order_id: Номер заявки на бирже
+        """
+        return self.check_result(get(url=f'{self.api_server}/md/v2/clients/{exchange}/{portfolio}/orders/{order_id}', headers=self.get_headers()))
+
     def create_market_order(self, portfolio, exchange, symbol, side, quantity):
         """Создание рыночной заявки
 
@@ -434,19 +434,6 @@ class AlorPy:
             j['icebergVariance'] = iceberg_variance
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/limit/{order_id}', headers=headers, json=j))
 
-    def delete_order(self, portfolio, exchange, order_id, stop=False):
-        """Снятие заявки
-
-        :param str portfolio: Идентификатор клиентского портфеля
-        :param str exchange: Биржа 'MOEX' или 'SPBX'
-        :param int order_id: Номер заявки
-        :param bool stop: Является ли стоп заявкой
-        """
-        headers = self.get_headers()
-        headers['X-ALOR-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
-        params = {'portfolio': portfolio, 'exchange': exchange, 'stop': stop, 'jsonResponse': True, 'format': 'Simple'}
-        return self.check_result(delete(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/{order_id}', headers=headers, params=params))
-
     def estimate_order(self, portfolio, exchange, symbol, price, quantity, board, include_limit_orders=False):
         """Провести оценку одной заявки
 
@@ -468,6 +455,19 @@ class AlorPy:
         {'portfolio': portfolio, 'ticker': symbol, 'exchange': exchange, 'price': price, 'lotQuantity': quantity, 'board': board}
         """
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/estimate/all', json=orders))
+
+    def delete_order(self, portfolio, exchange, order_id, stop=False):
+        """Снятие заявки
+
+        :param str portfolio: Идентификатор клиентского портфеля
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param int order_id: Номер заявки
+        :param bool stop: Является ли стоп заявкой
+        """
+        headers = self.get_headers()
+        headers['X-ALOR-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
+        params = {'portfolio': portfolio, 'exchange': exchange, 'stop': stop, 'jsonResponse': True, 'format': 'Simple'}
+        return self.check_result(delete(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/{order_id}', headers=headers, params=params))
 
     # Subscriptions - Подписки и события (WebSocket)
 

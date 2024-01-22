@@ -42,7 +42,11 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
             print(f'Файл {file_name} не найден и будет создан')
             seconds_from = 0  # Берем отметку времени, когда никакой тикер еще не торговался
         print(f'Получение истории {board}.{symbol} {tf} из Alor')
-        new_bars = ap_provider.get_history(exchange, symbol, time_frame, seconds_from)['history']  # Получаем все бары из Alor
+        history = ap_provider.get_history(exchange, symbol, time_frame, seconds_from)  # Запрос истории рынка
+        if not history:  # Если бары не получены
+            print('Бары не получены')
+            continue  # то переходим к следующему тикеру, дальше не продолжаем
+        new_bars = history['history']  # Получаем все бары из Alor
         if len(new_bars) == 0:  # Если новых бар нет
             print('Новых записей нет')
             continue  # то переходим к следующему тикеру, дальше не продолжаем

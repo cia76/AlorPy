@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta  # Дата и время
+import logging  # Выводим данные на консоль и в файл
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config, ConfigDemo  # Файл конфигурации
 
@@ -10,8 +11,7 @@ def print_bar(response):
     str_dt_msk = dt_msk.strftime('%d.%m.%Y') if type(tf) is str else dt_msk.strftime('%d.%m.%Y %H:%M:%S')  # Для дневных баров и выше показываем только дату. Для остальных - дату и время по МСК
     guid = response['guid']  # Код подписки
     subscription = ap_provider.subscriptions[guid]  # Подписка
-    str_dt_msk_now = ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime('%d.%m.%Y %H:%M:%S')  # Текущее время МСК
-    print(f'{str_dt_msk_now} - {subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {str_dt_msk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
+    logging.info(f'{subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {str_dt_msk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -20,9 +20,16 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # print(f'\nЭкземпляры класса совпадают: {ap_provider2 is ap_provider}')
     # ap_provider2.CloseWebSocket()  # Второй провайдер больше не нужен. Закрываем его поток подписок
 
+    file_handler = logging.FileHandler('AlorPyConnect.log')  # Лог записываем в файл
+    std_handler = logging.StreamHandler()  # и выводим на консоль
+    logging.root.name = 'AlorPyConnect'  # Название лога
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S',  # Формат сообщения и даты
+                        level=logging.INFO, handlers=[file_handler, std_handler])  # Уровень логируемых событий и где ведем лог
+    logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
+
     # Проверяем работу запрос/ответ
     seconds_from = ap_provider.get_time()  # Время в Alor OpenAPI V2 передается в секундах, прошедших с 01.01.1970 00:00 UTC
-    print(f'\nДата и время на сервере: {ap_provider.utc_timestamp_to_msk_datetime(seconds_from)}')  # В AlorPy это время можно перевести в МСК для удобства восприятия
+    logging.info(f'Дата и время на сервере: {ap_provider.utc_timestamp_to_msk_datetime(seconds_from)}')  # В AlorPy это время можно перевести в МСК для удобства восприятия
 
     # Проверяем работу подписок
     exchange = 'MOEX'  # Код биржи MOEX или SPBX
@@ -31,26 +38,26 @@ if __name__ == '__main__':  # Точка входа при запуске это
     tf = 60  # 60 = 1 минута, 300 = 5 минут, 3600 = 1 час, 'D' = день, 'W' = неделя, 'M' = месяц, 'Y' = год
     days = 3  # Кол-во последних календарных дней, за которые берем историю
 
-    ap_provider.OnEntering = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnEntering. Начало входа (Thread)')
-    ap_provider.OnEnter = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnEnter. Вход (Thread)')
-    ap_provider.OnConnect = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnConnect. Подключение к серверу (Task)')
-    ap_provider.OnResubscribe = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnResubscribe. Возобновление подписок (Task)')
-    ap_provider.OnReady = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnReady. Готовность к работе (Task)')
-    ap_provider.OnDisconnect = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnDisconnect. Отключение от сервера (Task)')
-    ap_provider.OnTimeout = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnTimeout. Таймаут (Task)')
-    ap_provider.OnError = lambda response: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnError. {response} (Task)')
-    ap_provider.OnCancel = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnCancel. Отмена (Task)')
-    ap_provider.OnExit = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnExit. Выход (Thread)')
+    ap_provider.OnEntering = lambda: logging.info('OnEntering. Начало входа (Thread)')
+    ap_provider.OnEnter = lambda: logging.info('OnEnter. Вход (Thread)')
+    ap_provider.OnConnect = lambda: logging.info('OnConnect. Подключение к серверу (Task)')
+    ap_provider.OnResubscribe = lambda: logging.info('OnResubscribe. Возобновление подписок (Task)')
+    ap_provider.OnReady = lambda: logging.info('OnReady. Готовность к работе (Task)')
+    ap_provider.OnDisconnect = lambda: logging.info('OnDisconnect. Отключение от сервера (Task)')
+    ap_provider.OnTimeout = lambda: logging.info('OnTimeout. Таймаут (Task)')
+    ap_provider.OnError = lambda response: logging.info(f'OnError. {response} (Task)')
+    ap_provider.OnCancel = lambda: logging.info('OnCancel. Отмена (Task)')
+    ap_provider.OnExit = lambda: logging.info('OnExit. Выход (Thread)')
     ap_provider.OnNewBar = print_bar  # Перед подпиской перехватим ответы
 
     seconds_from = ap_provider.msk_datetime_to_utc_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
     guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from, 1_000_000)  # Подписываемся на бары, получаем guid подписки
     subscription = ap_provider.subscriptions[guid]  # Получаем данные подписки
-    print('\nПодписка на сервере:', guid, subscription)
-    print(f'На бирже {subscription["exchange"]} тикер {subscription["code"]} подписан на новые бары через WebSocket на временнОм интервале {subscription["tf"]}. Код подписки {guid}')
+    logging.info(f'Подписка на сервере: {guid} {subscription}')
+    logging.info(f'На бирже {subscription["exchange"]} тикер {subscription["code"]} подписан на новые бары через WebSocket на временнОм интервале {subscription["tf"]}. Код подписки {guid}')
 
     # Выход
-    input('Enter - выход\n')
+    input('\nEnter - выход\n')
     ap_provider.unsubscribe(guid)  # Отписываемся от получения новых баров
-    print(f'Отмена подписки {guid}. Закрытие WebSocket по всем правилам займет некоторое время')
+    logging.info(f'Отмена подписки {guid}. Закрытие WebSocket по всем правилам займет некоторое время')
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

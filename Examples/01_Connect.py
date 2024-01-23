@@ -3,13 +3,15 @@ from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config, ConfigDemo  # Файл конфигурации
 
 
-def print_new_bar(response):
-    """Сначала получим все сформированные бары с заданного времени. Затем будем получать несформированные бары до их завершения"""
+def print_bar(response):
+    """Вывод на консоль полученного бара"""
     seconds = response['data']['time']  # Время в Alor OpenAPI V2 передается в секундах, прошедших с 01.01.1970 00:00 UTC
     dt_msk = datetime.utcfromtimestamp(seconds) if type(tf) is str else ap_provider.utc_timestamp_to_msk_datetime(seconds)  # Дневные бары и выше ставим на начало дня по UTC. Остальные - по МСК
+    str_dt_msk = dt_msk.strftime('%d.%m.%Y') if type(tf) is str else dt_msk.strftime('%d.%m.%Y %H:%M:%S')  # Для дневных баров и выше показываем только дату. Для остальных - дату и время по МСК
     guid = response['guid']  # Код подписки
     subscription = ap_provider.subscriptions[guid]  # Подписка
-    print(f'{datetime.now().strftime("%d.%m.%Y %H:%M:%S")} - {subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {dt_msk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
+    str_dt_msk_now = ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime('%d.%m.%Y %H:%M:%S')  # Текущее время МСК
+    print(f'{str_dt_msk_now} - {subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {str_dt_msk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -29,17 +31,17 @@ if __name__ == '__main__':  # Точка входа при запуске это
     tf = 60  # 60 = 1 минута, 300 = 5 минут, 3600 = 1 час, 'D' = день, 'W' = неделя, 'M' = месяц, 'Y' = год
     days = 3  # Кол-во последних календарных дней, за которые берем историю
 
-    ap_provider.OnEntering = lambda: print('- OnEntering. Начало входа (Thread)')
-    ap_provider.OnEnter = lambda: print('- OnEnter. Вход (Thread)')
-    ap_provider.OnConnect = lambda: print('- OnConnect. Подключение к серверу (Task)')
-    ap_provider.OnResubscribe = lambda: print('- OnResubscribe. Возобновление подписок (Task)')
-    ap_provider.OnReady = lambda: print('- OnReady. Готовность к работе (Task)')
-    ap_provider.OnDisconnect = lambda: print('- OnDisconnect. Отключение от сервера (Task)')
-    ap_provider.OnTimeout = lambda: print('- OnTimeout. Таймаут (Task)')
-    ap_provider.OnError = lambda response: print(f'- OnError. {response} (Task)')
-    ap_provider.OnCancel = lambda: print('- OnCancel. Отмена (Task)')
-    ap_provider.OnExit = lambda: print('- OnExit. Выход (Thread)')
-    ap_provider.OnNewBar = print_new_bar  # Перед подпиской перехватим ответы
+    ap_provider.OnEntering = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnEntering. Начало входа (Thread)')
+    ap_provider.OnEnter = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnEnter. Вход (Thread)')
+    ap_provider.OnConnect = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnConnect. Подключение к серверу (Task)')
+    ap_provider.OnResubscribe = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnResubscribe. Возобновление подписок (Task)')
+    ap_provider.OnReady = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnReady. Готовность к работе (Task)')
+    ap_provider.OnDisconnect = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnDisconnect. Отключение от сервера (Task)')
+    ap_provider.OnTimeout = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnTimeout. Таймаут (Task)')
+    ap_provider.OnError = lambda response: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnError. {response} (Task)')
+    ap_provider.OnCancel = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnCancel. Отмена (Task)')
+    ap_provider.OnExit = lambda: print(f'{ap_provider.utc_to_msk_datetime(datetime.utcnow()).strftime("%d.%m.%Y %H:%M:%S")} - OnExit. Выход (Thread)')
+    ap_provider.OnNewBar = print_bar  # Перед подпиской перехватим ответы
 
     seconds_from = ap_provider.msk_datetime_to_utc_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
     guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from, 1_000_000)  # Подписываемся на бары, получаем guid подписки

@@ -20,11 +20,9 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # print(f'\nЭкземпляры класса совпадают: {ap_provider2 is ap_provider}')
     # ap_provider2.CloseWebSocket()  # Второй провайдер больше не нужен. Закрываем его поток подписок
 
-    file_handler = logging.FileHandler('AlorPyConnect.log')  # Лог записываем в файл
-    std_handler = logging.StreamHandler()  # и выводим на консоль
     logging.root.name = 'AlorPyConnect'  # Название лога
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S',  # Формат сообщения и даты
-                        level=logging.INFO, handlers=[file_handler, std_handler])  # Уровень логируемых событий и где ведем лог
+                        level=logging.INFO, handlers=[logging.FileHandler('AlorPyConnect.log'), logging.StreamHandler()])  # Уровень логируемых событий. Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
 
     # Проверяем работу запрос/ответ

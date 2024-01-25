@@ -1,15 +1,16 @@
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 from datetime import datetime
 from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
-
-import requests.adapters
-from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 from uuid import uuid4  # Номера подписок должны быть уникальными во времени и пространстве
 from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
-from requests import post, get, put, delete  # Запросы/ответы от сервера запросов
-from urllib3.exceptions import MaxRetryError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения
 from asyncio import get_event_loop, create_task, run, CancelledError  # Работа с асинхронными функциями
 from threading import Thread  # Подписки сервера WebSockets будем получать в отдельном потоке
+import logging  # Будем вести лог
+
+from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
+import requests.adapters
+from requests import post, get, put, delete  # Запросы/ответы от сервера запросов
+from urllib3.exceptions import MaxRetryError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения
 from websockets import connect, ConnectionClosed  # Работа с сервером WebSockets
 
 
@@ -21,6 +22,7 @@ class AlorPy:
     tz_msk = timezone('Europe/Moscow')  # Время UTC будем приводить к московскому времени
     jwt_token_ttl = 60  # Время жизни токена JWT в секундах
     exchanges = ('MOEX', 'SPBX',)  # Биржи
+    logger = logging.getLogger('AlorPy')  # Будем вести лог
 
     def __init__(self, user_name, refresh_token, demo=False):
         """Инициализация
@@ -1433,42 +1435,33 @@ class AlorPy:
                 try:
                     response = loads(response_json)  # Переводим JSON в словарь
                 except JSONDecodeError:  # Если вместо JSON сообщений получаем текст (проверка на всякий случай)
+                    self.logger.debug(f'websocket_handler: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
                     continue  # то его не разбираем, пропускаем
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
+                    self.logger.debug(f'websocket_handler: Пришло сервисное сообщение о подписке/отписке {response}. Пропуск')
                     continue  # то его не разбираем, пропускаем
+                self.logger.debug(f'websocket_handler: Пришли данные подписки {response}')
                 guid = response['guid']  # GUID подписки
                 if guid not in self.subscriptions:  # Если подписка не найдена
+                    self.logger.debug(f'websocket_handler: Подписка с кодом {guid} не найдена. Пропуск')
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
                 subscription = self.subscriptions[guid]  # Поиск подписки по GUID
                 opcode = subscription['opcode']  # Разбираем по типу подписки
+                self.logger.debug(f'websocket_handler: Найдена подписка типа {opcode} с кодом {guid} {subscription}')
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
-                    seconds = response['data']['time']  # Время пришедшего бара
-                    if subscription['mode'] == 0:  # История
-                        if seconds != subscription['last']:  # Если пришел следующий бар истории
-                            subscription['last'] = seconds  # то запоминаем его
-                            if subscription['prev'] is not None:  # Мы не знаем, когда придет первый дубль
-                                self.OnNewBar(subscription['prev'])  # Поэтому, выдаем бар с задержкой на 1
-                        else:  # Если пришел дубль
-                            subscription['same'] = 2  # Есть 2 одинаковых бара
-                            subscription['mode'] = 1  # Переходим к обработке первого несформированного бара
-                    elif subscription['mode'] == 1:  # Первый несформированный бар
-                        if subscription['same'] < 3:  # Если уже есть 2 одинаковых бара
-                            subscription['same'] += 1  # то следующий бар будет таким же. 3 одинаковых бара
-                        else:  # Если пришел следующий бар
-                            subscription['last'] = seconds  # то запоминаем бар
-                            subscription['same'] = 1  # Повторов нет
-                            subscription['mode'] = 2  # Переходим к обработке новых баров
+                    if subscription['prev']:  # Если есть предыдущее значение
+                        seconds = response['data']['time']  # Время пришедшего бара
+                        prev_seconds = subscription['prev']['data']['time']  # Время предыдущего бара
+                        if seconds == prev_seconds:  # Пришла обновленная версия текущего бара
+                            subscription['prev'] = response  # то запоминаем пришедший бар
+                        elif seconds > prev_seconds:  # Пришел новый бар
+                            self.logger.debug(f'websocket_handler: OnNewBar {subscription["prev"]}')
                             self.OnNewBar(subscription['prev'])
-                    elif subscription['mode'] == 2:  # Новый бар
-                        if subscription['same'] < 2:  # Если нет повторов
-                            subscription['same'] += 1  # то следующий бар будет таким же. 2 одинаковых бара
-                        else:  # Если пришел следующий бар
-                            subscription['last'] = seconds  # то запоминаем бар
-                            subscription['same'] = 1  # Повторов нет
-                            self.OnNewBar(subscription['prev'])
-                    subscription['prev'] = response  # Запоминаем пришедший бар
+                            subscription['prev'] = response  # Запоминаем пришедший бар
+                    else:  # Если пришло первое значение
+                        subscription['prev'] = response  # то запоминаем пришедший бар
                 elif opcode == 'QuotesSubscribe':  # Котировки
                     self.OnNewQuotes(response)
                 elif opcode == 'AllTradesGetAndSubscribe':  # Все сделки
@@ -1513,9 +1506,6 @@ class AlorPy:
         """
         subscription_request = request.copy()  # Копируем запрос в подписку
         if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем дополнительные атрибуты и их значения по умолчанию
-            subscription_request['mode'] = 0  # 0 - история, 1 - первый несформированный бар, 2 - новый бар
-            subscription_request['last'] = 0  # Время последнего бара
-            subscription_request['same'] = 1  # Кол-во повторяющихся баров
             subscription_request['prev'] = None  # Дата и время предыдущего бара UTC в секундах
         self.subscriptions[guid] = subscription_request  # Заносим копию подписки в справочник
         request['token'] = self.get_jwt_token()  # Получаем JWT токен, ставим его в запрос

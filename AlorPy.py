@@ -1498,16 +1498,15 @@ class AlorPy:
             self.ws_socket = None  # Сбрасываем подключение
 
     async def subscribe_async(self, request, guid):
-        """Отправка запроса подписки на сервер WebSocket
+        """Отправка запроса (пере)подписки на сервер WebSocket
 
         :param request: Запрос
         :param str guid: Уникальный идентификатор подписки
         :return: Справочник из JSON, текст, None в случае веб ошибки
         """
-        subscription_request = request.copy()  # Копируем запрос в подписку
-        if subscription_request['opcode'] == 'BarsGetAndSubscribe':  # Для подписки на новые бары добавляем дополнительные атрибуты и их значения по умолчанию
-            subscription_request['prev'] = None  # Дата и время предыдущего бара UTC в секундах
-        self.subscriptions[guid] = subscription_request  # Заносим копию подписки в справочник
+        if request['opcode'] == 'BarsGetAndSubscribe' and 'prev' not in request:  # Для подписки на новые бары если нет последнего полученного бара (для подписки)
+            request['prev'] = None  # то ставим пустую дату и время последнего полученного бара UTC в секундах
+            self.subscriptions[guid] = request  # Заносим подписку с дополнительным полем в справочник
         request['token'] = self.get_jwt_token()  # Получаем JWT токен, ставим его в запрос
         request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
         await self.ws_socket.send(dumps(request))  # Отправляем запрос

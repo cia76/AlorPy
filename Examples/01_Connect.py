@@ -21,9 +21,15 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # ap_provider2.CloseWebSocket()  # Второй провайдер больше не нужен. Закрываем его поток подписок
 
     logging.root.name = 'AlorPyConnect'  # Название лога
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S',  # Формат сообщения и даты
-                        level=logging.INFO, handlers=[logging.FileHandler('AlorPyConnect.log'), logging.StreamHandler()])  # Уровень логируемых событий. Лог записываем в файл и выводим на консоль
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
+                        datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты
+                        # level=logging.DEBUG,  # Уровень логируемых событий NOTSET/DEBUG/INFO/WARNING/ERROR/CRITICAL
+                        level=logging.INFO,  # Уровень логируемых событий NOTSET/DEBUG/INFO/WARNING/ERROR/CRITICAL
+                        handlers=[logging.FileHandler('AlorPyConnect.log'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
+    logging.getLogger('asyncio').setLevel(logging.CRITICAL + 1)  # Не пропускать в лог
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # события
+    logging.getLogger('websockets').setLevel(logging.CRITICAL + 1)  # в этих библиотеках
 
     # Проверяем работу запрос/ответ
     seconds_from = ap_provider.get_time()  # Время в Alor OpenAPI V2 передается в секундах, прошедших с 01.01.1970 00:00 UTC

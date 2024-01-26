@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta  # Дата и время
 import logging  # Выводим данные на консоль и в файл
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from AlorPy.Config import Config, ConfigDemo  # Файл конфигурации
+from AlorPy.Config import Config, ConfigIIA, ConfigDemo  # Файл конфигурации
 
 
 def print_bar(response):
@@ -16,6 +16,7 @@ def print_bar(response):
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     ap_provider = AlorPy(Config.UserName, Config.RefreshToken)  # Провайдер работает со счетом по токену (из файла Config.py) Подключаемся к торговому счету
+    # ap_provider = AlorPy(ConfigIIA.UserName, ConfigIIA.RefreshToken)  # Провайдер работает со счетом по токену (из файла Config.py) Подключаемся к торговому счету ИИС
     # ap_provider2 = AlorPy(ConfigDemo.UserName, ConfigDemo.RefreshToken, True)  # Подключаемся к демо счету. Для каждого счета будет создан свой экземпляр AlorPy
     # print(f'\nЭкземпляры класса совпадают: {ap_provider2 is ap_provider}')
     # ap_provider2.CloseWebSocket()  # Второй провайдер больше не нужен. Закрываем его поток подписок

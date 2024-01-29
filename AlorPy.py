@@ -1506,7 +1506,7 @@ class AlorPy:
         """
         if request['opcode'] == 'BarsGetAndSubscribe' and 'prev' not in request:  # Для подписки на новые бары если нет последнего полученного бара (для подписки)
             request['prev'] = None  # то ставим пустую дату и время последнего полученного бара UTC в секундах
-            self.subscriptions[guid] = request  # Заносим подписку с дополнительным полем в справочник
+        self.subscriptions[guid] = request  # Заносим подписку в справочник
         request['token'] = self.get_jwt_token()  # Получаем JWT токен, ставим его в запрос
         request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
         await self.ws_socket.send(dumps(request))  # Отправляем запрос

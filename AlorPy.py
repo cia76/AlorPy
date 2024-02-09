@@ -1,3 +1,4 @@
+from typing import Tuple  # Кортеж
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 from datetime import datetime
 from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
@@ -14,6 +15,9 @@ from urllib3.exceptions import MaxRetryError  # Соединение с серв
 from websockets import connect, ConnectionClosed  # Работа с сервером WebSockets
 
 
+logger = logging.getLogger('AlorPy')  # Будем вести лог
+
+
 # noinspection PyShadowingBuiltins
 class AlorPy:
     """Работа с Alor OpenAPI V2 из Python https://alor.dev/docs"""
@@ -22,7 +26,6 @@ class AlorPy:
     tz_msk = timezone('Europe/Moscow')  # Время UTC будем приводить к московскому времени
     jwt_token_ttl = 60  # Время жизни токена JWT в секундах
     exchanges = ('MOEX', 'SPBX',)  # Биржи
-    logger = logging.getLogger('AlorPy')  # Будем вести лог
 
     def __init__(self, user_name, refresh_token, demo=False):
         """Инициализация
@@ -1435,19 +1438,17 @@ class AlorPy:
                 try:
                     response = loads(response_json)  # Переводим JSON в словарь
                 except JSONDecodeError:  # Если вместо JSON сообщений получаем текст (проверка на всякий случай)
-                    self.logger.debug(f'websocket_handler: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
+                    logger.debug(f'websocket_handler: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
                     continue  # то его не разбираем, пропускаем
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
-                    self.logger.debug(f'websocket_handler: Пришло сервисное сообщение о подписке/отписке {response}. Пропуск')
                     continue  # то его не разбираем, пропускаем
-                self.logger.debug(f'websocket_handler: Пришли данные подписки {response}')
+                logger.debug(f'websocket_handler: Пришли данные подписки {response}')
                 guid = response['guid']  # GUID подписки
                 if guid not in self.subscriptions:  # Если подписка не найдена
-                    self.logger.debug(f'websocket_handler: Подписка с кодом {guid} не найдена. Пропуск')
+                    logger.debug(f'websocket_handler: Подписка с кодом {guid} не найдена. Пропуск')
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
                 subscription = self.subscriptions[guid]  # Поиск подписки по GUID
                 opcode = subscription['opcode']  # Разбираем по типу подписки
-                self.logger.debug(f'websocket_handler: Найдена подписка типа {opcode} с кодом {guid} {subscription}')
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
@@ -1457,7 +1458,7 @@ class AlorPy:
                         if seconds == prev_seconds:  # Пришла обновленная версия текущего бара
                             subscription['prev'] = response  # то запоминаем пришедший бар
                         elif seconds > prev_seconds:  # Пришел новый бар
-                            self.logger.debug(f'websocket_handler: OnNewBar {subscription["prev"]}')
+                            logger.debug(f'websocket_handler: OnNewBar {subscription["prev"]}')
                             self.OnNewBar(subscription['prev'])
                             subscription['prev'] = response  # Запоминаем пришедший бар
                     else:  # Если пришло первое значение
@@ -1513,8 +1514,51 @@ class AlorPy:
 
     # Функции конвертации
 
+    def dataname_to_board_symbol(self, dataname) -> tuple[str, str]:
+        """Код площадки и тикер из названия тикера
+
+        :param str dataname: Название тикера
+        :return: Код площадки и тикер
+        """
+        board = None  # Код площадки
+        symbol_parts = dataname.split('.')  # По разделителю пытаемся разбить тикер на части
+        if len(symbol_parts) >= 2:  # Если тикер задан в формате <Код площадки>.<Код тикера>
+            board = symbol_parts[0]  # Код площадки
+            symbol = '.'.join(symbol_parts[1:])  # Код тикера
+        else:  # Если тикер задан без площадки
+            symbol = dataname  # Код тикера
+            for ex in self.exchanges:  # Пробегаемся по всем биржам
+                si = self.get_symbol_info(ex, symbol)  # Получаем информацию о тикере
+                if si:  # Если тикер найден на бирже
+                    board = si['board']  # то подставляем его площадку
+                    break  # Выходим, дальше не продолжаем
+        return board, symbol  # Возвращаем биржу и код тикера
+
+    @staticmethod
+    def board_symbol_to_dataname(board, symbol) -> str:
+        """Название тикера из кода площадки и тикера
+
+        :param str board: Код площадки
+        :param str symbol: Тикер
+        :return: Название тикера
+        """
+        return f'{board}.{symbol}'
+
+    def get_exchange(self, board, symbol):
+        """Биржа тикера из кода площадки и тикера
+
+        :param str board: Код площадки
+        :param str symbol: Тикер
+        :return: Биржа 'MOEX' или 'SPBX'
+        """
+        for ex in self.exchanges:  # Пробегаемся по всем биржам
+            si = self.get_symbol_info(ex, symbol)  # Получаем информацию о тикере
+            if si and si['board'] == board:  # Если информация о тикере найдена, и площадка есть на бирже
+                return ex  # то биржа найдена
+        return None  # Если биржа не была найдена, то возвращаем пустое значение
+
     def get_symbol_info(self, exchange, symbol, reload=False):
-        """Получение информации тикера
+        """Спецификация тикера
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
@@ -1530,30 +1574,32 @@ class AlorPy:
         return self.symbols[(exchange, symbol)]  # Возвращаем значение из справочника
 
     @staticmethod
-    def dataname_to_exchange_symbol(dataname) -> tuple[str, str]:
-        """Биржа и код тикера из названия тикера. Если задается без биржи, то по умолчанию ставится MOEX
+    def timeframe_to_alor_timeframe(tf) -> Tuple[str, bool]:
+        """Перевод временнОго интервала во временной интервал Алора
 
-        :param str dataname: Название тикера
-        :return: Код площадки и код тикера
+        :param str tf: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
+        :return: Временной интервал Алора, внутридневной интервал
         """
-        symbol_parts = dataname.split('.')  # По разделителю пытаемся разбить тикер на части
-        if len(symbol_parts) >= 2:  # Если тикер задан в формате <Биржа>.<Код тикера>
-            exchange = symbol_parts[0]  # Биржа
-            symbol = '.'.join(symbol_parts[1:])  # Код тикера
-        else:  # Если тикер задан без биржи
-            exchange = 'MOEX'  # Биржа по умолчанию
-            symbol = dataname  # Код тикера
-        return exchange, symbol  # Возвращаем биржу и код тикера
+        if 'MN' in tf:  # Месячный временной интервал
+            return 'M', False
+        if tf[0:1] in ('D', 'W', 'Y'):  # Дневной/недельный/годовой интервалы
+            return tf[0:1], False
+        if tf[0:1] == 'M':  # Минутный временной интервал
+            return f'{int(tf[1:]) * 60}', True  # переводим в секунды
+        raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
     @staticmethod
-    def exchange_symbol_to_dataname(exchange, symbol) -> str:
-        """Название тикера из биржи и кода тикера
+    def alor_timeframe_to_timeframe(tf) -> str:
+        """Перевод временнОго интервала Алора во временной интервал
 
-        :param str exchange: Биржа 'MOEX' или 'SPBX'
-        :param str symbol: Тикер
-        :return: Название тикера
+        :param str tf: Временной интервал Алора
+        :return: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
         """
-        return f'{exchange}.{symbol}'
+        if tf in ('D', 'W', 'M', 'Y'):  # Дневной/недельный/месячный/годовой интервалы
+            return f'{tf}1'
+        if tf.isdigit():  # Интервал в секундах
+            return f'M{int(tf) // 60}'  # переводим в минуты
+        raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
     def price_to_alor_price(self, exchange, symbol, price) -> float:
         """Перевод цены в цену Алор
@@ -1585,6 +1631,15 @@ class AlorPy:
             price *= 10  # цену умножаем на 10
         return price
 
+    def msk_datetime_to_utc_timestamp(self, dt) -> int:
+        """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC
+
+        :param datetime dt: Московское время
+        :return: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
+        """
+        dt_msk = self.tz_msk.localize(dt)  # Заданное время ставим в зону МСК
+        return int(dt_msk.timestamp())  # Переводим в кол-во секунд, прошедших с 01.01.1970 в UTC
+
     def utc_timestamp_to_msk_datetime(self, seconds) -> datetime:
         """Перевод кол-ва секунд, прошедших с 01.01.1970 00:00 UTC в московское время
 
@@ -1594,14 +1649,16 @@ class AlorPy:
         dt_utc = datetime.utcfromtimestamp(seconds)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
         return self.utc_to_msk_datetime(dt_utc)  # Переводим время из UTC в московское
 
-    def msk_datetime_to_utc_timestamp(self, dt) -> int:
-        """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC
+    def msk_to_utc_datetime(self, dt, tzinfo=False) -> datetime:
+        """Перевод времени из московского в UTC
 
         :param datetime dt: Московское время
-        :return: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
+        :param bool tzinfo: Отображать временнУю зону
+        :return: Время UTC
         """
-        dt_msk = self.tz_msk.localize(dt)  # Заданное время ставим в зону МСК
-        return int(dt_msk.timestamp())  # Переводим в кол-во секунд, прошедших с 01.01.1970 в UTC
+        dt_msk = self.tz_msk.localize(dt)  # Задаем временнУю зону МСК
+        dt_utc = dt_msk.astimezone(utc)  # Переводим в UTC
+        return dt_utc if tzinfo else dt_utc.replace(tzinfo=None)
 
     def utc_to_msk_datetime(self, dt, tzinfo=False) -> datetime:
         """Перевод времени из UTC в московское

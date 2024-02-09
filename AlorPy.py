@@ -1568,7 +1568,7 @@ class AlorPy:
         if reload or (exchange, symbol) not in self.symbols:  # Если нужно получить информацию из Алор или нет информации о тикере в справочнике
             symbol_info = self.get_symbol(exchange, symbol)  # Получаем информацию о тикере из Алор
             if not symbol_info:  # Если тикер не найден
-                print(f'Информация о {exchange}.{symbol} не найдена')
+                logger.warning(f'Информация о {exchange}.{symbol} не найдена')
                 return None  # то возвращаем пустое значение
             self.symbols[(exchange, symbol)] = symbol_info  # Заносим информацию о тикере в справочник
         return self.symbols[(exchange, symbol)]  # Возвращаем значение из справочника

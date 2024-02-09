@@ -1442,13 +1442,13 @@ class AlorPy:
                     continue  # то его не разбираем, пропускаем
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
-                logger.debug(f'websocket_handler: Пришли данные подписки {response}')
                 guid = response['guid']  # GUID подписки
                 if guid not in self.subscriptions:  # Если подписка не найдена
-                    logger.debug(f'websocket_handler: Подписка с кодом {guid} не найдена. Пропуск')
+                    logger.debug(f'websocket_handler: Поступившая подписка с кодом {guid} не найдена. Пропуск')
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
                 subscription = self.subscriptions[guid]  # Поиск подписки по GUID
                 opcode = subscription['opcode']  # Разбираем по типу подписки
+                logger.debug(f'websocket_handler: Пришли данные подписки {opcode} - {response}')
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар

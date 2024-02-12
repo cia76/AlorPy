@@ -20,7 +20,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
 
     :param AlorPy ap_provider: Провайдер Alor
-    :param str board: Код площадки
+    :param str board: Код режима торгов
     :param tuple symbols: Коды тикеров в виде кортежа
     :param int|str time_frame: Временной интервал в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
     :param str datapath: Путь сохранения файла '..\\..\\Data\\Alor\\' - Windows, '../../Data/Alor/' - Linux
@@ -46,14 +46,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         else:  # Файл не существует
             logger.warning(f'Файл {file_name} не найден и будет создан')
             seconds_from = 0  # Берем отметку времени, когда никакой тикер еще не торговался
-        si = None  # Информация о тикера
-        exchange = None  # Биржа
-        for ex in ap_provider.exchanges:  # Пробегаемся по всем биржам
-            si = ap_provider.get_symbol(ex, symbol)  # Получаем информацию о тикере
-            if si['board'] == board:  # Если площадка есть на бирже
-                exchange = ex  # то биржа найдена
-                logger.debug(f'Для тикера {board}.{symbol} найдена биржа {exchange}')
-                break  # Выходим, дальше не продолжаем
+        exchange = ap_provider.get_exchange(board, symbol)  # Биржа
         if not exchange:  # Если биржа не была найдена
             logger.error(f'Биржа для тикера {board}.{symbol} не найдена')
             return  # то выходим, дальше не продолжаем
@@ -71,6 +64,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
             continue  # то переходим к следующему тикеру, дальше не продолжаем
         pd_bars = pd.json_normalize(new_bars)  # Переводим список баров в pandas DataFrame
         pd_bars['datetime'] = pd.to_datetime(pd_bars['time'], unit='s')  # Дата и время в UTC для дневных бар и выше
+        si = ap_provider.get_symbol_info(exchange, symbol)  # Получаем спецификацию тикера
         pd_bars['volume'] *= si['lotsize']  # Объемы из лотов переводим в штуки
         if type(time_frame) is not str:  # Для внутридневных баров (time_frame число)
             pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК

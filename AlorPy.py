@@ -706,11 +706,11 @@ class AlorPy:
         :param str portfolio: Идентификатор клиентского портфеля
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param str class_code: Класс инструмента
+        :param str class_code: Режим торгов
         :param str side: Покупка 'buy' или продажа 'sell'
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
-        :param str condition: условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param bool activate: Флаг активной заявки
         """
@@ -733,7 +733,7 @@ class AlorPy:
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
         :param float limit_price: Лимитная цена
-        :param str condition: Условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param str time_in_force: 'OneDay' - До конца дня, 'ImmediateOrCancel' - Снять остаток, 'FillOrKill' - Исполнить целиком или отклонить, 'GoodTillCancelled' - Активна до отмены
         :param int iceberg_fixed: Видимая постоянная часть айсберг-заявки в лотах
@@ -761,7 +761,7 @@ class AlorPy:
         :param str side: Покупка 'buy' или продажа 'sell'
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
-        :param str condition: Условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param bool activate: Флаг активной заявки
         """
@@ -783,7 +783,7 @@ class AlorPy:
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
         :param float limit_price: Лимитная цена
-        :param str condition: Условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param str time_in_force: 'OneDay' - До конца дня, 'ImmediateOrCancel' - Снять остаток, 'FillOrKill' - Исполнить целиком или отклонить, 'GoodTillCancelled' - Активна до отмены
         :param int iceberg_fixed: Видимая постоянная часть айсберг-заявки в лотах
@@ -855,7 +855,7 @@ class AlorPy:
         :param str side: Покупка 'buy' или продажа 'sell'
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
-        :param str condition: условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param bool check_duplicates: Флаг, отвечающий за проверку уникальности команд
         :param bool activate: Флаг активной заявки
@@ -877,7 +877,7 @@ class AlorPy:
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
         :param float limit_price: Лимитная цена
-        :param str condition: Условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param str time_in_force: 'OneDay' - До конца дня, 'ImmediateOrCancel' - Снять остаток, 'FillOrKill' - Исполнить целиком или отклонить, 'GoodTillCancelled' - Активна до отмены
         :param int iceberg_fixed: Видимая постоянная часть айсберг-заявки в лотах
@@ -945,7 +945,7 @@ class AlorPy:
         :param str side: Покупка 'buy' или продажа 'sell'
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
-        :param str condition: условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param bool check_duplicates: Флаг, отвечающий за проверку уникальности команд
         :param bool activate: Флаг активной заявки
@@ -968,7 +968,7 @@ class AlorPy:
         :param int quantity: Кол-во в лотах
         :param float stop_price: Стоп цена
         :param float limit_price: Лимитная цена
-        :param str condition: Условие 'More' или 'Less'
+        :param str condition: Условие срабатывания 'More', 'Less', 'MoreOrEqual', 'LessOrEqual'
         :param int seconds_order_end: Дата и время UTC в секундах завершения сделки
         :param str time_in_force: 'OneDay' - До конца дня, 'ImmediateOrCancel' - Снять остаток, 'FillOrKill' - Исполнить целиком или отклонить, 'GoodTillCancelled' - Активна до отмены
         :param int iceberg_fixed: Видимая постоянная часть айсберг-заявки в лотах
@@ -1438,7 +1438,7 @@ class AlorPy:
                 try:
                     response = loads(response_json)  # Переводим JSON в словарь
                 except JSONDecodeError:  # Если вместо JSON сообщений получаем текст (проверка на всякий случай)
-                    logger.debug(f'websocket_handler: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
+                    logger.warning(f'websocket_handler: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
                     continue  # то его не разбираем, пропускаем
                 if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                     continue  # то его не разбираем, пропускаем
@@ -1448,7 +1448,7 @@ class AlorPy:
                     continue  # то мы не можем сказать, что это за подписка, пропускаем ее
                 subscription = self.subscriptions[guid]  # Поиск подписки по GUID
                 opcode = subscription['opcode']  # Разбираем по типу подписки
-                logger.debug(f'websocket_handler: Пришли данные подписки {opcode} - {response}')
+                logger.debug(f'websocket_handler: Пришли данные подписки {opcode} - {guid} - {response}')
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                     self.OnChangeOrderBook(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
@@ -1515,45 +1515,45 @@ class AlorPy:
     # Функции конвертации
 
     def dataname_to_board_symbol(self, dataname) -> tuple[str, str]:
-        """Код площадки и тикер из названия тикера
+        """Код режима торгов и тикер из названия тикера
 
         :param str dataname: Название тикера
-        :return: Код площадки и тикер
+        :return: Код режима торгов и тикер
         """
-        board = None  # Код площадки
+        board = None  # Код режима торгов
         symbol_parts = dataname.split('.')  # По разделителю пытаемся разбить тикер на части
-        if len(symbol_parts) >= 2:  # Если тикер задан в формате <Код площадки>.<Код тикера>
-            board = symbol_parts[0]  # Код площадки
+        if len(symbol_parts) >= 2:  # Если тикер задан в формате <Код режима торгов>.<Код тикера>
+            board = symbol_parts[0]  # Код режима торгов
             symbol = '.'.join(symbol_parts[1:])  # Код тикера
-        else:  # Если тикер задан без площадки
+        else:  # Если тикер задан без кода режима торгов
             symbol = dataname  # Код тикера
             for ex in self.exchanges:  # Пробегаемся по всем биржам
                 si = self.get_symbol_info(ex, symbol)  # Получаем информацию о тикере
                 if si:  # Если тикер найден на бирже
-                    board = si['board']  # то подставляем его площадку
+                    board = si['board']  # то подставляем его код режима торгов
                     break  # Выходим, дальше не продолжаем
         return board, symbol  # Возвращаем биржу и код тикера
 
     @staticmethod
     def board_symbol_to_dataname(board, symbol) -> str:
-        """Название тикера из кода площадки и тикера
+        """Название тикера из кода режима торгов и тикера
 
-        :param str board: Код площадки
+        :param str board: Код режима торгов
         :param str symbol: Тикер
         :return: Название тикера
         """
         return f'{board}.{symbol}'
 
     def get_exchange(self, board, symbol):
-        """Биржа тикера из кода площадки и тикера
+        """Биржа тикера из кода режима торгов и тикера
 
-        :param str board: Код площадки
+        :param str board: Код режима торгов
         :param str symbol: Тикер
         :return: Биржа 'MOEX' или 'SPBX'
         """
         for ex in self.exchanges:  # Пробегаемся по всем биржам
             si = self.get_symbol_info(ex, symbol)  # Получаем информацию о тикере
-            if si and si['board'] == board:  # Если информация о тикере найдена, и площадка есть на бирже
+            if si and si['board'] == board:  # Если информация о тикере найдена, и режим торгов есть на бирже
                 return ex  # то биржа найдена
         return None  # Если биржа не была найдена, то возвращаем пустое значение
 

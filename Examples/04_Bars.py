@@ -30,8 +30,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
     :param bool skip_last_date: Убрать бары на последнюю полученную дату
     :param bool four_price_doji: Оставить бары с дожи 4-х цен
     """
-    tf = f'{time_frame}1' if time_frame in ('D', 'W', 'Y') else f'MN1' if time_frame == 'M' else f'M{int(time_frame) // 60}'  # Временной интервал для файла
-    intraday = tf != 'MN1' and tf.startswith('M')  # Внутридневные интервалы начинаются с M, кроме MN1 (месяц)
+    tf, intraday = ap_provider.alor_timeframe_to_timeframe(time_frame)  # Временной интервал для имени файла, внутридневной интервал
     for symbol in symbols:  # Пробегаемся по всем тикерам
         file_bars = None  # Дальше будем пытаться получить бары из файла
         file_name = f'{datapath}{board}.{symbol}_{tf}.txt'
@@ -52,7 +51,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         if not exchange:  # Если биржа не была найдена
             logger.error(f'Биржа для тикера {board}.{symbol} не найдена')
             return  # то выходим, дальше не продолжаем
-        logger.info(f'Получение истории {board}.{symbol} {tf} из Алор')
+        logger.info(f'Получение истории {board}.{symbol} {tf} из Alor')
         history = ap_provider.get_history(exchange, symbol, time_frame, seconds_from)  # Запрос истории рынка
         if not history:  # Если бары не получены
             logger.error('Ошибка при получении истории: История не получена')
@@ -116,11 +115,11 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # Пропускаем события запросов
 
     board = 'TQBR'  # Акции ММВБ
-    symbols = ('SBER', 'VTBR', 'GAZP', 'NMTP', 'LKOH', 'BSPB', 'FESH', 'ALRS', 'YNDX', 'BELU',
-               'GMKN', 'MTLR', 'HYDR', 'MAGN', 'SNGSP', 'NVTK', 'ROSN', 'TATN', 'SBERP', 'CHMF',
-               'MGNT', 'RTKM', 'TRNFP', 'MTSS', 'FEES', 'SNGS', 'NLMK', 'PLZL', 'RNFT', 'MOEX',
-               'DVEC', 'TGKA', 'MTLRP', 'RUAL', 'TRMK', 'IRAO', 'SMLT', 'AFKS', 'AFLT', 'PIKK')  # TOP 40 акций ММВБ
-    # symbols = ('SBER',)  # Для тестов
+    # symbols = ('SBER', 'VTBR', 'GAZP', 'NMTP', 'LKOH', 'BSPB', 'FESH', 'ALRS', 'YNDX', 'BELU',
+    #            'GMKN', 'MTLR', 'HYDR', 'MAGN', 'SNGSP', 'NVTK', 'ROSN', 'TATN', 'SBERP', 'CHMF',
+    #            'MGNT', 'RTKM', 'TRNFP', 'MTSS', 'FEES', 'SNGS', 'NLMK', 'PLZL', 'RNFT', 'MOEX',
+    #            'DVEC', 'TGKA', 'MTLRP', 'RUAL', 'TRMK', 'IRAO', 'SMLT', 'AFKS', 'AFLT', 'PIKK')  # TOP 40 акций ММВБ
+    symbols = ('SBER',)  # Для тестов
     # board = 'SPBFUT'  # Фьючерсы
     # symbols = ('SiH4', 'RIH4')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
 

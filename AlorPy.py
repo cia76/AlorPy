@@ -1585,20 +1585,22 @@ class AlorPy:
         if tf[0:1] in ('D', 'W', 'Y'):  # Дневной/недельный/годовой интервалы
             return tf[0:1], False
         if tf[0:1] == 'M':  # Минутный временной интервал
-            return f'{int(tf[1:]) * 60}', True  # переводим в секунды
+            return f'{int(tf[1:]) * 60}', True  # переводим из минут в секунды
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
     @staticmethod
-    def alor_timeframe_to_timeframe(tf) -> str:
+    def alor_timeframe_to_timeframe(tf) -> Tuple[str, bool]:
         """Перевод временнОго интервала Алора во временной интервал
 
         :param str tf: Временной интервал Алора
-        :return: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
+        :return: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм, внутридневной интервал
         """
-        if tf in ('D', 'W', 'M', 'Y'):  # Дневной/недельный/месячный/годовой интервалы
-            return f'{tf}1'
+        if tf in ('D', 'W', 'Y'):  # Дневной/недельный/годовой интервалы
+            return f'{tf}1', False
+        if tf == 'M':  # Месячный интервал
+            return f'MN1', False
         if tf.isdigit():  # Интервал в секундах
-            return f'M{int(tf) // 60}'  # переводим в минуты
+            return f'M{int(tf) // 60}', True  # переводим из секунд в минуты
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
     def price_to_alor_price(self, exchange, symbol, price) -> float:

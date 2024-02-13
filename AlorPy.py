@@ -10,7 +10,7 @@ import logging  # Будем вести лог
 
 from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 import requests.adapters
-from requests import post, get, put, delete  # Запросы/ответы от сервера запросов
+from requests import post, get, put, delete, Response  # Запросы/ответы от сервера запросов
 from urllib3.exceptions import MaxRetryError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения
 from websockets import connect, ConnectionClosed  # Работа с сервером WebSockets
 
@@ -1324,9 +1324,12 @@ class AlorPy:
     def check_result(self, response):
         """Анализ результата запроса
 
-        :param response response: Результат запроса
+        :param Response response: Результат запроса
         :return: Справочник из JSON, текст, None в случае веб ошибки
         """
+        if not response:  # Если ответ не пришел. Например, при таймауте
+            self.OnError('Ошибка сервера: Таймаут')  # Событие ошибки
+            return None  # то возвращаем пустое значение
         if response.status_code != 200:  # Если статус ошибки
             self.OnError(f'Ошибка сервера: {response.status_code} {response.content.decode("utf-8")} {response.request}')  # Событие ошибки
             return None  # то возвращаем пустое значение

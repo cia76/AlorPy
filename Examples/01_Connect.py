@@ -1,5 +1,6 @@
 import logging  # Выводим лог на консоль и в файл
 from datetime import datetime, timedelta  # Дата и время, временной интервал
+
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config, ConfigIIA, ConfigDemo  # Файл конфигурации
 

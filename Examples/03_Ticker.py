@@ -27,12 +27,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
     for symbol in symbols:  # Пробегаемся по всем тикерам
         si = ap_provider.get_symbol(exchange, symbol)  # Получаем информацию о тикере
         logger.debug(f'Ответ от сервера: {si}')
-        logger.info(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}, {si["type"]}) на бирже {si["exchange"]}:')
+        logger.info(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}, {si["type"]}) на бирже {si["exchange"]}')
         logger.info(f'- Валюта: {si["currency"]}')
+        logger.info(f'- Лот: {si["lotsize"]}')
         min_step = si['minstep']  # Шаг цены
+        logger.info(f'- Шаг цены: {min_step}')
         decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
         logger.info(f'- Кол-во десятичных знаков: {decimals}')
-        logger.info(f'- Лот: {si["lotsize"]}')
-        logger.info(f'- Шаг цены: {min_step}')
 
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

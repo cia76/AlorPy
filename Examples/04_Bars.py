@@ -15,7 +15,7 @@ logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог
 # noinspection PyShadowingNames
 def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken),
                          board='TQBR', symbols=('SBER',), time_frame='D',
-                         datapath=os.path.join('..', '..', 'Data', 'Alor', ''),
+                         datapath=os.path.join('..', '..', 'Data', 'Alor', ''), delimiter='\t', dt_format='%d.%m.%Y %H:%M',
                          skip_first_date=False, skip_last_date=False, four_price_doji=False):
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
 
@@ -23,7 +23,9 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
     :param str board: Код режима торгов
     :param tuple symbols: Коды тикеров в виде кортежа
     :param int|str time_frame: Временной интервал в секундах (int) или код ("D" - дни, "W" - недели, "M" - месяцы, "Y" - годы)
-    :param str datapath: Путь сохранения файла '..\\..\\Data\\Alor\\' - Windows, '../../Data/Alor/' - Linux
+    :param str datapath: Путь сохранения файла истории '..\\..\\Data\\Alor\\' - Windows, '../../Data/Alor/' - Linux
+    :param str delimiter: Разделитель значений в файле истории. По умолчанию табуляция
+    :param str dt_format: Формат представления даты и времени в файле истории. По умолчанию русский формат
     :param bool skip_first_date: Убрать бары на первую полученную дату
     :param bool skip_last_date: Убрать бары на последнюю полученную дату
     :param bool four_price_doji: Оставить бары с дожи 4-х цен
@@ -36,7 +38,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
         file_exists = os.path.isfile(file_name)  # Существует ли файл
         if file_exists:  # Если файл существует
             logger.info(f'Получение файла {file_name}')
-            file_bars = pd.read_csv(file_name, sep='\t', parse_dates=['datetime'], date_format='%d.%m.%Y %H:%M', index_col='datetime')  # Считываем файл в DataFrame
+            file_bars = pd.read_csv(file_name, sep=delimiter, parse_dates=['datetime'], date_format=dt_format, index_col='datetime')  # Считываем файл в DataFrame
             last_date: datetime = file_bars.index[-1]  # Дата и время последнего бара
             logger.info(f'Первый бар: {file_bars.index[0]}')
             logger.info(f'Последний бар: {last_date}')
@@ -95,7 +97,7 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
             pd_bars = pd.concat([file_bars, pd_bars]).drop_duplicates(keep='last').sort_index()  # Объединяем файл с данными из Alor, убираем дубликаты, сортируем заново
         pd_bars = pd_bars[['open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время будет экспортирована как индекс
         logger.info(f'Сохранение файла ')
-        pd_bars.to_csv(file_name, sep='\t', date_format='%d.%m.%Y %H:%M')
+        pd_bars.to_csv(file_name, sep=delimiter, date_format=dt_format)
         logger.info(f'Первый бар: {pd_bars.index[0]}')
         logger.info(f'Последний бар: {pd_bars.index[-1]}')
         logger.info(f'Кол-во бар: {len(pd_bars)}')

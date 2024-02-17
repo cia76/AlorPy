@@ -1282,20 +1282,6 @@ class AlorPy:
         request = {'opcode': 'StopOrdersGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'format': 'Simple'}  # Запрос на подписку
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
-    # Выход и закрытие
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Выход из класса, например, с with"""
-        self.close_web_socket()  # Закрываем соединение с сервером WebSocket
-
-    def __del__(self):
-        self.close_web_socket()  # Закрываем соединение с сервером WebSocket
-
-    def close_web_socket(self):
-        """Закрытие соединения с сервером WebSocket"""
-        if self.ws_socket:  # Если запущена задача управления подписками WebSocket
-            self.ws_task.cancel()  # то отменяем задачу. Генерируем на ней исключение asyncio.CancelledError
-
     # Запросы REST
 
     def get_jwt_token(self):
@@ -1514,6 +1500,20 @@ class AlorPy:
         request['token'] = self.get_jwt_token()  # Получаем JWT токен, ставим его в запрос
         request['guid'] = guid  # Уникальный идентификатор подписки тоже ставим в запрос
         await self.ws_socket.send(dumps(request))  # Отправляем запрос
+
+    # Выход и закрытие
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Выход из класса, например, с with"""
+        self.close_web_socket()  # Закрываем соединение с сервером WebSocket
+
+    def __del__(self):
+        self.close_web_socket()  # Закрываем соединение с сервером WebSocket
+
+    def close_web_socket(self):
+        """Закрытие соединения с сервером WebSocket"""
+        if self.ws_socket:  # Если запущена задача управления подписками WebSocket
+            self.ws_task.cancel()  # то отменяем задачу. Генерируем на ней исключение asyncio.CancelledError
 
     # Функции конвертации
 

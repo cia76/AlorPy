@@ -1378,10 +1378,7 @@ class AlorPy:
         """
         if not self.ws_ready:  # Если WebSocket не готов принимать запросы
             self.OnEntering()  # Событие начала входа (Thread)
-            thread = Thread(target=run, args=(self.websocket_async(),))  # Создаем поток управления подписками
-            # thread = Thread(target=self.loop.run_until_complete, args=(self.websocket_async(),))  # Создаем поток управления подписками
-            thread.start()  # Запускаем его TODO Бывает ошибка cannot schedule new futures after shutdown
-            # self.loop.create_task(self.websocket_async())
+            Thread(target=run, args=(self.websocket_async(),)).start()  # Создаем и запускаем поток управления подписками
         while not self.ws_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             pass  # Подождем, пока WebSocket не будет готов принимать запросы
         guid = str(uuid4())  # Уникальный идентификатор подписки

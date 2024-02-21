@@ -1592,14 +1592,14 @@ class AlorPy:
     def alor_timeframe_to_timeframe(tf) -> Tuple[str, bool]:
         """Перевод временнОго интервала Алора во временной интервал
 
-        :param str tf: Временной интервал Алора
+        :param str|int tf: Временной интервал Алора
         :return: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм, внутридневной интервал
         """
         if tf in ('D', 'W', 'Y'):  # Дневной/недельный/годовой интервалы
             return f'{tf}1', False
         if tf == 'M':  # Месячный интервал
             return f'MN1', False
-        if tf.isdigit():  # Интервал в секундах
+        if isinstance(tf, int):  # Интервал в секундах
             return f'M{int(tf) // 60}', True  # переводим из секунд в минуты
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 

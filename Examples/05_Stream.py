@@ -66,7 +66,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     guid = ap_provider.quotes_subscribe(exchange, symbol)  # Получаем код пописки
     logger.info(f'Подписка на котировки {guid} тикера {exchange}.{symbol} создана')
     sleep(sleep_secs)  # Ждем кол-во секунд получения обезличенных сделок
-    logger.info(f'Подписка на котировки {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от стакана
+    logger.info(f'Подписка на котировки {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от котировок
     ap_provider.OnNewQuotes = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 
     # Выход

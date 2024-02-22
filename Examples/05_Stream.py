@@ -1,6 +1,6 @@
 import logging  # Выводим лог на консоль и в файл
 from datetime import datetime  # Дата и время
-import time  # Подписка на события по времени
+from time import sleep  # Подписка на события по времени
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 from AlorPy.Config import Config  # Файл конфигурации
@@ -50,7 +50,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     ap_provider.OnChangeOrderBook = lambda response: logger.info(f'Стакан - {response["data"]}')  # Обработка стакана
     guid = ap_provider.order_book_get_and_subscribe(exchange, symbol)  # Получаем код пописки
     logger.info(f'Подписка на стакан {guid} тикера {exchange}.{symbol} создана')
-    time.sleep(sleep_secs)  # Ждем кол-во секунд получения стакана
+    sleep(sleep_secs)  # Ждем кол-во секунд получения стакана
     logger.info(f'Подписка на стакан {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от стакана
     ap_provider.OnChangeOrderBook = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     ap_provider.OnNewQuotes = lambda response: logger.info(f'Котировка - {response["data"]}')  # Обработка котировок
     guid = ap_provider.quotes_subscribe(exchange, symbol)  # Получаем код пописки
     logger.info(f'Подписка на котировки {guid} тикера {exchange}.{symbol} создана')
-    time.sleep(sleep_secs)  # Ждем кол-во секунд получения обезличенных сделок
+    sleep(sleep_secs)  # Ждем кол-во секунд получения обезличенных сделок
     logger.info(f'Подписка на котировки {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от стакана
     ap_provider.OnNewQuotes = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 

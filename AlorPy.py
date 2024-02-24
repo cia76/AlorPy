@@ -1612,26 +1612,37 @@ class AlorPy:
         :return: Цена в Алор
         """
         si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
+        min_step = si['minstep']  # Шаг цены
         primary_board = si['primary_board']  # Рынок тикера
-        if primary_board == 'TQOB':  # Для рынка облигаций
-            price /= 10  # цену делим на 10
-        min_step = si['minstep']  # Минимальный шаг цены
+        if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
+            alor_price = price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+        elif primary_board == 'CETS':  # Для валют
+            alor_price = price / si.lot * si['facevalue']
+        else:  # В остальных случаях
+            alor_price = price  # Цена не изменяется
         decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
-        return round(price, decimals)  # Округляем цену
+        return round(alor_price // min_step * min_step, decimals)  # Округляем цену кратно шага цены
 
-    def alor_price_to_price(self, exchange, symbol, price) -> float:
+    def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
         """Перевод цены Алор в цену
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param float price: Цена в Алор
+        :param float alor_price: Цена в Алор
         :return: Цена
         """
-        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
-        primary_board = si['primary_board']  # Рынок тикера
-        if primary_board == 'TQOB':  # Для рынка облигаций
-            price *= 10  # цену умножаем на 10
-        return price
+        si = self.get_symbol_info(exchange, symbol, True)  # Информация о тикере
+        min_step = si['minstep']  # Шаг цены
+        alor_price = alor_price // min_step * min_step  # Цена кратная шагу цены
+        primary_board = si['primary_board']  # Код площадки
+        if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
+            price = alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+        elif primary_board == 'CETS':  # Для валют
+            price = alor_price * si.lot / si['facevalue']
+        else:  # В остальных случаях
+            price = alor_price  # Цена не изменяется
+        decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
+        return round(price, decimals)  # Округляем цену
 
     def msk_datetime_to_utc_timestamp(self, dt) -> int:
         """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC

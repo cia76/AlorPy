@@ -1631,7 +1631,7 @@ class AlorPy:
         :param float alor_price: Цена в Алор
         :return: Цена
         """
-        si = self.get_symbol_info(exchange, symbol, True)  # Информация о тикере
+        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
         min_step = si['minstep']  # Шаг цены
         alor_price = alor_price // min_step * min_step  # Цена кратная шагу цены
         primary_board = si['primary_board']  # Код площадки

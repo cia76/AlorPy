@@ -6,15 +6,10 @@ import os.path
 import pandas as pd
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from AlorPy.Config import Config  # Файл конфигурации
-
-
-logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог
 
 
 # noinspection PyShadowingNames
-def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken),
-                         board='TQBR', symbols=('SBER',), time_frame='D',
+def save_candles_to_file(ap_provider=AlorPy(), board='TQBR', symbols=('SBER',), time_frame='D',
                          datapath=os.path.join('..', '..', 'Data', 'Alor', ''), delimiter='\t', dt_format='%d.%m.%Y %H:%M',
                          skip_first_date=False, skip_last_date=False, four_price_doji=False):
     """Получение баров, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
@@ -105,7 +100,8 @@ def save_candles_to_file(ap_provider=AlorPy(Config.UserName, Config.RefreshToken
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     start_time = time()  # Время начала запуска скрипта
-    ap_provider = AlorPy(Config.UserName, Config.RefreshToken)
+    logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог
+    ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты

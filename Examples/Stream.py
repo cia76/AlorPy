@@ -3,14 +3,11 @@ from datetime import datetime  # Дата и время
 from time import sleep  # Подписка на события по времени
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from AlorPy.Config import Config  # Файл конфигурации
-
-
-logger = logging.getLogger('AlorPy.Stream')  # Будем вести лог
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    ap_provider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету
+    logger = logging.getLogger('AlorPy.Stream')  # Будем вести лог
+    ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты
@@ -47,12 +44,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     sleep_secs = 5  # Кол-во секунд получения стакана
     logger.info(f'{sleep_secs} секунд стакана')
-    ap_provider.OnChangeOrderBook = lambda response: logger.info(f'Стакан - {response["data"]}')  # Обработка стакана
+    ap_provider.on_change_order_book = lambda response: logger.info(f'Стакан - {response["data"]}')  # Обработка стакана
     guid = ap_provider.order_book_get_and_subscribe(exchange, symbol)  # Получаем код пописки
     logger.info(f'Подписка на стакан {guid} тикера {exchange}.{symbol} создана')
     sleep(sleep_secs)  # Ждем кол-во секунд получения стакана
     logger.info(f'Подписка на стакан {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от стакана
-    ap_provider.OnChangeOrderBook = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
+    ap_provider.on_change_order_book = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 
     # Котировки
     logger.info(f'Текущие котировки {exchange}.{symbol}')
@@ -62,12 +59,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     sleep_secs = 5  # Кол-во секунд получения котировок
     logger.info(f'{sleep_secs} секунд котировок')
-    ap_provider.OnNewQuotes = lambda response: logger.info(f'Котировка - {response["data"]}')  # Обработка котировок
+    ap_provider.on_new_quotes = lambda response: logger.info(f'Котировка - {response["data"]}')  # Обработка котировок
     guid = ap_provider.quotes_subscribe(exchange, symbol)  # Получаем код пописки
     logger.info(f'Подписка на котировки {guid} тикера {exchange}.{symbol} создана')
     sleep(sleep_secs)  # Ждем кол-во секунд получения обезличенных сделок
     logger.info(f'Подписка на котировки {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от котировок
-    ap_provider.OnNewQuotes = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
+    ap_provider.on_new_quotes = ap_provider.default_handler  # Возвращаем обработчик по умолчанию
 
     # Выход
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

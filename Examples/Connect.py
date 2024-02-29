@@ -2,10 +2,6 @@ import logging  # Выводим лог на консоль и в файл
 from datetime import datetime, timedelta  # Дата и время, временной интервал
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
-from AlorPy.Config import Config, ConfigIIA, ConfigDemo  # Файл конфигурации
-
-
-logger = logging.getLogger('AlorPy.Connect')  # Будем вести лог
 
 
 # noinspection PyShadowingNames
@@ -19,9 +15,9 @@ def log_bar(response):  # Вывод в лог полученного бара
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
-    ap_provider = AlorPy(Config.UserName, Config.RefreshToken)  # Подключаемся к торговому счету
-    # ap_provider = AlorPy(ConfigIIA.UserName, ConfigIIA.RefreshToken)  # Подключаемся к торговому счету ИИС
-    # ap_provider = AlorPy(ConfigDemo.UserName, ConfigDemo.RefreshToken, True)  # Подключаемся к демо счету
+    logger = logging.getLogger('AlorPy.Connect')  # Будем вести лог
+    ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
+    # ap_provider = AlorPy(True)  # Подключаемся к демо счету
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты
@@ -45,20 +41,20 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # tf = 'D'  # 1 день
     # days = 7  # Кол-во последних календарных дней, за которые берем историю
 
-    ap_provider.OnEntering = lambda: logger.info('OnEntering. Начало входа (Thread)')
-    ap_provider.OnEnter = lambda: logger.info('OnEnter. Вход (Thread)')
-    ap_provider.OnConnect = lambda: logger.info('OnConnect. Подключение к серверу (Task)')
-    ap_provider.OnResubscribe = lambda: logger.info('OnResubscribe. Возобновление подписок (Task)')
-    ap_provider.OnReady = lambda: logger.info('OnReady. Готовность к работе (Task)')
-    ap_provider.OnDisconnect = lambda: logger.info('OnDisconnect. Отключение от сервера (Task)')
-    ap_provider.OnTimeout = lambda: logger.info('OnTimeout. Таймаут (Task)')
-    ap_provider.OnError = lambda response: logger.info(f'OnError. {response} (Task)')
-    ap_provider.OnCancel = lambda: logger.info('OnCancel. Отмена (Task)')
-    ap_provider.OnExit = lambda: logger.info('OnExit. Выход (Thread)')
-    ap_provider.OnNewBar = log_bar  # Перед подпиской перехватим ответы
+    ap_provider.on_entering = lambda: logger.info('OnEntering. Начало входа (Thread)')
+    ap_provider.on_enter = lambda: logger.info('OnEnter. Вход (Thread)')
+    ap_provider.on_connect = lambda: logger.info('OnConnect. Подключение к серверу (Task)')
+    ap_provider.on_resubscribe = lambda: logger.info('OnResubscribe. Возобновление подписок (Task)')
+    ap_provider.on_ready = lambda: logger.info('OnReady. Готовность к работе (Task)')
+    ap_provider.on_disconnect = lambda: logger.info('OnDisconnect. Отключение от сервера (Task)')
+    ap_provider.on_timeout = lambda: logger.info('OnTimeout. Таймаут (Task)')
+    ap_provider.on_error = lambda response: logger.info(f'OnError. {response} (Task)')
+    ap_provider.on_cancel = lambda: logger.info('OnCancel. Отмена (Task)')
+    ap_provider.on_exit = lambda: logger.info('OnExit. Выход (Thread)')
+    ap_provider.on_new_bar = log_bar  # Перед подпиской перехватим ответы
 
     seconds_from = ap_provider.msk_datetime_to_utc_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
-    guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from, 1_000_000)  # Подписываемся на бары, получаем guid подписки
+    guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from, frequency=1_000_000_000)  # Подписываемся на бары, получаем guid подписки
     subscription = ap_provider.subscriptions[guid]  # Получаем данные подписки
     logger.info(f'Подписка на сервере: {guid} {subscription}')
     logger.info(f'На бирже {subscription["exchange"]} тикер {subscription["code"]} подписан на новые бары через WebSocket на временнОм интервале {subscription["tf"]}. Код подписки {guid}')

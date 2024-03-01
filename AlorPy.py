@@ -28,10 +28,9 @@ class AlorPy:
     exchanges = ('MOEX', 'SPBX',)  # Биржи
     logger = logging.getLogger('AlorPy')  # Будем вести лог
 
-    def __init__(self, sub=Config.sub, refresh_token=Config.refresh_token, demo=False):
+    def __init__(self, refresh_token=Config.refresh_token, demo=False):
         """Инициализация
 
-        :param str sub: Номер счета, на который выписан токен
         :param str refresh_token: Токен
         :param bool demo: Режим демо торговли. По умолчанию установлен режим реальной торговли
         """
@@ -43,7 +42,6 @@ class AlorPy:
         self.ws_socket = None  # Подключение к серверу WebSocket
         self.ws_task = None  # Задача управления подписками WebSocket
         self.ws_ready = False  # WebSocket готов принимать запросы
-        self.subscriptions = {}  # Справочник подписок. Для возобновления всех подписок после перезагрузки сервера Алор
 
         # События Alor OpenAPI V2
         self.on_change_order_book = self.default_handler  # Биржевой стакан
@@ -72,13 +70,12 @@ class AlorPy:
         self.on_cancel = self.default_handler  # Отмена (Task)
         self.on_exit = self.default_handler  # Выход (Thread)
 
-        self.sub = sub  # Номер счета, на который выписан токен
         self.refresh_token = refresh_token  # Токен
         self.jwt_token = None  # Токен JWT
         self.jwt_token_decoded = dict()  # Информация по портфелям
         self.jwt_token_issued = 0  # UNIX время в секундах выдачи токена JWT
-        self.get_jwt_token()  # Получаем токен JWT
         self.accounts = list()  # Счета (портфели по договорам)
+        self.get_jwt_token()  # Получаем токен JWT
         if self.jwt_token_decoded:
             all_agreements = self.jwt_token_decoded['agreements'].split(' ')  # Договоры
             all_portfolios = self.jwt_token_decoded['portfolios'].split(' ')  # Портфели
@@ -89,6 +86,7 @@ class AlorPy:
                     self.accounts.append(dict(account_id=i, agreement=agreement, portfolio=portfolio, exchanges=exchanges))  # Добавляем договор/портфель/биржи
                 i += 1  # Смещаем на следующий договор
                 j += 3  # Смещаем на начальную позицию портфелей для следующего договора
+        self.subscriptions = {}  # Справочник подписок. Для возобновления всех подписок после перезагрузки сервера Алор
         self.symbols = {}  # Справочник тикеров
 
     def __enter__(self):
@@ -1498,9 +1496,10 @@ class AlorPy:
         """Получение хедеров для запросов"""
         return {'Content-Type': 'application/json', 'Authorization': f'Bearer {self.get_jwt_token()}'}
 
-    def get_request_id(self):
+    @staticmethod
+    def get_request_id():
         """Получение уникального кода запроса"""
-        return f'{self.sub}{time_ns()}'  # Логин и текущее время в наносекундах, прошедших с 01.01.1970 в UTC
+        return f'{time_ns()}'  # Текущее время в наносекундах, прошедших с 01.01.1970 в UTC
 
     def check_result(self, response):
         """Анализ результата запроса

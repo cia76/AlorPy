@@ -37,16 +37,8 @@ class AlorPy:
         """
         self.oauth_server = f'https://oauth{"dev" if demo else ""}.alor.ru'  # Сервер аутентификации
         self.api_server = f'https://api{"dev" if demo else ""}.alor.ru'  # Сервер запросов
-        self.sub = sub  # Номер счета, на который выписан токен
-        self.refresh_token = refresh_token  # Токен
-        self.jwt_token = None  # Токен JWT
-        self.jwt_token_decoded = dict()  # Информация по портфелям
-        self.jwt_token_issued = 0  # UNIX время в секундах выдачи токена JWT
-        self.get_jwt_token()  # Получаем токен JWT
-
         self.cws_server = f'wss://api{"dev" if demo else ""}.alor.ru/cws'  # Сервис работы с заявками WebSocket
         self.cws_socket = None  # Подключение к серверу WebSocket
-
         self.ws_server = f'wss://api{"dev" if demo else ""}.alor.ru/ws'  # Сервис подписок и событий WebSocket
         self.ws_socket = None  # Подключение к серверу WebSocket
         self.ws_task = None  # Задача управления подписками WebSocket
@@ -80,16 +72,23 @@ class AlorPy:
         self.on_cancel = self.default_handler  # Отмена (Task)
         self.on_exit = self.default_handler  # Выход (Thread)
 
-        all_agreements = self.jwt_token_decoded['agreements'].split(' ')  # Договоры
-        all_portfolios = self.jwt_token_decoded['portfolios'].split(' ')  # Портфели
+        self.sub = sub  # Номер счета, на который выписан токен
+        self.refresh_token = refresh_token  # Токен
+        self.jwt_token = None  # Токен JWT
+        self.jwt_token_decoded = dict()  # Информация по портфелям
+        self.jwt_token_issued = 0  # UNIX время в секундах выдачи токена JWT
+        self.get_jwt_token()  # Получаем токен JWT
         self.accounts = list()  # Счета (портфели по договорам)
-        i = j = 0  # Начальная позиция договоров и портфелей
-        for agreement in all_agreements:  # Пробегаемся по всем договорам
-            for portfolio in all_portfolios[j:j + 3]:  # К каждому договору привязаны 3 портфеля
-                exchanges = self.exchanges if portfolio.startswith('D') else (self.exchanges[0],)  # Для фондового рынка берем все биржи. Для остальных только MOEX
-                self.accounts.append(dict(account_id=i, agreement=agreement, portfolio=portfolio, exchanges=exchanges))  # Добавляем договор/портфель/биржи
-            i += 1  # Смещаем на следующий договор
-            j += 3  # Смещаем на начальную позицию портфелей для следующего договора
+        if self.jwt_token_decoded:
+            all_agreements = self.jwt_token_decoded['agreements'].split(' ')  # Договоры
+            all_portfolios = self.jwt_token_decoded['portfolios'].split(' ')  # Портфели
+            i = j = 0  # Начальная позиция договоров и портфелей
+            for agreement in all_agreements:  # Пробегаемся по всем договорам
+                for portfolio in all_portfolios[j:j + 3]:  # К каждому договору привязаны 3 портфеля
+                    exchanges = self.exchanges if portfolio.startswith('D') else (self.exchanges[0],)  # Для фондового рынка берем все биржи. Для остальных только MOEX
+                    self.accounts.append(dict(account_id=i, agreement=agreement, portfolio=portfolio, exchanges=exchanges))  # Добавляем договор/портфель/биржи
+                i += 1  # Смещаем на следующий договор
+                j += 3  # Смещаем на начальную позицию портфелей для следующего договора
         self.symbols = {}  # Справочник тикеров
 
     def __enter__(self):

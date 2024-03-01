@@ -28,15 +28,17 @@ class AlorPy:
     exchanges = ('MOEX', 'SPBX',)  # Биржи
     logger = logging.getLogger('AlorPy')  # Будем вести лог
 
-    def __init__(self, demo=False):
+    def __init__(self, sub=Config.sub, refresh_token=Config.refresh_token, demo=False):
         """Инициализация
 
+        :param str sub: Номер счета, на который выписан токен
+        :param str refresh_token: Токен
         :param bool demo: Режим демо торговли. По умолчанию установлен режим реальной торговли
         """
         self.oauth_server = f'https://oauth{"dev" if demo else ""}.alor.ru'  # Сервер аутентификации
         self.api_server = f'https://api{"dev" if demo else ""}.alor.ru'  # Сервер запросов
-        self.sub = Config.sub  # Номер счета, на который выписан токен
-        self.refresh_token = Config.refresh_token  # Токен
+        self.sub = sub  # Номер счета, на который выписан токен
+        self.refresh_token = refresh_token  # Токен
         self.jwt_token = None  # Токен JWT
         self.jwt_token_decoded = dict()  # Информация по портфелям
         self.jwt_token_issued = 0  # UNIX время в секундах выдачи токена JWT

@@ -8,6 +8,9 @@ import pandas as pd
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
+logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог. Определяем здесь, т.к. возможен внешний вызов ф-ии
+
+
 # noinspection PyShadowingNames
 def save_candles_to_file(ap_provider=AlorPy(), board='TQBR', symbols=('SBER',), time_frame='D',
                          datapath=os.path.join('..', '..', 'Data', 'Alor', ''), delimiter='\t', dt_format='%d.%m.%Y %H:%M',
@@ -100,7 +103,6 @@ def save_candles_to_file(ap_provider=AlorPy(), board='TQBR', symbols=('SBER',), 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     start_time = time()  # Время начала запуска скрипта
-    logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог
     ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения

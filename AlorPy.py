@@ -1514,7 +1514,7 @@ class AlorPy:
         if response.status_code != 200:  # Если статус ошибки
             self.on_error(f'Ошибка сервера: {response.status_code} Запрос: {response.request.path_url} Ответ: {content}')  # Событие ошибки
             return None  # то возвращаем пустое значение
-        self.logger.debug(f'Запрос: {response.request.path_url} Ответ: {content}')
+        # self.logger.debug(f'Запрос: {response.request.path_url} Ответ: {content}')
         try:
             return loads(content)  # Декодируем JSON в справочник, возвращаем его. Ошибки также могут приходить в виде JSON
         except JSONDecodeError:  # Если произошла ошибка при декодировании JSON, например, при удалении заявок

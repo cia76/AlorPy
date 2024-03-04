@@ -29,8 +29,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
         logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio}')
         for exchange in account['exchanges']:  # Пробегаемся по всем биржам
             logger.info(f'- Биржа {exchange}')
-            positions = ap_provider.get_positions(portfolio, exchange, True)  # Позиции без денежной позиции
-            for position in positions:  # Пробегаемся по всем позициям
+            for position in ap_provider.get_positions(portfolio, exchange, True):  # Пробегаемся по всем позициям без денежной позиции
                 symbol = position['symbol']  # Тикер
                 si = ap_provider.get_symbol(exchange, symbol)  # Информация о тикере
                 size = position['qty'] * si['lotsize']  # Кол-во в штуках
@@ -39,7 +38,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 last_price = ap_provider.alor_price_to_price(exchange, symbol, last_alor_price)  # Последняя цена
                 logger.info(f'  - Позиция {si["board"]}.{symbol} ({position["shortName"]}) {size} @ {entry_price} / {last_price}')
             value = round(ap_provider.get_risk(portfolio, exchange)['portfolioEvaluation'], 2)  # Общая стоимость портфеля
-            g = ap_provider.get_portfolio_summary(portfolio, exchange)
             cash = round(ap_provider.get_portfolio_summary(portfolio, exchange)['buyingPowerByCurrency'][0]['buyingPower'], 2)  # Свободные средства
             logger.info(f'  - Позиции {round(value - cash, 2)} + Свободные средства {cash} = {value}')
             orders = ap_provider.get_orders(portfolio, exchange)  # Получаем список активных заявок

@@ -127,7 +127,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # save_candles_to_file(ap_provider, board=board, symbols=symbols, time_frame=3600, skip_last_date=skip_last_date)  # Часовые бары (с 11.12.2017)
     # save_candles_to_file(ap_provider, board=board, symbols=symbols, time_frame=900, skip_last_date=skip_last_date)  # 15-и минутные бары (с 11.12.2017)
     # save_candles_to_file(ap_provider, board=board, symbols=symbols, time_frame=300, skip_last_date=skip_last_date)  # 5-и минутные бары (с 11.12.2017)
-    # save_candles_to_file(ap_provider, board=board, symbols=symbols, time_frame=60, skip_last_date=skip_last_date, four_price_doji=True)  # Минутные бары (с 11.12.2007)
+    # save_candles_to_file(ap_provider, board=board, symbols=symbols, time_frame=60, skip_last_date=skip_last_date, four_price_doji=True)  # Минутные бары (с 11.12.2017)
 
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket
 

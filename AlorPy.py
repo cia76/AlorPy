@@ -1760,10 +1760,11 @@ class AlorPy:
         :param str symbol: Тикер
         :return: Биржа 'MOEX' или 'SPBX'
         """
-        for ex in self.exchanges:  # Пробегаемся по всем биржам
-            si = self.get_symbol_info(ex, symbol)  # Получаем информацию о тикере
+        for exchange in self.exchanges:  # Пробегаемся по всем биржам
+            si = self.get_symbol_info(exchange, symbol)  # Получаем информацию о тикере
             if si and si['board'] == board:  # Если информация о тикере найдена, и режим торгов есть на бирже
-                return ex  # то биржа найдена
+                return exchange  # то биржа найдена
+        self.logger.warning(f'Биржа для {board}.{symbol} не найдена')
         return None  # Если биржа не была найдена, то возвращаем пустое значение
 
     def get_symbol_info(self, exchange, symbol, reload=False):

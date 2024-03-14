@@ -38,7 +38,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 last_price = ap_provider.alor_price_to_price(exchange, symbol, last_alor_price)  # Последняя цена
                 logger.info(f'  - Позиция {si["board"]}.{symbol} ({position["shortName"]}) {size} @ {entry_price} / {last_price}')
             value = round(ap_provider.get_risk(portfolio, exchange)['portfolioEvaluation'], 2)  # Общая стоимость портфеля
-            cash = round(ap_provider.get_portfolio_summary(portfolio, exchange)['buyingPowerByCurrency'][0]['buyingPower'], 2)  # Свободные средства
+            cash = next((position['volume'] for position in ap_provider.get_positions(portfolio, exchange, False) if position['symbol'] == 'RUB'), 0)  # Свободные средства через денежную позицию
             logger.info(f'  - Позиции {round(value - cash, 2)} + Свободные средства {cash} = {value}')
             orders = ap_provider.get_orders(portfolio, exchange)  # Получаем список активных заявок
             for order in orders:  # Пробегаемся по всем активным заявкам

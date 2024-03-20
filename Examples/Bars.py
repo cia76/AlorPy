@@ -66,6 +66,8 @@ def save_candles_to_file(ap_provider=AlorPy(), board='TQBR', symbols=('SBER',), 
         if type(time_frame) is not str:  # Для внутридневных баров (time_frame число)
             pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
         pd_bars.index = pd_bars['datetime']  # Это будет индексом
+        si = ap_provider.get_symbol(exchange, symbol)  # Получаем информацию о тикере
+        pd_bars['volume'] *= si['lotsize']  # Объем в штуках
         pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время нужна, чтобы не удалять одинаковые OHLCV на разное время
         pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
         logger.info(f'Первый бар: {pd_bars.index[0]}')

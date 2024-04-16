@@ -1784,7 +1784,7 @@ class AlorPy:
         return self.symbols[(exchange, symbol)]  # Возвращаем значение из справочника
 
     @staticmethod
-    def timeframe_to_alor_timeframe(tf) -> tuple[str, bool]:
+    def timeframe_to_alor_timeframe(tf) -> tuple[Union[str, int], bool]:
         """Перевод временнОго интервала во временной интервал Алора
 
         :param str tf: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
@@ -1795,7 +1795,7 @@ class AlorPy:
         if tf[0:1] in ('D', 'W', 'Y'):  # Дневной/недельный/годовой интервалы
             return tf[0:1], False
         if tf[0:1] == 'M':  # Минутный временной интервал
-            return f'{int(tf[1:]) * 60}', True  # переводим из минут в секунды
+            return int(tf[1:]) * 60, True  # переводим из минут в секунды
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
     @staticmethod

@@ -17,7 +17,7 @@ def log_bar(response):  # Вывод в лог полученного бара
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     logger = logging.getLogger('AlorPy.Connect')  # Будем вести лог
     ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
-    # ap_provider = AlorPy(demo=True)  # Подключаемся к демо счету
+    # ap_provider = AlorPy(demo=True)  # Подключаемся к демо счетам
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты

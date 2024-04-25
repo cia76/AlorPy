@@ -26,19 +26,29 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     for account in ap_provider.accounts:  # Пробегаемся по всем счетам
         portfolio = account['portfolio']  # Портфель
-        logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio}')
+        stocks_account = portfolio[0] == 'D'  # Портфели фондового рынка начинаются на D, и имеют формат D12345
+        futures_account = portfolio[0:3] == '750'  # Портфели срочного рынка начинаются на 750, и имеют формат 750***
+        cets_account = portfolio[0] == 'G'  # Портфели валютного рынка начинаются на G, и имеют формат G12345
+        logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio} ({"Фондовый" if stocks_account else "Срочный" if futures_account else "Валютный" if exchange_account else "Неизвестный"} рынок)')
         for exchange in account['exchanges']:  # Пробегаемся по всем биржам
             logger.info(f'- Биржа {exchange}')
-            for position in ap_provider.get_positions(portfolio, exchange, True):  # Пробегаемся по всем позициям без денежной позиции
+            positions = ap_provider.get_positions(portfolio, exchange)  # Все позиции (с денежной позицией)
+            for position in positions:  # Пробегаемся по всем позициям
                 symbol = position['symbol']  # Тикер
+                if symbol == 'RUB':  # Если получаем денежную позицию
+                    continue  # то ее пропускаем
                 si = ap_provider.get_symbol(exchange, symbol)  # Информация о тикере
                 size = position['qty'] * si['lotsize']  # Кол-во в штуках
                 entry_price = ap_provider.alor_price_to_price(exchange, symbol, position['avgPrice'])  # Цена входа
                 last_alor_price = ap_provider.price_to_alor_price(exchange, symbol, position['currentVolume'] / size)  # Последняя цена Алора
                 last_price = ap_provider.alor_price_to_price(exchange, symbol, last_alor_price)  # Последняя цена
                 logger.info(f'  - Позиция {si["board"]}.{symbol} ({position["shortName"]}) {size} @ {entry_price} / {last_price}')
-            value = round(ap_provider.get_risk(portfolio, exchange)['portfolioLiquidationValue'], 2)  # Общая стоимость портфеля
-            cash = next((position['volume'] for position in ap_provider.get_positions(portfolio, exchange, False) if position['symbol'] == 'RUB'), 0)  # Свободные средства через денежную позицию
+            risk = ap_provider.get_risk(portfolio, exchange)  # Общую стоимость портфеля будем получать из рисков
+            value = round(risk['portfolioLiquidationValue'], 2)  # Общая стоимость портфеля
+            if futures_account:  # Для счета срочного рынка
+                cash = round(ap_provider.get_forts_risk(portfolio, exchange)['moneyFree'], 2)  # Свободные средства. Сумма рублей и залогов, дисконтированных в рубли, доступная для открытия позиций. (MoneyFree = MoneyAmount + VmInterCl – MoneyBlocked – VmReserve – Fee)
+            else:  # Для остальных счетов
+                cash = next((position['volume'] for position in positions if position['symbol'] == 'RUB'), 0)  # Свободные средства через денежную позицию
             logger.info(f'  - Позиции {round(value - cash, 2)} + Свободные средства {cash} = {value}')
             orders = ap_provider.get_orders(portfolio, exchange)  # Получаем список активных заявок
             for order in orders:  # Пробегаемся по всем активным заявкам

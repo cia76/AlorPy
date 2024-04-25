@@ -1826,6 +1826,8 @@ class AlorPy:
         primary_board = si['primary_board']  # Рынок тикера
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             alor_price = price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+        elif primary_board == 'RFUD':  # Для фьючерсов
+            alor_price = price / si['facevalue']
         elif primary_board == 'CETS':  # Для валют
             alor_price = price / si.lot * si['facevalue']
         else:  # В остальных случаях
@@ -1847,6 +1849,8 @@ class AlorPy:
         primary_board = si['primary_board']  # Код площадки
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             price = alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+        elif primary_board == 'RFUD':  # Для фьючерсов
+            price = alor_price * si['facevalue']
         elif primary_board == 'CETS':  # Для валют
             price = alor_price * si.lot / si['facevalue']
         else:  # В остальных случаях

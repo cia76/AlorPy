@@ -29,7 +29,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
         securities_account = portfolio[0] == 'D'  # Портфели фондового рынка начинаются на D, и имеют формат D12345
         derivatives_account = portfolio[0:3] == '750'  # Портфели срочного рынка начинаются на 750, и имеют формат 750***
         fx_account = portfolio[0] == 'G'  # Портфели валютного рынка начинаются на G, и имеют формат G12345
-        logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio} ({"Фондовый" if securities_account else "Срочный" if derivatives_account else "Валютный" if exchange_account else "Неизвестный"} рынок)')
+        logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio} ({"Фондовый" if securities_account else "Срочный" if derivatives_account else "Валютный" if fx_account else "Неизвестный"} рынок)')
         for exchange in account['exchanges']:  # Пробегаемся по всем биржам
             logger.info(f'- Биржа {exchange}')
             positions = ap_provider.get_positions(portfolio, exchange)  # Все позиции (с денежной позицией)

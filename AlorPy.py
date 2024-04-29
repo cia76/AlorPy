@@ -1727,6 +1727,8 @@ class AlorPy:
                 if si:  # Если тикер найден на бирже
                     board = si['board']  # то подставляем его код режима торгов
                     break  # Выходим, дальше не продолжаем
+        if board == 'SPBFUT':  # Для фьючерсов
+            board = 'RFUD'  # Меняем код режима торгов на принятое в Алоре
         return board, symbol  # Возвращаем биржу и код тикера
 
     @staticmethod
@@ -1737,6 +1739,8 @@ class AlorPy:
         :param str symbol: Тикер
         :return: Название тикера
         """
+        if board == 'RFUD':  # Для фьючерсов
+            board = 'SPBFUT'  # Меняем код режима торгов на каноническое
         return f'{board}.{symbol}'
 
     def get_account(self, board, account_id=0) -> Union[dict, None]:

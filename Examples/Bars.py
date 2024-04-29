@@ -93,7 +93,7 @@ def save_candles_to_file(ap_provider=AlorPy(), board='TQBR', symbols=('SBER',), 
     :param bool skip_last_date: Убрать бары на последнюю полученную дату
     :param bool four_price_doji: Оставить бары с дожи 4-х цен
     """
-    time_frame, intraday = ap_provider.timeframe_to_alor_timeframe(tf)  # Временной интервал Alor, внутридневной интервал
+    _, intraday = ap_provider.timeframe_to_alor_timeframe(tf)  # Временной интервал Alor, внутридневной интервал
     for symbol in symbols:  # Пробегаемся по всем тикерам
         file_bars = load_candles_from_file(board, symbol, tf, datapath, delimiter, dt_format)  # Получаем бары из файла
         if file_bars.empty:  # Если файла нет
@@ -102,7 +102,7 @@ def save_candles_to_file(ap_provider=AlorPy(), board='TQBR', symbols=('SBER',), 
             last_date: datetime = file_bars.index[-1]  # Дата и время последнего бара
             seconds_from = ap_provider.msk_datetime_to_utc_timestamp(last_date + timedelta(seconds=1)) if intraday else \
                 ap_provider.msk_datetime_to_utc_timestamp(last_date + timedelta(days=1))  # Смещаем время на возможный следующий бар по UTC
-        pd_bars = get_candles_from_provider(ap_provider, board, symbol, time_frame, seconds_from)  # Получаем бары из провайдера
+        pd_bars = get_candles_from_provider(ap_provider, board, symbol, tf, seconds_from)  # Получаем бары из провайдера
         if pd_bars.empty:  # Если бары не получены
             logger.info('Новых бар нет')
             continue  # то переходим к следующему тикеру, дальше не продолжаем

@@ -81,7 +81,7 @@ def get_candles_from_provider(ap_provider=AlorPy(), class_code='TQBR', security_
 # noinspection PyShadowingNames
 def save_candles_to_file(ap_provider=AlorPy(), class_code='TQBR', security_codes=('SBER',), tf='D1',
                          skip_first_date=False, skip_last_date=False, four_price_doji=False):
-    """Получение новых бар из провайдера, объединение с имеющимися барами в файле (если есть), сохранение баров в файл
+    """Получение новых бар из провайдера, объединение с имеющимися барами в файле (если есть), сохранение бар в файл
 
     :param AlorPy ap_provider: Провайдер Alor
     :param str class_code: Код режима торгов

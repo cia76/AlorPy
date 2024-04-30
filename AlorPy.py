@@ -20,7 +20,7 @@ from AlorPy import Config  # Файл конфигурации
 
 # noinspection PyShadowingBuiltins
 class AlorPy:
-    """Работа с Alor OpenAPI V2 из Python https://alor.dev/docs"""
+    """Работа с Alor OpenAPI V2 https://alor.dev/docs из Python"""
     requests.adapters.DEFAULT_RETRIES = 10  # Настройка кол-ва попыток
     requests.adapters.DEFAULT_POOL_TIMEOUT = 10  # Настройка таймауту запроса в секундах
     tz_msk = timezone('Europe/Moscow')  # Время UTC будем приводить к московскому времени

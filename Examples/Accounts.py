@@ -40,8 +40,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 si = ap_provider.get_symbol(exchange, symbol)  # Информация о тикере
                 size = position['qty'] * si['lotsize']  # Кол-во в штуках
                 entry_price = ap_provider.alor_price_to_price(exchange, symbol, position['avgPrice'])  # Цена входа
-                last_alor_price = ap_provider.price_to_alor_price(exchange, symbol, position['currentVolume'] / size)  # Последняя цена Алора
-                last_price = ap_provider.alor_price_to_price(exchange, symbol, last_alor_price)  # Последняя цена
+                last_price = position['currentVolume'] / size  # Последняя цена по bid/ask
                 logger.info(f'  - Позиция {si["board"]}.{symbol} ({position["shortName"]}) {size} @ {entry_price} / {last_price}')
             risk = ap_provider.get_risk(portfolio, exchange)  # Общую стоимость портфеля будем получать из рисков
             value = round(risk['portfolioLiquidationValue'], 2)  # Общая стоимость портфеля

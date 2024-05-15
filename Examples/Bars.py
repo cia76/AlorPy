@@ -9,7 +9,7 @@ from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
 logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог. Определяем здесь, т.к. возможен внешний вызов ф-ии
-datapath = os.path.join('..', '..', 'Data', 'Alor', '')  # Путь сохранения файла истории
+datapath = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'Data', 'Alor', '')  # Путь сохранения файла истории
 delimiter = '\t'  # Разделитель значений в файле истории. По умолчанию табуляция
 dt_format = '%d.%m.%Y %H:%M'  # Формат представления даты и времени в файле истории. По умолчанию русский формат
 

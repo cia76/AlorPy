@@ -25,14 +25,11 @@ if __name__ == '__main__':  # Точка входа при запуске это
     class_code = 'TQBR'  # Акции ММВБ
 
     # Алор понимает только такой формат фьючерсов. В остальных случаях он возвращает None после постановки заявки. Заявку не ставит
-    # symbol = 'SI-3.24'  # Для фьючерсов: <Код тикера>-<Месяц экспирации: 3, 6, 9, 12>.<Две последнии цифры года>
-    # symbol = 'RTS-3.24'
+    # symbol = 'SI-6.24'  # Для фьючерсов: <Код тикера>-<Месяц экспирации: 3, 6, 9, 12>.<Две последнии цифры года>
+    # symbol = 'RTS-6.24'
     # class_code = 'SPBFUT'  # Фьючерсы
 
     portfolio = ap_provider.get_account(class_code)['portfolio']  # Название портфеля по коду режима торгов
-    si = ap_provider.get_symbol(exchange, symbol)  # Получаем информацию о тикере
-    logger.debug(si)
-    min_step = si['minstep']  # Минимальный шаг цены
 
     quotes = ap_provider.get_quotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
     last_price = quotes['last_price']  # Последняя цена сделки
@@ -73,8 +70,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # sleep(10)  # Ждем 10 секунд
 
     # Новая лимитная заявка
-    limit_price = last_price * 0.99  # Лимитная цена на 1% ниже последней цены сделки
-    limit_price = limit_price // min_step * min_step  # Округляем цену кратно минимальному шагу цены
+    limit_price = ap_provider.price_to_alor_price(exchange, symbol, last_price * 0.99)  # Лимитная цена на 1% ниже последней цены сделки
     logger.info(f'Заявка {exchange}.{symbol} на покупку минимального лота по лимитной цене {limit_price}')
     response = ap_provider.create_limit_order(portfolio, exchange, symbol, 'buy', 1, limit_price)
     logger.debug(response)
@@ -91,8 +87,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     sleep(10)  # Ждем 10 секунд
 
     # Новая стоп заявка
-    stop_price = last_price * 1.01  # Стоп цена на 1% выше последней цены сделки
-    stop_price = stop_price // min_step * min_step  # Округляем цену кратно минимальному шагу цены
+    stop_price = ap_provider.price_to_alor_price(exchange, symbol, last_price * 1.01)  # Стоп цена на 1% выше последней цены сделки
     logger.info(f'Заявка {exchange}.{symbol} на покупку минимального лота по стоп цене {stop_price}')
     response = ap_provider.create_stop_order(portfolio, exchange, symbol, class_code, 'buy', 1, stop_price, 'MoreOrEqual')
     logger.debug(response)

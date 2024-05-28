@@ -40,7 +40,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 si = ap_provider.get_symbol(exchange, symbol)  # Информация о тикере
                 size = position['qty'] * si['lotsize']  # Кол-во в штуках
                 entry_price = ap_provider.alor_price_to_price(exchange, symbol, position['avgPrice'])  # Цена входа
-                last_price = position['currentVolume'] / size  # Последняя цена по bid/ask
+                # last_price = position['currentVolume'] / size  # Последняя цена по bid/ask
+                last_price = entry_price + position['unrealisedPl'] / size  # Последняя цена по бумажной прибыли/убытку
                 logger.info(f'  - Позиция {si["board"]}.{symbol} ({position["shortName"]}) {size} @ {entry_price} / {last_price}')
             risk = ap_provider.get_risk(portfolio, exchange)  # Общую стоимость портфеля будем получать из рисков
             value = round(risk['portfolioLiquidationValue'], 2)  # Общая стоимость портфеля
@@ -52,10 +53,18 @@ if __name__ == '__main__':  # Точка входа при запуске это
             orders = ap_provider.get_orders(portfolio, exchange)  # Получаем список активных заявок
             for order in orders:  # Пробегаемся по всем активным заявкам
                 if order['status'] == 'working':  # Если заявка еще не исполнилась
-                    logger.info(f'  - Заявка номер {order["id"]} {"Покупка" if order["side"] == "buy" else "Продажа"} {order["exchange"]}.{order["symbol"]} {order["qty"]} @ {order["price"]}')
+                    symbol = order['symbol']  # Тикер
+                    order_price = ap_provider.alor_price_to_price(exchange, symbol, order['price'])  # Цена заявки
+                    si = ap_provider.get_symbol(exchange, symbol)  # Информация о тикере
+                    order_qty = order['qty'] * si['lotsize']  # Кол-во в штуках
+                    logger.info(f'  - Заявка номер {order["id"]} {"Покупка" if order["side"] == "buy" else "Продажа"} {exchange}.{symbol} {order_qty} @ {order_price}')
             stop_orders = ap_provider.get_stop_orders(portfolio, exchange)  # Получаем список активных стоп заявок
             for stop_order in stop_orders:  # Пробегаемся по всем активным стоп заявкам
                 if stop_order['status'] == 'working':  # Если заявка еще не исполнилась
-                    logger.info(f'  - Стоп заявка номер {stop_order["id"]} {"Покупка" if stop_order["side"] == "buy" else "Продажа"} {stop_order["exchange"]}.{stop_order["symbol"]} {stop_order["qty"]} @ {stop_order["price"]}')
+                    symbol = stop_order['symbol']  # Тикер
+                    stop_order_price = ap_provider.alor_price_to_price(exchange, symbol, stop_order['price'])  # Цена срабатывания стоп заявки
+                    si = ap_provider.get_symbol(exchange, symbol)  # Информация о тикере
+                    stop_order_qty = stop_order['qty'] * si['lotsize']  # Кол-во в штуках
+                    logger.info(f'  - Стоп заявка номер {stop_order["id"]} {"Покупка" if stop_order["side"] == "buy" else "Продажа"} {exchange}.{symbol} {stop_order_qty} @ {stop_order_price}')
 
         ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

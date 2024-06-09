@@ -1764,6 +1764,8 @@ class AlorPy:
         :param str symbol: Тикер
         :return: Биржа 'MOEX' или 'SPBX'
         """
+        if board == 'SPBFUT':  # Для фьючерсов
+            board = 'RFUD'  # Меняем код режима торгов на принятое в Алоре
         for exchange in self.exchanges:  # Пробегаемся по всем биржам
             si = self.get_symbol_info(exchange, symbol)  # Получаем информацию о тикере
             if si and si['board'] == board:  # Если информация о тикере найдена, и режим торгов есть на бирже

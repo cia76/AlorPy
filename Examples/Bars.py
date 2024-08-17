@@ -15,7 +15,7 @@ dt_format = '%d.%m.%Y %H:%M'  # Формат представления даты
 
 
 # noinspection PyShadowingNames
-def load_candles_from_file(class_code='TQBR', security_code='SBER', tf='D1') -> pd.DataFrame:
+def load_candles_from_file(class_code, security_code, tf) -> pd.DataFrame:
     """Получение бар из файла
 
     :param str class_code: Код режима торгов
@@ -26,7 +26,8 @@ def load_candles_from_file(class_code='TQBR', security_code='SBER', tf='D1') -> 
     file_exists = os.path.isfile(filename)  # Существует ли файл
     if file_exists:  # Если файл существует
         logger.info(f'Получение файла {filename}')
-        file_bars = pd.read_csv(filename, sep=delimiter, parse_dates=['datetime'], date_format=dt_format, index_col='datetime')
+        file_bars = pd.read_csv(filename, sep=delimiter, parse_dates=['datetime'], date_format=dt_format)  # Получаем и разбираем бары из файла
+        file_bars.index = file_bars['datetime']  # Дата/время также будет индексом
         logger.info(f'Первый бар    : {file_bars.index[0]:{dt_format}}')
         logger.info(f'Последний бар : {file_bars.index[-1]:{dt_format}}')
         logger.info(f'Кол-во бар    : {len(file_bars)}')
@@ -37,7 +38,7 @@ def load_candles_from_file(class_code='TQBR', security_code='SBER', tf='D1') -> 
 
 
 # noinspection PyShadowingNames
-def get_candles_from_provider(ap_provider=AlorPy(), class_code='TQBR', security_code='SBER', tf='D1', seconds_from=0) -> pd.DataFrame:
+def get_candles_from_provider(ap_provider, class_code, security_code, tf, seconds_from=0) -> pd.DataFrame:
     """Получение бар из провайдера
 
     :param AlorPy ap_provider: Провайдер Alor
@@ -79,13 +80,13 @@ def get_candles_from_provider(ap_provider=AlorPy(), class_code='TQBR', security_
 
 
 # noinspection PyShadowingNames
-def save_candles_to_file(ap_provider=AlorPy(), class_code='TQBR', security_codes=('SBER',), tf='D1',
+def save_candles_to_file(ap_provider, class_code, security_codes, tf,
                          skip_first_date=False, skip_last_date=False, four_price_doji=False):
     """Получение новых бар из провайдера, объединение с имеющимися барами в файле (если есть), сохранение бар в файл
 
     :param AlorPy ap_provider: Провайдер Alor
     :param str class_code: Код режима торгов
-    :param tuple security_codes: Коды тикеров в виде кортежа
+    :param tuple[str] security_codes: Коды тикеров в виде кортежа
     :param str tf: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
     :param bool skip_first_date: Убрать бары на первую полученную дату
     :param bool skip_last_date: Убрать бары на последнюю полученную дату

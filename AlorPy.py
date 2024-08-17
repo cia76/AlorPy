@@ -1514,7 +1514,7 @@ class AlorPy:
         if response.status_code != 200:  # Если статус ошибки
             self.on_error(f'Ошибка сервера: {response.status_code} Запрос: {response.request.path_url} Ответ: {content}')  # Событие ошибки
             return None  # то возвращаем пустое значение
-        # self.logger.debug(f'Запрос: {response.request.path_url} Ответ: {content}')
+        # self.logger.debug(f'Запрос: {response.request.path_url} Ответ: {content}')  # Для отладки
         try:
             return loads(content)  # Декодируем JSON в справочник, возвращаем его. Ошибки также могут приходить в виде JSON
         except JSONDecodeError:  # Если произошла ошибка при декодировании JSON, например, при удалении заявок
@@ -1729,7 +1729,7 @@ class AlorPy:
                     break  # Выходим, дальше не продолжаем
         if board == 'SPBFUT':  # Для фьючерсов
             board = 'RFUD'  # Меняем код режима торгов на принятое в Алоре
-        return board, symbol  # Возвращаем биржу и код тикера
+        return board, symbol
 
     @staticmethod
     def board_symbol_to_dataname(board, symbol) -> str:
@@ -1858,7 +1858,7 @@ class AlorPy:
         elif primary_board == 'RFUD' and si['cfiCode'] == 'FFCCSX':  # Для вечных фьючерсов
             price = alor_price * si['facevalue']
         elif primary_board == 'CETS':  # Для валют
-            price = alor_price * si.lot / si['facevalue']
+            price = alor_price * si['lot'] / si['facevalue']
         else:  # В остальных случаях
             price = alor_price  # Цена не изменяется
         decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков

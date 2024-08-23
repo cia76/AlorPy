@@ -1,3 +1,4 @@
+import logging  # Будем вести лог
 from typing import Union  # Объединение типов
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 from datetime import datetime
@@ -6,7 +7,6 @@ from uuid import uuid4  # Номера подписок должны быть у
 from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
 from asyncio import get_event_loop, create_task, run, CancelledError  # Работа с асинхронными функциями
 from threading import Thread  # Подписки сервера WebSockets будем получать в отдельном потоке
-import logging  # Будем вести лог
 
 from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 import requests.adapters  # Настройки запросов/ответов

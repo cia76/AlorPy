@@ -18,7 +18,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     # Формат короткого имени для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>. Пример: SiU3, RIU3
     # Формат полного имени для фьючерсов: <Код тикера заглавными буквами>-<Месяц экспирации: 3, 6, 9, 12>.<Последние 2 цифры года>. Пример: SI-9.23, RTS-9.23
-    datanames = ('TQBR.SBER', 'TQBR.VTBR', 'RFUD.SiH4', 'RFUD.RIH4')  # Кортеж тикеров
+    datanames = ('TQBR.SBER', 'SPBFUT.SiU4', 'SPBFUT.RIU4', 'SPBFUT.BRU4', 'SPBFUT.CNYRUBF')  # Кортеж тикеров
 
     for dataname in datanames:  # Пробегаемся по всем тикерам
         board, symbol = ap_provider.dataname_to_board_symbol(dataname)  # Код режима торгов и тикер
@@ -30,10 +30,26 @@ if __name__ == '__main__':  # Точка входа при запуске это
         logger.debug(f'Ответ от сервера: {si}')
         logger.info(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}, {si["type"]}) на бирже {si["exchange"]}')
         logger.info(f'- Валюта: {si["currency"]}')
-        logger.info(f'- Лот: {si["lotsize"]}')
-        min_step = si['minstep']  # Шаг цены
-        logger.info(f'- Шаг цены: {min_step}')
-        decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
-        logger.info(f'- Кол-во десятичных знаков: {decimals}')
+        lot_size = si['lotsize'] if si['market'] == 'FOND' else si['facevalue']  # Лот для фондового и срочного/валютного рынков
+        logger.info(f'- Лот: {lot_size}')
+        min_price_step = si['minstep']  # Шаг цены
+        logger.info(f'- Шаг цены: {min_price_step}')
+        logger.info(f'- Кол-во десятичных знаков: {si["decimals"]}')
+        trade_account = next((account for account in ap_provider.accounts if board in account['boards']), None)
+        if not trade_account:  # Если торговый счет не найден
+            logger.error('Торговый счет не найден')
+        else:  # Торговый счет найден
+            logger.info(f'- Торговый счет: #{trade_account["account_id"]}, Договор: {trade_account["agreement"]}, Портфель: {trade_account["portfolio"]} ({"Фондовый" if trade_account["type"] == "securities" else "Срочный" if trade_account["type"] == "derivatives" else "Валютный" if trade_account["type"] == "fx" else "Неизвестный"} рынок)')
+        quotes = ap_provider.get_quotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
+        last_price = quotes['last_price'] if quotes else None  # Последняя цена сделки
+        logger.info(f'- Последняя цена сделки: {last_price}')
+        step_price = si['pricestep']  # Стоимость шага цены
+        logger.info(f'- Стоимость шага цены: {step_price} руб.')
+        if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
+            lot_price = last_price // min_price_step * step_price  # Цена за лот в рублях
+            logger.info(f'- Цена за лот: {last_price} / {min_price_step} * {step_price} = {lot_price} руб.')
+            pcs_price = lot_price / lot_size  # Цена за штуку в рублях
+            logger.info(f'- Цена за штуку: {lot_price} / {lot_size} = {pcs_price} руб.')
+            logger.info(f'- Последняя цена сделки: {ap_provider.price_to_alor_price(exchange, symbol, pcs_price)} из цены за штуку в рублях')
 
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

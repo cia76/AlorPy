@@ -26,10 +26,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     for account in ap_provider.accounts:  # Пробегаемся по всем счетам
         portfolio = account['portfolio']  # Портфель
-        securities_account = portfolio[0] == 'D'  # Портфели фондового рынка начинаются на D, и имеют формат D12345
-        derivatives_account = portfolio[0:3] == '750'  # Портфели срочного рынка начинаются на 750, и имеют формат 750***
-        fx_account = portfolio[0] == 'G'  # Портфели валютного рынка начинаются на G, и имеют формат G12345
-        logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio} ({"Фондовый" if securities_account else "Срочный" if derivatives_account else "Валютный" if fx_account else "Неизвестный"} рынок)')
+        logger.info(f'Счет #{account["account_id"]}, Договор: {account["agreement"]}, Портфель: {portfolio} ({"Фондовый" if account["type"] == "securities" else "Срочный" if account["type"] == "derivatives" else "Валютный" if account["type"] == "fx" else "Неизвестный"} рынок)')
+        logger.info(f'Режимы торгов: {account["boards"]}')
         for exchange in account['exchanges']:  # Пробегаемся по всем биржам
             logger.info(f'- Биржа {exchange}')
             positions = ap_provider.get_positions(portfolio, exchange)  # Все позиции (с денежной позицией)
@@ -45,7 +43,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
                 logger.info(f'  - Позиция {si["board"]}.{symbol} ({position["shortName"]}) {size} @ {entry_price} / {last_price}')
             risk = ap_provider.get_risk(portfolio, exchange)  # Общую стоимость портфеля будем получать из рисков
             value = round(risk['portfolioLiquidationValue'], 2)  # Общая стоимость портфеля
-            if derivatives_account:  # Для счета срочного рынка
+            if account['type'] == 'derivatives':  # Для счета срочного рынка
                 cash = round(ap_provider.get_forts_risk(portfolio, exchange)['moneyFree'], 2)  # Свободные средства. Сумма рублей и залогов, дисконтированных в рубли, доступная для открытия позиций. (MoneyFree = MoneyAmount + VmInterCl – MoneyBlocked – VmReserve – Fee)
             else:  # Для остальных счетов
                 cash = next((position['volume'] for position in positions if position['symbol'] == 'RUB'), 0)  # Свободные средства через денежную позицию

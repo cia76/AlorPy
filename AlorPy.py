@@ -82,8 +82,22 @@ class AlorPy:
             i = j = 0  # Начальная позиция договоров и портфелей
             for agreement in all_agreements:  # Пробегаемся по всем договорам
                 for portfolio in all_portfolios[j:j + 3]:  # К каждому договору привязаны 3 портфеля
-                    exchanges = self.exchanges if portfolio.startswith('D') else (self.exchanges[0],)  # Для фондового рынка берем все биржи. Для остальных только MOEX
-                    self.accounts.append(dict(account_id=i, agreement=agreement, portfolio=portfolio, exchanges=exchanges))  # Добавляем договор/портфель/биржи
+                    if portfolio.startswith('D'):  # Портфель счета фондового рынка начинается с D и имеет формат D12345
+                        type = 'securities'  # Тип счета
+                        exchanges = self.exchanges  # Все биржи
+                        boards = ('TQRD', 'TQOY', 'TQIF', 'TQBR', 'MTQR', 'TQOB', 'TQIR', 'EQRP_INFO', 'TQTF', 'FQDE', 'INDX', 'TQOD', 'FQBR', 'TQCB', 'TQPI', 'TQBD')  # Режимы торгов
+                    elif portfolio.startswith('G'):  # Портфель валютного счета начинается с G и имеет формат G12345
+                        type = 'fx'  # Тип счета
+                        exchanges = (self.exchanges[0],)  # Биржа MOEX
+                        boards = ('CETS_SU', 'INDXC', 'CETS')  # Режимы торгов
+                    elif portfolio.startswith('750'):  # Портфель счета срочного рынка начинается с 750 и имеет формат 750****
+                        type = 'derivatives'  # Тип счета
+                        exchanges = (self.exchanges[0],)  # Биржа MOEX
+                        boards = ('SPBOPT', 'OPTCOMDTY', 'OPTSPOT', 'SPBFUT', 'OPTCURNCY', 'RFUD', 'ROPD')  # Режимы торгов RFUD=SBPFUT, ROPD=SPBOPT
+                    else:  # Неизвестный портфель
+                        logging.warning(f'Не определен тип счета для договора {agreement}, портфеля {portfolio}')
+                        continue  # Переходим к следующему портфелю, дальше не продолжаем
+                    self.accounts.append(dict(account_id=i, agreement=agreement, portfolio=portfolio, type=type, exchanges=exchanges, boards=boards))  # Добавляем договор/портфель/биржи/режимы торгов
                 i += 1  # Смещаем на следующий договор
                 j += 3  # Смещаем на начальную позицию портфелей для следующего договора
         self.subscriptions = {}  # Справочник подписок. Для возобновления всех подписок после перезагрузки сервера Алор
@@ -304,7 +318,9 @@ class AlorPy:
         params = {'format': format}
         if instrument_group:
             params['instrumentGroup'] = instrument_group
-        return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}', params=params, headers=self.get_headers()))
+        result: dict = self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}', params=params, headers=self.get_headers()))  # Результат в виде словаря
+        result['decimals'] = int(log10(1 / result['minstep']) + 0.99)  # Кол-во десятичных знаков получаем из шага цены, добавляем в полученный словарь
+        return result
 
     def get_available_boards(self, exchange, symbol):
         """Получение списка бордов для выбранного финансового инструмента
@@ -1729,6 +1745,8 @@ class AlorPy:
                     break  # Выходим, дальше не продолжаем
         if board == 'SPBFUT':  # Для фьючерсов
             board = 'RFUD'  # Меняем код режима торгов на принятое в Алоре
+        elif board == 'SPBOPT':  # Для опционов
+            board = 'ROPD'  # Меняем код режима торгов на принятое в Алоре
         return board, symbol
 
     @staticmethod
@@ -1741,6 +1759,8 @@ class AlorPy:
         """
         if board == 'RFUD':  # Для фьючерсов
             board = 'SPBFUT'  # Меняем код режима торгов на каноническое
+        elif board == 'ROPD':  # Для опционов
+            board = 'SPBOPT'  # Меняем код режима торгов на каноническое
         return f'{board}.{symbol}'
 
     def get_account(self, board, account_id=0) -> Union[dict, None]:
@@ -1750,12 +1770,7 @@ class AlorPy:
         :param int account_id: Порядковый номер счета
         :return: Счет
         """
-        if board == 'CETS':  # Для валютного рынка
-            return next((account for account in self.accounts if account['account_id'] == account_id and account['portfolio'].startswith('G')), None)
-        elif board in ('RFUD', 'ROPD'):  # Для фьючерсов и опционов
-            return next((account for account in self.accounts if account['account_id'] == account_id and not account['portfolio'].startswith('G') and not account['portfolio'].startswith('D')), None)
-        else:  # Для остальных рынков
-            return next((account for account in self.accounts if account['account_id'] == account_id and account['portfolio'].startswith('D')), None)
+        return next((account for account in self.accounts if account['account_id'] == account_id and board in account['boards']), None)
 
     def get_exchange(self, board, symbol):
         """Биржа тикера из кода режима торгов и тикера
@@ -1766,6 +1781,8 @@ class AlorPy:
         """
         if board == 'SPBFUT':  # Для фьючерсов
             board = 'RFUD'  # Меняем код режима торгов на принятое в Алоре
+        elif board == 'SPBOPT':  # Для опционов
+            board = 'ROPD'  # Меняем код режима торгов на принятое в Алоре
         for exchange in self.exchanges:  # Пробегаемся по всем биржам
             si = self.get_symbol_info(exchange, symbol)  # Получаем информацию о тикере
             if si and si['board'] == board:  # Если информация о тикере найдена, и режим торгов есть на бирже
@@ -1820,49 +1837,82 @@ class AlorPy:
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
     def price_to_alor_price(self, exchange, symbol, price) -> float:
-        """Перевод цены в цену Алор
+        """Перевод цены за штуку в рублях в цену Алор
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param float price: Цена
+        :param float price: Цена за штуку в рублях
         :return: Цена в Алор
         """
         si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
-        min_step = si['minstep']  # Шаг цены
+        min_price_step = si['minstep']  # Шаг цены
+        alor_price = price  # Изначально считаем, что цена не изменится
         primary_board = si['primary_board']  # Рынок тикера
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             alor_price = price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
-        elif primary_board == 'RFUD' and si['cfiCode'] == 'FFCCSX':  # Для вечных фьючерсов
-            alor_price = price / si['facevalue']
+        elif primary_board == 'RFUD':  # Для рынка фьючерсов
+            lot_size = si['facevalue']  # Лот
+            step_price = si['pricestep']  # Стоимость шага цены
+            if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
+                lot_price = price * lot_size  # Цена за лот в рублях
+                alor_price = lot_price * min_price_step / step_price  # Цена
         elif primary_board == 'CETS':  # Для валют
             alor_price = price / si.lot * si['facevalue']
-        else:  # В остальных случаях
-            alor_price = price  # Цена не изменяется
-        decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
-        return round(alor_price // min_step * min_step, decimals)  # Округляем цену кратно шага цены
+        alor_price = round(alor_price // min_price_step * min_price_step, si['decimals'])  # Округляем цену кратно шага цены
+        return int(alor_price) if alor_price.is_integer() else alor_price  # Если возможно, приводим цену к целому числу
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
-        """Перевод цены Алор в цену
+        """Перевод цены Алор в цену за штуку в рублях
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
         :param float alor_price: Цена в Алор
-        :return: Цена
+        :return: Цена за штуку в рублях
         """
-        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
-        min_step = si['minstep']  # Шаг цены
-        alor_price = alor_price // min_step * min_step  # Цена кратная шагу цены
+        si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         primary_board = si['primary_board']  # Код площадки
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
-            price = alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
-        elif primary_board == 'RFUD' and si['cfiCode'] == 'FFCCSX':  # Для вечных фьючерсов
-            price = alor_price * si['facevalue']
+            return alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+        elif primary_board == 'RFUD':  # Для фьючерсов
+            lot_size = si['facevalue']  # Лот
+            step_price = si['pricestep']  # Стоимость шага цены
+            if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
+                min_price_step = si['minstep']  # Шаг цены
+                lot_price = alor_price // min_price_step * step_price  # Цена за лот
+                return lot_price / lot_size  # Цена за штуку
         elif primary_board == 'CETS':  # Для валют
-            price = alor_price * si['lot'] / si['facevalue']
-        else:  # В остальных случаях
-            price = alor_price  # Цена не изменяется
-        decimals = int(log10(1 / min_step) + 0.99)  # Из шага цены получаем кол-во десятичных знаков
-        return round(price, decimals)  # Округляем цену
+            return alor_price * si['lot'] / si['facevalue']
+        return alor_price
+
+    def lots_to_size(self, exchange, symbol, lots) -> int:
+        """Перевод лотов в штуки
+
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str symbol: Тикер
+        :param int lots: Кол-во лотов
+        :return: Кол-во штук
+        """
+        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
+        if si:  # Если тикер найден
+            lot_size = si['lotsize']  # Кол-во штук в лоте
+            if lot_size:  # Если задано кол-во штук в лоте
+                return int(lots * lot_size)  # то возвращаем кол-во в штуках
+        return lots  # В остальных случаях возвращаем кол-во в лотах
+
+    def size_to_lots(self, exchange, symbol, size) -> int:
+        """Перевод штуки в лоты
+
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str symbol: Тикер
+        :param int size: Кол-во штук
+        :return: Кол-во лотов
+        """
+        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
+        if si:  # Если тикер найден
+            lot_size = int(si['lotsize'])  # Кол-во штук в лоте
+            if lot_size:  # Если задано кол-во штук
+                return size // lot_size  # то возвращаем кол-во в лотах
+        return size  # В остальных случаях возвращаем кол-во в штуках
 
     def msk_datetime_to_utc_timestamp(self, dt) -> int:
         """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC

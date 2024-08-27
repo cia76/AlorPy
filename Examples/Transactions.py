@@ -70,7 +70,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # sleep(10)  # Ждем 10 секунд
 
     # Новая лимитная заявка
-    limit_price = ap_provider.price_to_alor_price(exchange, symbol, last_price * 0.99)  # Лимитная цена на 1% ниже последней цены сделки
+    limit_price = last_price * 0.99  # Лимитная цена на 1% ниже последней цены сделки
     logger.info(f'Заявка {exchange}.{symbol} на покупку минимального лота по лимитной цене {limit_price}')
     response = ap_provider.create_limit_order(portfolio, exchange, symbol, 'buy', 1, limit_price)
     logger.debug(response)
@@ -87,7 +87,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     sleep(10)  # Ждем 10 секунд
 
     # Новая стоп заявка
-    stop_price = ap_provider.price_to_alor_price(exchange, symbol, last_price * 1.01)  # Стоп цена на 1% выше последней цены сделки
+    stop_price = last_price * 1.01  # Стоп цена на 1% выше последней цены сделки
     logger.info(f'Заявка {exchange}.{symbol} на покупку минимального лота по стоп цене {stop_price}')
     response = ap_provider.create_stop_order(portfolio, exchange, symbol, class_code, 'buy', 1, stop_price, 'MoreOrEqual')
     logger.debug(response)

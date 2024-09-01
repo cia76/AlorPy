@@ -1836,12 +1836,28 @@ class AlorPy:
             return f'M{int(tf) // 60}', True  # переводим из секунд в минуты
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
-    def price_to_alor_price(self, exchange, symbol, price) -> float:
-        """Перевод цены за штуку в рублях в цену Алор
+    def price_to_valid_price(self, exchange, symbol, alor_price) -> Union[int, float]:
+        """Перевод цены в цену, которую примет Алор в заявке
+
+        :param str exchange: Биржа 'MOEX' или 'SPBX'
+        :param str symbol: Тикер:param str class_code: Код режима торгов
+        :param float alor_price: Цена в Алор
+        :return: Цена, которую примет Алор в зявке
+        """
+        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
+        min_price_step = si['minstep']  # Шаг цены
+        valid_price = alor_price // min_price_step * min_price_step  # Цена должна быть кратна шагу цены
+        decimals = si['decimals']  # Кол-во десятичных знаков
+        if decimals > 0:  # Если задано кол-во десятичных знаков
+            return round(valid_price, decimals)  # то округляем цену кратно шага цены, возвращаем ее
+        return int(valid_price)  # Если кол-во десятичных знаков = 0, то переводим цену в целое число
+
+    def price_to_alor_price(self, exchange, symbol, price) -> Union[int, float]:
+        """Перевод цены в рублях за штуку в цену Алор
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
-        :param float price: Цена за штуку в рублях
+        :param float price: Цена в рублях за штуку
         :return: Цена в Алор
         """
         si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
@@ -1854,20 +1870,19 @@ class AlorPy:
             lot_size = si['facevalue']  # Лот
             step_price = si['pricestep']  # Стоимость шага цены
             if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
-                lot_price = price * lot_size  # Цена за лот в рублях
+                lot_price = price * lot_size  # Цена в рублях за лот
                 alor_price = lot_price * min_price_step / step_price  # Цена
         elif primary_board == 'CETS':  # Для валют
-            alor_price = price / si.lot * si['facevalue']
-        alor_price = round(alor_price // min_price_step * min_price_step, si['decimals'])  # Округляем цену кратно шага цены
-        return int(alor_price) if alor_price.is_integer() else alor_price  # Если возможно, приводим цену к целому числу
+            alor_price = price / si.lot * si['facevalue']  # Цена
+        return self.price_to_valid_price(exchange, symbol, alor_price)  # Возращаем цену, которую примет Алор в заявке
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
-        """Перевод цены Алор в цену за штуку в рублях
+        """Перевод цены Алор в цену в рублях за штуку
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
         :param str symbol: Тикер
         :param float alor_price: Цена в Алор
-        :return: Цена за штуку в рублях
+        :return: Цена в рублях за штуку
         """
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         primary_board = si['primary_board']  # Код площадки
@@ -1892,7 +1907,7 @@ class AlorPy:
         :param int lots: Кол-во лотов
         :return: Кол-во штук
         """
-        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
+        si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         if si:  # Если тикер найден
             lot_size = si['lotsize']  # Кол-во штук в лоте
             if lot_size:  # Если задано кол-во штук в лоте
@@ -1907,7 +1922,7 @@ class AlorPy:
         :param int size: Кол-во штук
         :return: Кол-во лотов
         """
-        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
+        si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         if si:  # Если тикер найден
             lot_size = int(si['lotsize'])  # Кол-во штук в лоте
             if lot_size:  # Если задано кол-во штук

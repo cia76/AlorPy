@@ -69,7 +69,13 @@ def get_candles_from_provider(ap_provider, class_code, security_code, tf, second
         pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
     pd_bars.index = pd_bars['datetime']  # В индекс ставим дату/время
     pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время нужна, чтобы не удалять одинаковые OHLCV на разное время
-    pd_bars.volume = pd.to_numeric(pd_bars.volume, downcast='integer')  # Объемы могут быть только целыми
+    pd_bars['volume'] = pd_bars['volume'].astype('int64')  # Объемы могут быть только целыми
+    si = ap_provider.get_symbol_info(exchange, security_code)  # Спецификация тикера
+    if not si['decimals']:  # Если кол-во десятичных знаков = 0, то цены - целые значения
+        pd_bars['open'] = pd_bars['open'].astype('int64')
+        pd_bars['high'] = pd_bars['high'].astype('int64')
+        pd_bars['low'] = pd_bars['low'].astype('int64')
+        pd_bars['close'] = pd_bars['close'].astype('int64')
     logger.info(f'Первый бар    : {pd_bars.index[0]:{dt_format}}')
     logger.info(f'Последний бар : {pd_bars.index[-1]:{dt_format}}')
     logger.info(f'Кол-во бар    : {len(pd_bars)}')
@@ -144,16 +150,16 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     class_code = 'TQBR'  # Акции ММВБ
     security_codes = ('SBER',)  # Для тестов
-    # security_codes = ('SBER', 'VTBR', 'GAZP', 'NMTP', 'LKOH', 'BSPB', 'FESH', 'ALRS', 'YNDX', 'BELU',
-    #                   'GMKN', 'MTLR', 'HYDR', 'MAGN', 'SNGSP', 'NVTK', 'ROSN', 'TATN', 'SBERP', 'CHMF',
-    #                   'MGNT', 'RTKM', 'TRNFP', 'MTSS', 'FEES', 'SNGS', 'NLMK', 'PLZL', 'RNFT', 'MOEX',
-    #                   'DVEC', 'TGKA', 'MTLRP', 'RUAL', 'TRMK', 'IRAO', 'SMLT', 'AFKS', 'AFLT', 'PIKK')  # TOP 40 акций ММВБ
+    # security_codes = ('GAZP', 'SBER', 'LKOH', 'MTLR', 'TCSG', 'VTBR', 'NVTK', 'ROSN', 'GMKN', 'PLZL',
+    #                   'SGZH', 'MVID', 'TRNFP', 'AFLT', 'AFKS', 'MTLRP', 'NLMK', 'MTSS', 'TATN', 'SBERP',
+    #                   'VKCO', 'MOEX', 'SMLT', 'ALRS', 'CHMF', 'RNFT', 'BSPB', 'MAGN', 'FLOT', 'POSI',
+    #                   'RUAL', 'PHOR', 'IRAO', 'PIKK', 'AQUA', 'RTKM', 'UPRO', 'TATNP', 'FEES', 'SELG')  # TOP 40 акций ММВБ
     # class_code = 'SPBFUT'  # Фьючерсы (RFUD)
-    # security_codes = ('SiM4', 'RIM4')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
+    # security_codes = ('SiU4', 'RIU4')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     # security_codes = ('USDRUBF', 'EURRUBF', 'CNYRUBF', 'GLDRUBF', 'IMOEXF')  # Вечные фьючерсы ММВБ
 
-    skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
-    # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
+    # skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
+    skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
     save_candles_to_file(ap_provider, class_code, security_codes, 'D1', skip_last_date=skip_last_date, four_price_doji=True)  # Дневные бары (с начала)
     # save_candles_to_file(ap_provider, class_code, security_codes, 'M60', skip_last_date=skip_last_date)  # Часовые бары (с 11.12.2017)
     # save_candles_to_file(ap_provider, class_code, security_codes, 'M15', skip_last_date=skip_last_date)  # 15-и минутные бары (с 11.12.2017)

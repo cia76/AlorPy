@@ -158,8 +158,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # security_codes = ('SiU4', 'RIU4')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
     # security_codes = ('USDRUBF', 'EURRUBF', 'CNYRUBF', 'GLDRUBF', 'IMOEXF')  # Вечные фьючерсы ММВБ
 
-    # skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
-    skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
+    skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
+    # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
     save_candles_to_file(ap_provider, class_code, security_codes, 'D1', skip_last_date=skip_last_date, four_price_doji=True)  # Дневные бары (с начала)
     # save_candles_to_file(ap_provider, class_code, security_codes, 'M60', skip_last_date=skip_last_date)  # Часовые бары (с 11.12.2017)
     # save_candles_to_file(ap_provider, class_code, security_codes, 'M15', skip_last_date=skip_last_date)  # 15-и минутные бары (с 11.12.2017)

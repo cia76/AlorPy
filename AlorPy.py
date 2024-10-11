@@ -77,11 +77,11 @@ class AlorPy:
         self.accounts = list()  # Счета (портфели по договорам)
         self.get_jwt_token()  # Получаем токен JWT
         if self.jwt_token_decoded:
-            all_agreements = self.jwt_token_decoded['agreements'].split(' ')  # Договоры
-            all_portfolios = self.jwt_token_decoded['portfolios'].split(' ')  # Портфели
-            i = j = 0  # Начальная позиция договоров и портфелей
+            all_agreements = self.jwt_token_decoded['agreements'].split(' ')  # Все договоры
+            all_portfolios = self.jwt_token_decoded['portfolios'].split(' ')  # Все портфели. К каждому договору привязаны 3 портфеля
+            account_id = portfolio_id = 0  # Начальная позиция договоров и портфелей
             for agreement in all_agreements:  # Пробегаемся по всем договорам
-                for portfolio in all_portfolios[j:j + 3]:  # К каждому договору привязаны 3 портфеля
+                for portfolio in all_portfolios[portfolio_id:portfolio_id + 3]:  # Пробегаемся по 3-м портфелям каждого договора
                     if portfolio.startswith('D'):  # Портфель счета фондового рынка начинается с D и имеет формат D12345
                         type = 'securities'  # Тип счета
                         exchanges = self.exchanges  # Все биржи
@@ -97,9 +97,9 @@ class AlorPy:
                     else:  # Неизвестный портфель
                         logging.warning(f'Не определен тип счета для договора {agreement}, портфеля {portfolio}')
                         continue  # Переходим к следующему портфелю, дальше не продолжаем
-                    self.accounts.append(dict(account_id=i, agreement=agreement, portfolio=portfolio, type=type, exchanges=exchanges, boards=boards))  # Добавляем договор/портфель/биржи/режимы торгов
-                i += 1  # Смещаем на следующий договор
-                j += 3  # Смещаем на начальную позицию портфелей для следующего договора
+                    self.accounts.append(dict(account_id=account_id, agreement=agreement, portfolio=portfolio, type=type, exchanges=exchanges, boards=boards))  # Добавляем договор/портфель/биржи/режимы торгов
+                account_id += 1  # Смещаем на следующий договор
+                portfolio_id += 3  # Смещаем на начальную позицию портфелей для следующего договора
         self.subscriptions = {}  # Справочник подписок. Для возобновления всех подписок после перезагрузки сервера Алор
         self.symbols = {}  # Справочник тикеров
 

@@ -1,5 +1,5 @@
 import logging  # Выводим лог на консоль и в файл
-from datetime import datetime, timedelta  # Дата и время, временной интервал
+from datetime import datetime  # Дата и время
 from time import time
 import os.path
 
@@ -27,7 +27,7 @@ def load_candles_from_file(class_code, security_code, tf) -> pd.DataFrame:
         logger.info(f'Получение файла {filename}')
         file_bars = pd.read_csv(filename,  # Имя файла
                                 sep=delimiter,  # Разделитель значений
-                                usecols=['datetime', 'open', 'high', 'low', 'close', 'volume'],  # Для ускорения обработки задаем колонки, которые будут нужны для исследований
+                                usecols=['datetime', 'open', 'high', 'low', 'close', 'volume'],  # Для ускорения обработки задаем названия колонокки
                                 parse_dates=['datetime'],  # Колонку datetime разбираем как дату/время
                                 dayfirst=True,  # В дате/времени сначала идет день, затем месяц и год
                                 index_col='datetime')  # Индексом будет колонка datetime  # Дневки тикера
@@ -106,9 +106,9 @@ def save_candles_to_file(ap_provider, class_code, security_codes, tf='D1',
         if file_bars.empty:  # Если файла нет
             seconds_from = 0  # Берем отметку времени, когда никакой тикер еще не торговался
         else:  # Если получили бары из файла
-            last_date: datetime = file_bars.index[-1]  # Дата и время последнего бара по МСК
-            seconds_from = ap_provider.msk_datetime_to_utc_timestamp(last_date + timedelta(seconds=1)) if intraday else \
-                ap_provider.msk_datetime_to_utc_timestamp(last_date + timedelta(days=1))  # Смещаем время на возможный следующий бар по UTC
+            last_date_time: datetime = file_bars.index[-1]  # Дата и время последнего полученного бара по МСК
+            # Возможно, последний бар был получен, когда он еще не был завершен. Поэтому, запросим новые бары вместе с последним по UTC
+            seconds_from = ap_provider.msk_datetime_to_utc_timestamp(last_date_time) if intraday else int(last_date_time.timestamp())
         pd_bars = get_candles_from_provider(ap_provider, class_code, security_code, tf, seconds_from)  # Получаем бары из провайдера
         if pd_bars.empty:  # Если бары не получены
             logger.info('Новых бар нет')
@@ -120,12 +120,12 @@ def save_candles_to_file(ap_provider, class_code, security_codes, tf='D1',
             logger.warning(f'Удалено бар на первую дату {first_date:{dt_format}}: {len_with_first_date - len(pd_bars)}')
         if skip_last_date:  # Если убираем бары на последнюю дату
             len_with_last_date = len(pd_bars)  # Кол-во бар до удаления на последнюю дату
-            last_date = pd_bars.index[-1].date()  # Последняя дата
-            pd_bars.drop(pd_bars[(pd_bars.index.date == last_date)].index, inplace=True)  # Удаляем их
+            last_date = pd_bars.index[-1].date()  # Дата последнего бара
+            pd_bars.drop(pd_bars[pd_bars.index.date == last_date].index, inplace=True)  # Удаляем их
             logger.warning(f'Удалено бар на последнюю дату {last_date:{dt_format}}: {len_with_last_date - len(pd_bars)}')
         if not four_price_doji:  # Если удаляем дожи 4-х цен
             len_with_doji = len(pd_bars)  # Кол-во бар до удаления дожи
-            pd_bars.drop(pd_bars[(pd_bars.high == pd_bars.low)].index, inplace=True)  # Удаляем их по условия High == Low
+            pd_bars.drop(pd_bars[pd_bars.high == pd_bars.low].index, inplace=True)  # Удаляем их по условия High == Low
             logger.warning(f'Удалено дожи 4-х цен: {len_with_doji - len(pd_bars)}')
         if len(pd_bars) == 0:  # Если нечего объединять
             logger.info('Новых бар нет')
@@ -156,19 +156,17 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # Пропускаем события запросов
 
     class_code = 'TQBR'  # Акции ММВБ
-    security_codes = ('SBER', 'GAZP')  # Для тестов
+    security_codes = ('SBER',)  # Для тестов
     # class_code = 'SPBFUT'  # Фьючерсы (RFUD)
     # security_codes = ('SiM5', 'RIM5')  # Формат фьючерса: <Тикер><Месяц экспирации><Последняя цифра года> Месяц экспирации: 3-H, 6-M, 9-U, 12-Z
-    # security_codes = ('USDRUBF', 'EURRUBF', 'CNYRUBF', 'GLDRUBF', 'IMOEXF', 'SBERF', 'GAZPF')  # Вечные фьючерсы ММВБ
+    # security_codes = ('USDRUBF', 'EURRUBF', 'CNYRUBF', 'GLDRUBF', 'IMOEXF', 'SBERF', 'GAZPF')  # Вечные фьючерсы https://www.moex.com/s3581
+    # time_frames = ('D1', 'M60', 'M15', 'M5', 'M1')  # ВременнЫе интервалы https://ru.wikipedia.org/wiki/Таймфрейм
+    time_frames = ('D1',)  # Для тестов
+    skip_last_date = True  # Не берем бары за дату незавершенной сессии
+    # skip_last_date = False  # Берем все бары
 
-    skip_last_date = True  # Если получаем данные внутри сессии, то не берем бары за дату незавершенной сессии
-    # skip_last_date = False  # Если получаем данные, когда рынок не работает, то берем все бары
-    save_candles_to_file(ap_provider, class_code, security_codes, 'D1', skip_last_date=skip_last_date, four_price_doji=True)  # Дневные бары (с начала)
-    # save_candles_to_file(ap_provider, class_code, security_codes, 'M60', skip_last_date=skip_last_date)  # Часовые бары (с 11.12.2017)
-    # save_candles_to_file(ap_provider, class_code, security_codes, 'M15', skip_last_date=skip_last_date)  # 15-и минутные бары (с 11.12.2017)
-    # save_candles_to_file(ap_provider, class_code, security_codes, 'M5', skip_last_date=skip_last_date)  # 5-и минутные бары (с 11.12.2017)
-    # save_candles_to_file(ap_provider, class_code, security_codes, 'M1', skip_last_date=skip_last_date, four_price_doji=True)  # Минутные бары (с 11.12.2017)
-
+    for time_frame in time_frames:  # Пробегаемся по всем временнЫм интервалам
+        four_price_doji = time_frames in ('D1', 'M1')  # Для дневных и минутных данных оставляем дожи 4-х цен (все цены одиннаковые)
+        save_candles_to_file(ap_provider, class_code, security_codes, 'D1', skip_last_date=skip_last_date, four_price_doji=four_price_doji)
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket
-
     logger.info(f'Скрипт выполнен за {(time() - start_time):.2f} с')

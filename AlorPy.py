@@ -468,7 +468,7 @@ class AlorPy:
             params['offset'] = offset
         return self.check_result(get(url=f'{self.api_server}/md/v2/risk/rates', params=params, headers=self.get_headers()))
 
-    def get_history(self, exchange, symbol, tf, seconds_from=1, seconds_to=32536799999, untraded=False, format='Simple'):
+    def get_history(self, exchange, symbol, tf, seconds_from=0, seconds_to=32536799999, untraded=False, format='Simple'):
         """Запрос истории рынка для выбранных биржи и финансового инструмента
 
         :param str exchange: Биржа 'MOEX' или 'SPBX'
@@ -479,9 +479,7 @@ class AlorPy:
         :param bool untraded: Флаг для поиска данных по устаревшим или экспирированным инструментам. При использовании требуется точное совпадение тикера
         :param str format: Формат принимаемых данных 'Simple', 'Slim', 'Heavy'
         """
-        # Если на from подаем точное время начала бара, то этот бар из Алор не передается. Возможно, проблема в том, что сервис Алора смотрит все даты >, а >= from
-        # Временное решение, вычитать 1 секунду
-        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': max(0, seconds_from - 1), 'to': seconds_to, 'untraded': untraded, 'format': format}
+        params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': seconds_from, 'to': seconds_to, 'untraded': untraded, 'format': format}
         return self.check_result(get(url=f'{self.api_server}/md/v2/history', params=params, headers=self.get_headers()))
 
     # Other - Другое

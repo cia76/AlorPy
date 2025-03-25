@@ -167,6 +167,6 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     for time_frame in time_frames:  # Пробегаемся по всем временнЫм интервалам
         four_price_doji = time_frames in ('D1', 'M1')  # Для дневных и минутных данных оставляем дожи 4-х цен (все цены одиннаковые)
-        save_candles_to_file(ap_provider, class_code, security_codes, 'D1', skip_last_date=skip_last_date, four_price_doji=four_price_doji)
+        save_candles_to_file(ap_provider, class_code, security_codes, time_frame, skip_last_date=skip_last_date, four_price_doji=four_price_doji)
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket
     logger.info(f'Скрипт выполнен за {(time() - start_time):.2f} с')

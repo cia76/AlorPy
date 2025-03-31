@@ -6,12 +6,12 @@ from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 # noinspection PyShadowingNames
 def log_bar(response):  # Вывод в лог полученного бара
-    seconds = response['data']['time']  # Время в Alor OpenAPI V2 передается в секундах, прошедших с 01.01.1970 00:00 UTC
-    dt_msk = datetime.utcfromtimestamp(seconds) if type(tf) is str else ap_provider.utc_timestamp_to_msk_datetime(seconds)  # Дневные бары и выше ставим на начало дня по UTC. Остальные - по МСК
+    response_data = response['data']  # Данные бара
+    utc_timestamp = response_data['time']  # Время в Alor OpenAPI V2 передается в секундах, прошедших с 01.01.1970 00:00 UTC
+    dt_msk = datetime.utcfromtimestamp(utc_timestamp) if type(tf) is str else ap_provider.utc_timestamp_to_msk_datetime(utc_timestamp)  # Дневные бары и выше ставим на начало дня по UTC. Остальные - по МСК
     str_dt_msk = dt_msk.strftime('%d.%m.%Y') if type(tf) is str else dt_msk.strftime('%d.%m.%Y %H:%M:%S')  # Для дневных баров и выше показываем только дату. Для остальных - дату и время по МСК
-    guid = response['guid']  # Код подписки
-    subscription = ap_provider.subscriptions[guid]  # Подписка
-    logger.info(f'{subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {str_dt_msk} - Open = {response["data"]["open"]}, High = {response["data"]["high"]}, Low = {response["data"]["low"]}, Close = {response["data"]["close"]}, Volume = {response["data"]["volume"]}')
+    subscription = ap_provider.subscriptions[response['guid']]  # Получаем данные подписки
+    logger.info(f'{subscription["exchange"]}.{subscription["code"]} ({subscription["tf"]}) - {str_dt_msk} - Open = {response_data["open"]}, High = {response_data["high"]}, Low = {response_data["low"]}, Close = {response_data["close"]}, Volume = {response_data["volume"]}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта

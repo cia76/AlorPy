@@ -1723,7 +1723,7 @@ class AlorPy:
 
     # Функции конвертации
 
-    def dataname_to_board_symbol(self, dataname) -> tuple[str, str]:
+    def dataname_to_board_symbol(self, dataname) -> tuple[Union[str, None], str]:
         """Код режима торгов и тикер из названия тикера
 
         :param str dataname: Название тикера
@@ -1736,15 +1736,14 @@ class AlorPy:
             symbol = '.'.join(symbol_parts[1:])  # Код тикера
         else:  # Если тикер задан без кода режима торгов
             symbol = dataname  # Код тикера
-            for ex in self.exchanges:  # Пробегаемся по всем биржам
-                si = self.get_symbol_info(ex, symbol)  # Получаем информацию о тикере
-                if si:  # Если тикер найден на бирже
-                    board = si['board']  # то подставляем его код режима торгов
-                    break  # Выходим, дальше не продолжаем
+            si = next((self.get_symbol_info(ex, symbol) for ex in self.exchanges), None)  # Пробуем получить спецификацию тикера на всех биржах
+            if si is None:  # Если спецификация тикера нигде не найдена
+                return board, symbol  # то возвращаем без кода режима торгов
+            board = si['board']  # Код режима торгов с биржи
         if board == 'SPBFUT':  # Для фьючерсов
-            board = 'RFUD'  # Меняем код режима торгов на принятое в Алоре
+            board = 'RFUD'  # Меняем канонический код режима торгов на Алор
         elif board == 'SPBOPT':  # Для опционов
-            board = 'ROPD'  # Меняем код режима торгов на принятое в Алоре
+            board = 'ROPD'  # Меняем канонический код режима торгов на Алор
         return board, symbol
 
     @staticmethod
@@ -1756,9 +1755,9 @@ class AlorPy:
         :return: Название тикера
         """
         if board == 'RFUD':  # Для фьючерсов
-            board = 'SPBFUT'  # Меняем код режима торгов на каноническое
+            board = 'SPBFUT'  # Меняем код режима торгов Алор на канонический
         elif board == 'ROPD':  # Для опционов
-            board = 'SPBOPT'  # Меняем код режима торгов на каноническое
+            board = 'SPBOPT'  # Меняем код режима торгов Алор на канонический
         return f'{board}.{symbol}'
 
     def get_account(self, board, account_id=0) -> Union[dict, None]:

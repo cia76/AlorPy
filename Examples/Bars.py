@@ -52,7 +52,8 @@ def get_candles_from_provider(ap_provider, class_code, security_code, tf, second
     :param int seconds_from: Дата и время открытия первого бара в кол-ве секунд, прошедших с 01.01.1970 00:00 UTC
     """
     time_frame, _ = ap_provider.timeframe_to_alor_timeframe(tf)  # Временной интервал Alor
-    exchange = ap_provider.get_exchange(class_code, security_code)  # Биржа
+    alor_board = ap_provider.board_to_alor_board(class_code)  # Код режима торгов Алора
+    exchange = ap_provider.get_exchange(alor_board, security_code)  # Биржа
     if not exchange:  # Если биржа не была найдена
         logger.error(f'Биржа для тикера {class_code}.{security_code} не найдена')
         return pd.DataFrame()  # то выходим, дальше не продолжаем
@@ -151,7 +152,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты
                         level=logging.DEBUG,  # Уровень логируемых событий NOTSET/DEBUG/INFO/WARNING/ERROR/CRITICAL
-                        handlers=[logging.FileHandler('Bars.log'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
+                        handlers=[logging.FileHandler('Bars.log', encoding='utf-8'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # Пропускаем события запросов
 

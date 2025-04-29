@@ -22,7 +22,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты
                         level=logging.DEBUG,  # Уровень логируемых событий NOTSET/DEBUG/INFO/WARNING/ERROR/CRITICAL
-                        handlers=[logging.FileHandler('Connect.log'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
+                        handlers=[logging.FileHandler('Connect.log', encoding='utf-8'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
     logging.getLogger('asyncio').setLevel(logging.CRITICAL + 1)  # Не пропускать в лог
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # события
@@ -35,22 +35,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # Проверяем работу подписок
     exchange = 'MOEX'  # Код биржи MOEX или SPBX
     symbol = 'SBER'  # Тикер
-    # symbol = 'SiH4'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    # symbol = 'SiM5'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
     tf = 60  # 60 = 1 минута, 300 = 5 минут, 3600 = 1 час, 'D' = день, 'W' = неделя, 'M' = месяц, 'Y' = год
     days = 3  # Кол-во последних календарных дней, за которые берем историю
     # tf = 'D'  # 1 день
     # days = 7  # Кол-во последних календарных дней, за которые берем историю
 
-    ap_provider.on_entering = lambda: logger.info('OnEntering. Начало входа (Thread)')
-    ap_provider.on_enter = lambda: logger.info('OnEnter. Вход (Thread)')
-    ap_provider.on_connect = lambda: logger.info('OnConnect. Подключение к серверу (Task)')
-    ap_provider.on_resubscribe = lambda: logger.info('OnResubscribe. Возобновление подписок (Task)')
-    ap_provider.on_ready = lambda: logger.info('OnReady. Готовность к работе (Task)')
-    ap_provider.on_disconnect = lambda: logger.info('OnDisconnect. Отключение от сервера (Task)')
-    ap_provider.on_timeout = lambda: logger.info('OnTimeout. Таймаут (Task)')
-    ap_provider.on_error = lambda response: logger.info(f'OnError. {response} (Task)')
-    ap_provider.on_cancel = lambda: logger.info('OnCancel. Отмена (Task)')
-    ap_provider.on_exit = lambda: logger.info('OnExit. Выход (Thread)')
     ap_provider.on_new_bar = log_bar  # Перед подпиской перехватим ответы
 
     seconds_from = ap_provider.msk_datetime_to_utc_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC

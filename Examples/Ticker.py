@@ -12,7 +12,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты
                         level=logging.DEBUG,  # Уровень логируемых событий NOTSET/DEBUG/INFO/WARNING/ERROR/CRITICAL
-                        handlers=[logging.FileHandler('Ticker.log'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
+                        handlers=[logging.FileHandler('Ticker.log', encoding='utf-8'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # Пропускаем события запросов
 
@@ -21,13 +21,12 @@ if __name__ == '__main__':  # Точка входа при запуске это
     datanames = ('TQBR.SBER', 'TQBR.HYDR', 'SPBFUT.SiU4', 'SPBFUT.RIU4', 'SPBFUT.BRU4', 'SPBFUT.CNYRUBF')  # Кортеж тикеров
 
     for dataname in datanames:  # Пробегаемся по всем тикерам
-        board, symbol = ap_provider.dataname_to_board_symbol(dataname)  # Код режима торгов и тикер
-        exchange = ap_provider.get_exchange(board, symbol)  # Биржа тикера
+        alor_board, symbol = ap_provider.dataname_to_alor_board_symbol(dataname)  # Код режима торгов и тикер
+        exchange = ap_provider.get_exchange(alor_board, symbol)  # Биржа тикера
         if not exchange:  # Если биржа не получена (тикер не найден)
-            logger.warning(f'Биржа для тикера {board}.{symbol} не найдена')
+            logger.warning(f'Биржа для тикера {alor_board}.{symbol} не найдена')
             continue  # то переходим к следующему тикеру, дальше не продолжаем
-        si = ap_provider.get_symbol(exchange, symbol)  # Получаем информацию о тикере
-        logger.debug(f'Ответ от сервера: {si}')
+        si = ap_provider.get_symbol_info(exchange, symbol)  # Получаем информацию о тикере
         logger.info(f'Информация о тикере {si["primary_board"]}.{si["symbol"]} ({si["shortname"]}, {si["type"]}) на бирже {si["exchange"]}')
         logger.info(f'- Валюта: {si["currency"]}')
         lot_size = si['lotsize'] if si['market'] == 'FOND' else si['facevalue']  # Лот для фондового и срочного/валютного рынков
@@ -35,7 +34,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
         min_price_step = si['minstep']  # Шаг цены
         logger.info(f'- Шаг цены: {min_price_step}')
         logger.info(f'- Кол-во десятичных знаков: {si["decimals"]}')
-        trade_account = next((account for account in ap_provider.accounts if board in account['boards']), None)
+        trade_account = next((account for account in ap_provider.accounts if alor_board in account['boards']), None)
         if not trade_account:  # Если торговый счет не найден
             logger.error('Торговый счет не найден')
         else:  # Торговый счет найден

@@ -37,6 +37,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
                     continue  # то ее пропускаем
                 si = ap_provider.get_symbol_info(exchange, symbol)  # Информация о тикере
                 size = position['qty'] * si['lotsize']  # Кол-во в штуках
+                if size == 0:  # Если кол-ва нет (позиция закрыта)
+                    continue  # то ее пропускаем
                 entry_price = ap_provider.alor_price_to_price(exchange, symbol, position['avgPrice'])  # Цена входа
                 # last_price = position['currentVolume'] / size  # Последняя цена по bid/ask
                 last_price = entry_price + position['unrealisedPl'] / size  # Последняя цена по бумажной прибыли/убытку

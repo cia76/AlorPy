@@ -1974,7 +1974,6 @@ class AlorPy:
         :param str dataname: Название тикера
         :return: Код режима торгов и тикер
         """
-        board = None  # Код режима торгов
         symbol_parts = dataname.split('.')  # По разделителю пытаемся разбить тикер на части
         if len(symbol_parts) >= 2:  # Если тикер задан в формате <Код режима торгов>.<Код тикера>
             board = symbol_parts[0]  # Код режима торгов
@@ -1983,13 +1982,13 @@ class AlorPy:
             symbol = dataname  # Код тикера
             si = next((self.get_symbol_info(exchange, symbol) for exchange in self.exchanges), None)  # Пробуем получить спецификацию тикера на всех биржах
             if si is None:  # Если спецификация тикера нигде не найдена
-                return board, symbol  # то возвращаем без кода режима торгов
+                return None, symbol  # то возвращаем без кода режима торгов
             board = si['board']  # Канонический код режима торгов
         alor_board = self.board_to_alor_board(board)  # Код режима торгов Алор
         return alor_board, symbol
 
     def alor_board_symbol_to_dataname(self, alor_board, symbol) -> str:
-        """Название тикера из кода режима торгов и тикера
+        """Название тикера из кода режима торгов Алор и тикера
 
         :param str alor_board: Код режима торгов Алор
         :param str symbol: Тикер

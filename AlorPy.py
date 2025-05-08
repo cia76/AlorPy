@@ -1,7 +1,7 @@
 import logging  # Будем вести лог
 from typing import Union, Any  # Объединение типов, любой тип
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
-from datetime import datetime
+from datetime import datetime, UTC
 from time import time_ns  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
 from uuid import uuid4  # Номера подписок должны быть уникальными во времени и пространстве
 from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
@@ -221,7 +221,8 @@ class AlorPy:
         :return: Запрос возвращает информацию обо всех сделках с участием указанного в portfolio портфеля за текущую торговую сессию
         """
         params: dict[str, Any] = {'format': format}
-        if with_repo: params['withRepo'] = with_repo
+        if with_repo:
+            params['withRepo'] = with_repo
         return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{exchange}/{portfolio}/trades', params=params, headers=self.get_headers()))
 
     def get_trade(self, portfolio, exchange, symbol, format='Simple'):  # https://alor.dev/docs/api/http/md-v-2-clients-exchange-portfolio-symbol-trades-get
@@ -267,7 +268,8 @@ class AlorPy:
         :return: Запрос возвращает информацию обо всех позициях во всех портфелях указанного в параметре login торгового аккаунта
         """
         params: dict[str, Any] = {'format': format}
-        if without_currency: params['withoutCurrency'] = without_currency
+        if without_currency:
+            params['withoutCurrency'] = without_currency
         return self.check_result(get(url=f'{self.api_server}/md/v2/Clients/{login}/positions', params=params, headers=self.get_headers()))
 
     def get_trades_history_v2(self, portfolio, exchange, instrument_group=None, date_from=None, ticker=None, id_from=None,
@@ -289,15 +291,24 @@ class AlorPy:
         :return: Запрос возвращает информацию обо всех сделках с участием указанного в portfolio портфеля за прошлые торговые сессии
         """
         params: dict[str, Any] = {'format': format}
-        if instrument_group: params['instrumentGroup'] = instrument_group
-        if date_from: params['dateFrom'] = date_from
-        if ticker: params['ticker'] = ticker
-        if id_from: params['from'] = id_from
-        if limit: params['limit'] = limit
-        if order_by_trade_date: params['orderByTradeDate'] = order_by_trade_date
-        if descending: params['descending'] = descending
-        if with_repo: params['withRepo'] = with_repo
-        if side: params['side'] = side
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
+        if date_from:
+            params['dateFrom'] = date_from
+        if ticker:
+            params['ticker'] = ticker
+        if id_from:
+            params['from'] = id_from
+        if limit:
+            params['limit'] = limit
+        if order_by_trade_date:
+            params['orderByTradeDate'] = order_by_trade_date
+        if descending:
+            params['descending'] = descending
+        if with_repo:
+            params['withRepo'] = with_repo
+        if side:
+            params['side'] = side
         return self.check_result(get(url=f'{self.api_server}/md/v2/Stats/{exchange}/{portfolio}/history/trades', params=params, headers=self.get_headers()))
 
     def get_trades_symbol_v2(self, portfolio, exchange, symbol, instrument_group=None, date_from=None, id_from=None,
@@ -319,14 +330,22 @@ class AlorPy:
         :return: Запрос возвращает информацию обо всех сделках с участием указанного в portfolio портфеля по указанному в symbol финансовому инструменту за прошлые торговые сессии
         """
         params: dict[str, Any] = {'format': format}
-        if instrument_group: params['instrumentGroup'] = instrument_group
-        if date_from: params['dateFrom'] = date_from
-        if id_from: params['from'] = id_from
-        if limit: params['limit'] = limit
-        if order_by_trade_date: params['orderByTradeDate'] = order_by_trade_date
-        if descending: params['descending'] = descending
-        if with_repo: params['withRepo'] = with_repo
-        if side: params['side'] = side
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
+        if date_from:
+            params['dateFrom'] = date_from
+        if id_from:
+            params['from'] = id_from
+        if limit:
+            params['limit'] = limit
+        if order_by_trade_date:
+            params['orderByTradeDate'] = order_by_trade_date
+        if descending:
+            params['descending'] = descending
+        if with_repo:
+            params['withRepo'] = with_repo
+        if side:
+            params['side'] = side
         return self.check_result(get(url=f'{self.api_server}/md/v2/Stats/{exchange}/{portfolio}/history/trades/{symbol}', params=params, headers=self.get_headers()))
 
     # Об инструменте
@@ -346,14 +365,22 @@ class AlorPy:
         :return: Запрос возвращает информацию о соответствующих запросу торговых инструментах на всех биржах. Объекты в ответе сортируются по объёму торгов в очерёдности "Сначала объёмные"
         """
         params: dict[str, Any] = {'format': format}
-        if symbol: params['query'] = symbol
-        if limit: params['limit'] = limit
-        if offset: params['offset'] = offset
-        if sector: params['sector'] = sector
-        if cficode: params['cficode'] = cficode
-        if exchange: params['exchange'] = exchange
-        if instrument_group: params['instrumentGroup'] = instrument_group
-        if include_non_base_boards: params['includeNonBaseBoards'] = include_non_base_boards
+        if symbol:
+            params['query'] = symbol
+        if limit:
+            params['limit'] = limit
+        if offset:
+            params['offset'] = offset
+        if sector:
+            params['sector'] = sector
+        if cficode:
+            params['cficode'] = cficode
+        if exchange:
+            params['exchange'] = exchange
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
+        if include_non_base_boards:
+            params['includeNonBaseBoards'] = include_non_base_boards
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities', params=params, headers=self.get_headers()))
 
     def get_securities_exchange(self, exchange, market=None, include_old=None, limit=None, include_non_base_boards=None, offset=None, format='Simple'):  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-get
@@ -369,11 +396,16 @@ class AlorPy:
         :return: Запрос возвращает информацию о соответствующих запросу торговых инструментах на выбранной бирже. Объекты в ответе сортируются по объёму торгов в очерёдности "Сначала объёмные"
         """
         params: dict[str, Any] = {'format': format}
-        if market: params['market'] = market
-        if include_old: params['includeOld'] = include_old
-        if limit: params['limit'] = limit
-        if include_non_base_boards: params['includeNonBaseBoards'] = include_non_base_boards
-        if offset: params['offset'] = offset
+        if market:
+            params['market'] = market
+        if include_old:
+            params['includeOld'] = include_old
+        if limit:
+            params['limit'] = limit
+        if include_non_base_boards:
+            params['includeNonBaseBoards'] = include_non_base_boards
+        if offset:
+            params['offset'] = offset
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}', params=params, headers=self.get_headers()))
 
     def get_symbol(self, exchange, symbol, instrument_group=None, format='Simple'):  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-symbol-get
@@ -386,7 +418,8 @@ class AlorPy:
         :return: Запрос возвращает полную информацию об указанном финансовом инструменте на выбранной бирже
         """
         params = {'format': format}
-        if instrument_group: params['instrumentGroup'] = instrument_group
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
         result: dict = self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}', params=params, headers=self.get_headers()))  # Результат в виде словаря
         result['decimals'] = int(log10(1 / result['minstep']) + 0.99)  # Кол-во десятичных знаков получаем из шага цены, добавляем в полученный словарь
         return result
@@ -425,20 +458,34 @@ class AlorPy:
         :return: Запрос возвращает обезличенную информацию обо всех сделках с участием указанного в symbol инструмента, совершённых всеми участниками торгов за текущую торговую сессию
         """
         params: dict[str, Any] = {'format': format}
-        if instrument_group: params['instrumentGroup'] = instrument_group
-        if seconds_from: params['from'] = seconds_from
-        if seconds_to: params['to'] = seconds_to
-        if id_from: params['fromId'] = id_from
-        if id_to: params['toId'] = id_to
-        if qty_from: params['qtyFrom'] = qty_from
-        if qty_to: params['qtyTo'] = qty_to
-        if price_from: params['priceFrom'] = price_from
-        if price_to: params['priceTo'] = price_to
-        if side: params['side'] = side
-        if offset: params['offset'] = offset
-        if take: params['take'] = take
-        if descending: params['descending'] = descending
-        if include_virtual_trades: params['includeVirtualTrades'] = include_virtual_trades
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
+        if seconds_from:
+            params['from'] = seconds_from
+        if seconds_to:
+            params['to'] = seconds_to
+        if id_from:
+            params['fromId'] = id_from
+        if id_to:
+            params['toId'] = id_to
+        if qty_from:
+            params['qtyFrom'] = qty_from
+        if qty_to:
+            params['qtyTo'] = qty_to
+        if price_from:
+            params['priceFrom'] = price_from
+        if price_to:
+            params['priceTo'] = price_to
+        if side:
+            params['side'] = side
+        if offset:
+            params['offset'] = offset
+        if take:
+            params['take'] = take
+        if descending:
+            params['descending'] = descending
+        if include_virtual_trades:
+            params['includeVirtualTrades'] = include_virtual_trades
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/alltrades', params=params, headers=self.get_headers()))
 
     def get_all_trades_history(self, exchange, symbol, instrument_group=None, seconds_from=None, seconds_to=None, limit=50000, offset=None, format='Simple'):  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-symbol-alltrades-history-get
@@ -455,10 +502,14 @@ class AlorPy:
         :return: Запрос возвращает обезличенную информацию обо всех сделках с участием указанного в symbol инструмента, совершённых всеми участниками торгов за прошлые торговые сессии
         """
         params = {'limit': limit, 'format': format}
-        if instrument_group: params['instrumentGroup'] = instrument_group
-        if seconds_from: params['from'] = seconds_from
-        if seconds_to: params['to'] = seconds_to
-        if offset: params['offset'] = offset
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
+        if seconds_from:
+            params['from'] = seconds_from
+        if seconds_to:
+            params['to'] = seconds_to
+        if offset:
+            params['offset'] = offset
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}/alltrades/history', params=params, headers=self.get_headers()))
 
     def get_actual_futures_quote(self, exchange, symbol, format='Simple'):  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-symbol-actual-futures-quote-get
@@ -502,8 +553,10 @@ class AlorPy:
         :return: Запрос возвращает информацию о текущем количестве лотов и их цене в бидах и асках биржевого стакана для указанного финансового инструмента
         """
         params: dict[str, Any] = {'format': format}
-        if depth: params['depth'] = depth
-        if instrument_group: params['instrumentGroup'] = instrument_group
+        if depth:
+            params['depth'] = depth
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
         return self.check_result(get(url=f'{self.api_server}/md/v2/orderbooks/{exchange}/{symbol}', params=params, headers=self.get_headers()))
 
     def get_risk_rates(self, exchange, ticker=None, risk_category_id=None, search=None, limit=None, offset=None):  # https://alor.dev/docs/api/http/md-v-2-risk-rates-get
@@ -518,11 +571,16 @@ class AlorPy:
         :return: Запрос возвращает текущие значения ставок риска для маржинальной торговли
         """
         params: dict[str, Any] = {'exchange': exchange}
-        if ticker: params['ticker'] = ticker
-        if risk_category_id: params['riskCategoryId'] = risk_category_id
-        if search: params['search'] = search
-        if limit: params['limit'] = limit
-        if offset: params['offset'] = offset
+        if ticker:
+            params['ticker'] = ticker
+        if risk_category_id:
+            params['riskCategoryId'] = risk_category_id
+        if search:
+            params['search'] = search
+        if limit:
+            params['limit'] = limit
+        if offset:
+            params['offset'] = offset
         return self.check_result(get(url=f'{self.api_server}/md/v2/risk/rates', params=params, headers=self.get_headers()))
 
     def get_history(self, exchange, symbol, tf, seconds_from=0, seconds_to=32536799999,
@@ -542,10 +600,14 @@ class AlorPy:
         :return: Запрос возвращает исторические данные о состоянии рынка для выбранных биржи и финансового инструмента
         """
         params = {'exchange': exchange, 'symbol': symbol, 'tf': tf, 'from': seconds_from, 'to': seconds_to, 'format': format}
-        if instrument_group: params['instrumentGroup'] = instrument_group
-        if count_back: params['countBack'] = count_back
-        if untraded: params['untraded'] = untraded
-        if split_adjust: params['splitAdjust'] = split_adjust
+        if instrument_group:
+            params['instrumentGroup'] = instrument_group
+        if count_back:
+            params['countBack'] = count_back
+        if untraded:
+            params['untraded'] = untraded
+        if split_adjust:
+            params['splitAdjust'] = split_adjust
         return self.check_result(get(url=f'{self.api_server}/md/v2/history', params=params, headers=self.get_headers()))
 
     # Биржевые заявки
@@ -568,11 +630,15 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'quantity': abs(quantity), 'instrument': instrument, 'user': {'portfolio': portfolio}}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if allow_margin: params['allowMargin'] = allow_margin
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if allow_margin:
+            params['allowMargin'] = allow_margin
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/market', headers=headers, json=params))
 
     def create_limit_order(self, portfolio, exchange, symbol, side, quantity, price,
@@ -596,13 +662,19 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'quantity': abs(quantity), 'price': price, 'instrument': instrument, 'user': {'portfolio': portfolio}}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if allow_margin: params['allowMargin'] = allow_margin
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if allow_margin:
+            params['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/limit', headers=headers, json=params))
 
     def edit_market_order(self, portfolio, exchange, order_id, symbol, side, quantity,
@@ -624,11 +696,15 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{order_id};{quantity}'  # Портфель с уникальным идентификатором запроса и кол-вом в лотах
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'quantity': abs(quantity), 'instrument': instrument, 'user': {'portfolio': portfolio}}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if allow_margin: params['allowMargin'] = allow_margin
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if allow_margin:
+            params['allowMargin'] = allow_margin
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/market/{order_id}', headers=headers, json=params))
 
     def edit_limit_order(self, portfolio, exchange, order_id, symbol, side, quantity, price,
@@ -653,13 +729,19 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{order_id};{quantity}'  # Портфель с уникальным идентификатором запроса и кол-вом в лотах
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'quantity': abs(quantity), 'price': price, 'instrument': instrument, 'user': {'portfolio': portfolio}}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if allow_margin: params['allowMargin'] = allow_margin
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if allow_margin:
+            params['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/limit/{order_id}', headers=headers, json=params))
 
     def estimate_order(self, portfolio, exchange, symbol, price, quantity=None, budget=None, board=None, include_limit_orders=False):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-estimate-post
@@ -741,10 +823,12 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'condition': condition, 'triggerPrice': trigger_price, 'stopEndUnixTime': stop_end_unix_time, 'quantity': abs(quantity),
                   'instrument': instrument, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'protectingSeconds': protecting_seconds, 'activate': activate}
-        if allow_margin: params['allowMargin'] = allow_margin
+        if allow_margin:
+            params['allowMargin'] = allow_margin
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stop', headers=headers, json=params))
 
     def create_stop_limit_order(self, portfolio, exchange, symbol, side, quantity, trigger_price, price,
@@ -773,13 +857,18 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'condition': condition, 'triggerPrice': trigger_price, 'stopEndUnixTime': stop_end_unix_time, 'price': price, 'quantity': abs(quantity),
                   'instrument': instrument, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'protectingSeconds': protecting_seconds, 'activate': activate}
-        if time_in_force: params['timeInForce'] = time_in_force
-        if allow_margin: params['allowMargin'] = allow_margin
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if allow_margin:
+            params['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit', headers=headers, json=params))
 
     def edit_stop_order(self, portfolio, exchange, order_id, symbol, side, quantity, trigger_price,
@@ -803,11 +892,13 @@ class AlorPy:
         """
         headers = self.get_headers()
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         headers['X-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         params = {'side': side, 'condition': condition, 'triggerPrice': trigger_price, 'stopEndUnixTime': stop_end_unix_time, 'quantity': abs(quantity),
                   'instrument': instrument, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'protectingSeconds': protecting_seconds, 'activate': activate}
-        if allow_margin: params['allowMargin'] = allow_margin
+        if allow_margin:
+            params['allowMargin'] = allow_margin
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stop/{order_id}', headers=headers, json=params))
 
     def edit_stop_limit_order(self, portfolio, exchange, order_id, symbol, side, quantity, trigger_price, price,
@@ -837,13 +928,18 @@ class AlorPy:
         headers = self.get_headers()
         headers['X-REQID'] = f'{portfolio};{self.get_request_id()}'  # Портфель с уникальным идентификатором запроса
         instrument = {'symbol': symbol, 'exchange': exchange}
-        if instrument_group: instrument['instrumentGroup'] = instrument_group
+        if instrument_group:
+            instrument['instrumentGroup'] = instrument_group
         params = {'side': side, 'condition': condition, 'triggerPrice': trigger_price, 'stopEndUnixTime': stop_end_unix_time, 'price': price, 'quantity': abs(quantity),
                   'instrument': instrument, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'protectingSeconds': protecting_seconds, 'activate': activate}
-        if time_in_force: params['timeInForce'] = time_in_force
-        if allow_margin: params['allowMargin'] = allow_margin
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if allow_margin:
+            params['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit/{order_id}', headers=headers, json=params))
 
     # Группы заявок
@@ -944,14 +1040,22 @@ class AlorPy:
         :return: Запрос списка сделок за предыдущие дни (не более 1000 сделок за один запрос)
         """
         params: dict[str, Any] = {'format': format}
-        if date_from: params['dateFrom'] = date_from
-        if symbol: params['ticker'] = symbol
-        if side: params['side'] = side
-        if id_from: params['from'] = id_from
-        if limit: params['limit'] = limit
-        if order_by_trade_date: params['orderByTradeDate'] = order_by_trade_date
-        if descending: params['descending'] = descending
-        if with_repo: params['withRepo'] = with_repo
+        if date_from:
+            params['dateFrom'] = date_from
+        if symbol:
+            params['ticker'] = symbol
+        if side:
+            params['side'] = side
+        if id_from:
+            params['from'] = id_from
+        if limit:
+            params['limit'] = limit
+        if order_by_trade_date:
+            params['orderByTradeDate'] = order_by_trade_date
+        if descending:
+            params['descending'] = descending
+        if with_repo:
+            params['withRepo'] = with_repo
         return self.check_result(get(url=f'{self.api_server}/md/stats/{exchange}/{portfolio}/history/trades', params=params, headers=self.get_headers()))
 
     def get_trades_symbol(self, portfolio, exchange, symbol, date_from=None, id_from=None, limit=None, order_by_trade_date=None, descending=None, with_repo=None, format='Simple'):  # https://alor.dev/docs/api/http/trade-stats-by-symbol
@@ -970,12 +1074,18 @@ class AlorPy:
         :return: Запрос списка сделок за предыдущие дни (не более 1000 сделок за один запрос) по одному инструменту
         """
         params: dict[str, Any] = {'format': format}
-        if date_from: params['dateFrom'] = date_from
-        if id_from: params['from'] = id_from
-        if limit: params['limit'] = limit
-        if order_by_trade_date: params['orderByTradeDate'] = order_by_trade_date
-        if descending: params['descending'] = descending
-        if with_repo: params['withRepo'] = with_repo
+        if date_from:
+            params['dateFrom'] = date_from
+        if id_from:
+            params['from'] = id_from
+        if limit:
+            params['limit'] = limit
+        if order_by_trade_date:
+            params['orderByTradeDate'] = order_by_trade_date
+        if descending:
+            params['descending'] = descending
+        if with_repo:
+            params['withRepo'] = with_repo
         return self.check_result(get(url=f'{self.api_server}/md/stats/{exchange}/{portfolio}/history/trades/{symbol}', params=params, headers=self.get_headers()))
 
     def get_exchange_market(self, exchange, market, format='Simple'):  # https://alor.dev/docs/api/http/dev-trading-session-status
@@ -1008,7 +1118,8 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
+        if comment:
+            params['comment'] = comment
         return self.check_result(post(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/stopLoss', headers=headers, json=params))
 
     def create_take_profit_order(self, trade_server_code, account, portfolio, exchange, symbol, side, quantity, trigger_price, comment=None, order_end_unix_time=0):  # https://alor.dev/docs/api/http/v-2-client-orders-actions-take-profit
@@ -1030,7 +1141,8 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
+        if comment:
+            params['comment'] = comment
         return self.check_result(post(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/takeProfit', headers=headers, json=params))
 
     def create_take_profit_limit_order(self, trade_server_code, account, portfolio, exchange, symbol, side, quantity, trigger_price, price,
@@ -1057,10 +1169,14 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Price': price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(post(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/takeProfitLimit', headers=headers, json=params))
 
     def create_stop_loss_limit_order(self, trade_server_code, account, portfolio, exchange, symbol, side, quantity, trigger_price, price,
@@ -1087,10 +1203,14 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Price': price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(post(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/stopLossLimit', headers=headers, json=params))
 
     def edit_stop_loss_order(self, trade_server_code, account, portfolio, exchange, order_id, symbol, side, quantity, trigger_price, comment=None, order_end_unix_time=0):  # https://alor.dev/docs/api/http/v-2-client-orders-actions-stop-loss-order-id
@@ -1113,7 +1233,8 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
+        if comment:
+            params['comment'] = comment
         return self.check_result(put(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/stopLoss/{order_id}', headers=headers, json=params))
 
     def edit_take_profit_order(self, trade_server_code, account, portfolio, exchange, order_id, symbol, side, quantity, trigger_price, comment=None, order_end_unix_time=0):
@@ -1136,7 +1257,8 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
+        if comment:
+            params['comment'] = comment
         return self.check_result(put(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/takeProfit/{order_id}', headers=headers, json=params))
 
     def edit_take_profit_limit_order(self, trade_server_code, account, portfolio, exchange, order_id, symbol, side, quantity, trigger_price, price,
@@ -1164,10 +1286,14 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Price': price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(put(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/takeProfitLimit/{order_id}', headers=headers, json=params))
 
     def edit_stop_loss_limit_order(self, trade_server_code, account, portfolio, exchange, order_id, symbol, side, quantity, trigger_price, price,
@@ -1195,10 +1321,14 @@ class AlorPy:
         headers['X-REQID'] = self.get_request_id()  # Уникальный идентификатор запроса
         params = {'Quantity': abs(quantity), 'Side': side, 'TriggerPrice': trigger_price, 'Price': price, 'Instrument': {'Symbol': symbol, 'Exchange': exchange},
                   'User': {'Account': account, 'Portfolio': portfolio}, 'OrderEndUnixTime': order_end_unix_time}
-        if comment: params['comment'] = comment
-        if time_in_force: params['timeInForce'] = time_in_force
-        if iceberg_fixed: params['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
+        if time_in_force:
+            params['timeInForce'] = time_in_force
+        if iceberg_fixed:
+            params['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            params['icebergVariance'] = iceberg_variance
         return self.check_result(put(url=f'{self.api_server}/warptrans/{trade_server_code}/v2/client/orders/actions/stopLossLimit/{order_id}', headers=headers, json=params))
 
     def delete_stop_order(self, trade_server_code, portfolio, order_id, stop=True):  # https://alor.dev/docs/api/http/v-2-client-orders-actions-order-id
@@ -1246,7 +1376,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'OrderBookGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'depth': depth, 'frequency': frequency, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def bars_get_and_subscribe(self, exchange, symbol, tf, instrument_group=None, seconds_from=0, skip_history=False, split_adjust=None, frequency=0, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/BarsGetAndSubscribe
@@ -1264,8 +1395,10 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'BarsGetAndSubscribe', 'exchange': exchange, 'code': symbol, 'tf': tf, 'from': int(seconds_from), 'skipHistory': skip_history, 'frequency': frequency, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
-        if split_adjust: request['splitAdjust'] = split_adjust
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
+        if split_adjust:
+            request['splitAdjust'] = split_adjust
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def quotes_subscribe(self, exchange, symbol, instrument_group=None, frequency=0, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/QuotesSubscribe
@@ -1279,7 +1412,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'QuotesSubscribe', 'exchange': exchange, 'code': symbol, 'frequency': frequency, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def trades_get_and_subscribe_v2(self, portfolio, exchange, instrument_group=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/TradesGetAndSubscribe
@@ -1293,7 +1427,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'TradesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def all_trades_subscribe(self, exchange, symbol, instrument_group=None, depth=0, include_virtual_trades=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/AllTradesGetAndSubscribe
@@ -1308,7 +1443,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'AllTradesGetAndSubscribe', 'code': symbol, 'exchange': exchange, 'depth': depth, 'includeVirtualTrades': include_virtual_trades, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def positions_get_and_subscribe_v2(self, portfolio, exchange, instrument_group=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/PositionsGetAndSubscribe
@@ -1322,7 +1458,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'PositionsGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def summaries_get_and_subscribe_v2(self, portfolio, exchange, instrument_group=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/SummariesGetAndSubscribeV2
@@ -1336,7 +1473,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'SummariesGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def risks_get_and_subscribe(self, portfolio, exchange, instrument_group=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/RisksGetAndSubscribe
@@ -1350,7 +1488,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'RisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def spectra_risks_get_and_subscribe(self, portfolio, exchange, instrument_group=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/SpectraRisksGetAndSubscribe
@@ -1364,7 +1503,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'SpectraRisksGetAndSubscribe', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def instruments_get_and_subscribe_v2(self, exchange, symbol, instrument_group=None, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/InstrumentsGetAndSubscribeV2
@@ -1377,7 +1517,8 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request = {'opcode': 'InstrumentsGetAndSubscribeV2', 'code': symbol, 'exchange': exchange, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def orders_get_and_subscribe_v2(self, portfolio, exchange, instrument_group=None, order_statuses=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/OrdersGetAndSubscribe
@@ -1393,8 +1534,10 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request: dict[str, Any] = {'opcode': 'OrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
-        if order_statuses: request['orderStatuses'] = order_statuses
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
+        if order_statuses:
+            request['orderStatuses'] = order_statuses
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def stop_orders_get_and_subscribe_v2(self, portfolio, exchange, instrument_group=None, order_statuses=None, skip_history=False, format='Simple'):  # https://alor.dev/docs/api/websocket/data-subscriptions/StopOrdersGetAndSubscribeV2
@@ -1410,8 +1553,10 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         request: dict[str, Any] = {'opcode': 'StopOrdersGetAndSubscribeV2', 'exchange': exchange, 'portfolio': portfolio, 'skipHistory': skip_history, 'format': format}  # Запрос на подписку
-        if instrument_group: request['instrumentGroup'] = instrument_group
-        if order_statuses: request['orderStatuses'] = order_statuses
+        if instrument_group:
+            request['instrumentGroup'] = instrument_group
+        if order_statuses:
+            request['orderStatuses'] = order_statuses
         return self.subscribe(request)  # Отправляем запрос, возвращаем уникальный идентификатор подписки
 
     def unsubscribe(self, guid):  # https://alor.dev/docs/api/websocket/data-subscriptions/Unsubscribe
@@ -1448,11 +1593,16 @@ class AlorPy:
         :return: Запрос создаёт от имени указанного портфеля рыночную заявку c указанными в теле сообщения характеристиками
         """
         request = {'opcode': 'create:market', 'side': side, 'quantity': abs(quantity), 'instrument': {'exchange': exchange, 'symbol': symbol}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if comment: request['comment'] = comment
-        if time_in_force: request['timeInForce'] = time_in_force
-        if allow_margin: request['allowMargin'] = allow_margin
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if board:
+            request['board'] = board
+        if comment:
+            request['comment'] = comment
+        if time_in_force:
+            request['timeInForce'] = time_in_force
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def create_limit_order_websocket(self, portfolio, exchange, symbol, side, quantity, price,
@@ -1475,13 +1625,20 @@ class AlorPy:
         :return: Запрос создаёт от имени указанного портфеля лимитную заявку c указанными в теле сообщения характеристиками
         """
         request = {'opcode': 'create:limit', 'side': side, 'quantity': abs(quantity), 'price': price, 'instrument': {'exchange': exchange, 'symbol': symbol}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if comment: request['comment'] = comment
-        if time_in_force: request['timeInForce'] = time_in_force
-        if allow_margin: request['allowMargin'] = allow_margin
-        if iceberg_fixed: request['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: request['icebergVariance'] = iceberg_variance
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if board:
+            request['board'] = board
+        if comment:
+            request['comment'] = comment
+        if time_in_force:
+            request['timeInForce'] = time_in_force
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            request['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            request['icebergVariance'] = iceberg_variance
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def create_stop_order_websocket(self, portfolio, exchange, symbol, side, quantity, trigger_price,
@@ -1505,11 +1662,16 @@ class AlorPy:
         """
         request = {'opcode': 'create:stop', 'side': side, 'quantity': abs(quantity), 'condition': condition, 'triggerPrice': trigger_price,
                    'stopEndUnixTime': stop_end_unix_time, 'instrument': {'symbol': symbol, 'exchange': exchange}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if allow_margin: request['allowMargin'] = allow_margin
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
-        if protecting_seconds: request['protectingSeconds'] = protecting_seconds
-        if activate: request['activate'] = activate
+        if board:
+            request['board'] = board
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
+        if protecting_seconds:
+            request['protectingSeconds'] = protecting_seconds
+        if activate:
+            request['activate'] = activate
         return self.send_websocket(request)
 
     def create_stop_limit_order_websocket(self, portfolio, exchange, symbol, side, quantity, trigger_price, price,
@@ -1538,14 +1700,22 @@ class AlorPy:
         """
         request = {'opcode': 'create:stopLimit', 'side': side, 'quantity': abs(quantity), 'price': price, 'condition': condition, 'triggerPrice': trigger_price,
                    'stopEndUnixTime': stop_end_unix_time, 'instrument': {'symbol': symbol, 'exchange': exchange}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if time_in_force: request['timeInForce'] = time_in_force
-        if allow_margin: request['allowMargin'] = allow_margin
-        if iceberg_fixed: request['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: request['icebergVariance'] = iceberg_variance
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
-        if protecting_seconds: request['protectingSeconds'] = protecting_seconds
-        if activate: request['activate'] = activate
+        if board:
+            request['board'] = board
+        if time_in_force:
+            request['timeInForce'] = time_in_force
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            request['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            request['icebergVariance'] = iceberg_variance
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
+        if protecting_seconds:
+            request['protectingSeconds'] = protecting_seconds
+        if activate:
+            request['activate'] = activate
         return self.send_websocket(request)
 
     def edit_market_order_websocket(self, order_id, portfolio, exchange, symbol, side, quantity,
@@ -1566,11 +1736,16 @@ class AlorPy:
         :return: Запрос создаёт новую рыночную заявку с изменёнными характеристиками, автоматически отменив созданную ранее. Для определения отменяемой заявки используется её номер в параметре orderid
         """
         request = {'opcode': 'update:market', 'orderId': order_id, 'side': side, 'quantity': abs(quantity), 'instrument': {'exchange': exchange, 'symbol': symbol}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if comment: request['comment'] = comment
-        if time_in_force: request['timeInForce'] = time_in_force
-        if allow_margin: request['allowMargin'] = allow_margin
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if board:
+            request['board'] = board
+        if comment:
+            request['comment'] = comment
+        if time_in_force:
+            request['timeInForce'] = time_in_force
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def edit_limit_order_websocket(self, order_id, portfolio, exchange, symbol, side, quantity, price,
@@ -1595,13 +1770,20 @@ class AlorPy:
         """
         request = {'opcode': 'update:limit', 'orderId': order_id, 'side': side, 'quantity': abs(quantity), 'price': price,
                    'instrument': {'exchange': exchange, 'symbol': symbol}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if comment: request['comment'] = comment
-        if time_in_force: request['timeInForce'] = time_in_force
-        if allow_margin: request['allowMargin'] = allow_margin
-        if iceberg_fixed: request['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: request['icebergVariance'] = iceberg_variance
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if board:
+            request['board'] = board
+        if comment:
+            request['comment'] = comment
+        if time_in_force:
+            request['timeInForce'] = time_in_force
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            request['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            request['icebergVariance'] = iceberg_variance
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def edit_stop_order_websocket(self, order_id, portfolio, exchange, symbol, side, quantity, trigger_price,
@@ -1626,11 +1808,16 @@ class AlorPy:
         """
         request = {'opcode': 'update:stop', 'orderId': order_id, 'side': side, 'quantity': abs(quantity), 'condition': condition, 'triggerPrice': trigger_price,
                    'stopEndUnixTime': stop_end_unix_time, 'instrument': {'symbol': symbol, 'exchange': exchange}, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if allow_margin: request['allowMargin'] = allow_margin
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
-        if protecting_seconds: request['protectingSeconds'] = protecting_seconds
-        if activate: request['activate'] = activate
+        if board:
+            request['board'] = board
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
+        if protecting_seconds:
+            request['protectingSeconds'] = protecting_seconds
+        if activate:
+            request['activate'] = activate
         return self.send_websocket(request)
 
     def edit_stop_limit_order_websocket(self, order_id, portfolio, exchange, symbol, side, quantity, trigger_price, price,
@@ -1660,14 +1847,22 @@ class AlorPy:
         """
         request = {'opcode': 'update:stopLimit', 'orderId': order_id, 'side': side, 'quantity': abs(quantity), 'price': price, 'condition': condition, 'triggerPrice': trigger_price,
                    'stopEndUnixTime': stop_end_unix_time, 'instrument': {'symbol': symbol, 'exchange': exchange}, 'board': board, 'user': {'portfolio': portfolio}}
-        if board: request['board'] = board
-        if time_in_force: request['timeInForce'] = time_in_force
-        if allow_margin: request['allowMargin'] = allow_margin
-        if iceberg_fixed: request['icebergFixed'] = iceberg_fixed
-        if iceberg_variance: request['icebergVariance'] = iceberg_variance
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
-        if protecting_seconds: request['protectingSeconds'] = protecting_seconds
-        if activate: request['activate'] = activate
+        if board:
+            request['board'] = board
+        if time_in_force:
+            request['timeInForce'] = time_in_force
+        if allow_margin:
+            request['allowMargin'] = allow_margin
+        if iceberg_fixed:
+            request['icebergFixed'] = iceberg_fixed
+        if iceberg_variance:
+            request['icebergVariance'] = iceberg_variance
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
+        if protecting_seconds:
+            request['protectingSeconds'] = protecting_seconds
+        if activate:
+            request['activate'] = activate
         return self.send_websocket(request)
 
     def delete_market_order_websocket(self, order_id, portfolio, exchange, check_duplicates=None):  # https://alor.dev/docs/api/websocket/commands/DeleteMarketOrder
@@ -1680,7 +1875,8 @@ class AlorPy:
         :return: Запрос снимает выставленную ранее рыночную заявку, если она по какой-либо причине не была удовлетворена. Для определения отменяемой заявки используется её номер в параметре orderid
         """
         request = {'opcode': 'delete:market', 'orderId': order_id, 'exchange': exchange, 'user': {'portfolio': portfolio}}
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def delete_limit_order_websocket(self, order_id, portfolio, exchange, check_duplicates=None):  # https://alor.dev/docs/api/websocket/commands/DeleteLimitOrder
@@ -1693,7 +1889,8 @@ class AlorPy:
         :return: Запрос снимает выставленную ранее лимитную заявку. Для определения отменяемой заявки используется её номер в параметре orderid
         """
         request = {'opcode': 'delete:limit', 'orderId': order_id, 'exchange': exchange, 'user': {'portfolio': portfolio}}
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def delete_stop_order_websocket(self, order_id, portfolio, exchange, check_duplicates=None):  # https://alor.dev/docs/api/websocket/commands/DeleteStopOrder
@@ -1706,7 +1903,8 @@ class AlorPy:
         :return: Запрос снимает выставленную ранее стоп-заявку. Для определения отменяемой заявки используется её номер в параметре orderid
         """
         request = {'opcode': 'delete:stop', 'orderId': order_id, 'exchange': exchange, 'user': {'portfolio': portfolio}}
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     def delete_stop_limit_order_websocket(self, order_id, portfolio, exchange, check_duplicates=None):  # https://alor.dev/docs/api/websocket/commands/DeleteStopLimitOrder
@@ -1719,7 +1917,8 @@ class AlorPy:
         :return: Запрос снимает выставленную ранее стоп-лимитную заявку. Для определения отменяемой заявки используется её номер в параметре orderid
         """
         request = {'opcode': 'delete:stopLimit', 'orderId': order_id, 'exchange': exchange, 'user': {'portfolio': portfolio}}
-        if check_duplicates: request['checkDuplicates'] = check_duplicates
+        if check_duplicates:
+            request['checkDuplicates'] = check_duplicates
         return self.send_websocket(request)
 
     # Запросы REST
@@ -2173,7 +2372,7 @@ class AlorPy:
         :param int seconds: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
         :return: Московское время без временнОй зоны
         """
-        dt_utc = datetime.utcfromtimestamp(seconds)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
+        dt_utc = datetime.fromtimestamp(seconds, UTC)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
         return self.utc_to_msk_datetime(dt_utc)  # Переводим время из UTC в московское
 
     def msk_to_utc_datetime(self, dt, tzinfo=False) -> datetime:

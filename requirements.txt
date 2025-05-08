@@ -1,6 +1,6 @@
 pytz
 requests
-pyjwt
+PyJWT
 urllib3
 websockets
 pandas

@@ -89,7 +89,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # Новая стоп заявка
     stop_price = ap_provider.price_to_valid_price(exchange, symbol, last_price * 1.01)  # Стоп цена на 1% выше последней цены сделки
     logger.info(f'Заявка {exchange}.{symbol} на покупку минимального лота по стоп цене {stop_price}')
-    response = ap_provider.create_stop_order(portfolio, exchange, symbol, class_code, 'buy', 1, stop_price, 'MoreOrEqual')
+    response = ap_provider.create_stop_order(portfolio, exchange, symbol, 'buy', 1, stop_price, class_code, 'MoreOrEqual')
     logger.debug(response)
     order_id = response['orderNumber']  # Номер заявки
     logger.info(f'Номер заявки: {order_id}')

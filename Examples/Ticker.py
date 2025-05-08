@@ -1,6 +1,5 @@
 import logging  # Выводим лог на консоль и в файл
 from datetime import datetime  # Дата и время
-from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 

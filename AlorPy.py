@@ -2336,11 +2336,15 @@ class AlorPy:
         :return: Кол-во штук
         """
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
-        if si:  # Если тикер найден
-            lot_size = si['lotsize']  # Кол-во штук в лоте
-            if lot_size:  # Если задано кол-во штук в лоте
-                return int(lots * lot_size)  # то возвращаем кол-во в штуках
-        return lots  # В остальных случаях возвращаем количество в лотах
+        if si is None:  # Если тикер не найден
+            return lots  # то возвращаем кол-во в лотах
+        primary_board = si['primary_board']  # Код режима торгов
+        if primary_board == 'RFUD':  # Для фьючерсов
+            return lots  # объем считаем в лотах
+        lot_size = si['lotsize']  # Кол-во штук в лоте
+        if lot_size is None:  # Если не задано кол-во штук в лоте
+            return lots  # то возвращаем кол-во в лотах
+        return int(lots * lot_size)  # В остальных случаях возвращаем кол-во в штуках
 
     def size_to_lots(self, exchange, symbol, size) -> int:
         """Перевод штуки в лоты
@@ -2351,11 +2355,15 @@ class AlorPy:
         :return: Кол-во лотов
         """
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
-        if si:  # Если тикер найден
-            lot_size = int(si['lotsize'])  # Кол-во штук в лоте
-            if lot_size:  # Если задано кол-во штук
-                return size // lot_size  # то возвращаем количество в лотах
-        return size  # В остальных случаях возвращаем кол-во в штуках
+        if si is None:  # Если тикер не найден
+            return size  # то возвращаем кол-во в штуках
+        primary_board = si['primary_board']  # Код режима торгов
+        if primary_board == 'RFUD':  # Для фьючерсов
+            return size  # объем в штуках = объем в лотах
+        lot_size = int(si['lotsize'])  # Кол-во штук в лоте
+        if lot_size is None:  # Если не задано кол-во штук в лоте
+            return size  # то возвращаем кол-во в штуках
+        return size // lot_size  # В остальных случаях возвращаем кол-во в лотах
 
     def msk_datetime_to_utc_timestamp(self, dt) -> int:
         """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC

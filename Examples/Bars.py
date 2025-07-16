@@ -75,7 +75,8 @@ def get_candles_from_provider(ap_provider, class_code, security_code, tf, second
         pd_bars['datetime'] = pd_bars['datetime'].dt.tz_localize('UTC').dt.tz_convert(ap_provider.tz_msk).dt.tz_localize(None)  # Переводим в рыночное время МСК
     pd_bars.index = pd_bars['datetime']  # В индекс ставим дату/время
     pd_bars = pd_bars[['datetime', 'open', 'high', 'low', 'close', 'volume']]  # Отбираем нужные колонки. Дата и время нужна, чтобы не удалять одинаковые OHLCV на разное время
-    pd_bars['volume'] = pd_bars['volume'].astype('int64')  # Объемы могут быть только целыми
+    lot_size = ap_provider.lots_to_size(exchange, security_code, 1)  # Кол-во акций в штуках в одном лоте
+    pd_bars['volume'] = pd_bars['volume'].astype('int64') * lot_size  # Объемы в штуках могут быть только целыми
     si = ap_provider.get_symbol_info(exchange, security_code)  # Спецификация тикера
     if not si['decimals']:  # Если кол-во десятичных знаков = 0, то цены - целые значения
         pd_bars['open'] = pd_bars['open'].astype('int64')

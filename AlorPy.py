@@ -38,7 +38,7 @@ class AlorPy:
         self.api_server = f'https://api{"dev" if demo else ""}.alor.ru'  # Сервер запросов
         self.cws_server = f'wss://api{"dev" if demo else ""}.alor.ru/cws'  # Сервис работы с заявками WebSocket
         self.cws_socket = None  # Подключение к серверу WebSocket
-        self.ws_server = f'wss://apis{"dev" if demo else ""}.alor.ru/ws'  # Сервис подписок и событий WebSocket
+        self.ws_server = f'wss://api{"dev" if demo else ""}.alor.ru/ws'  # Сервис подписок и событий WebSocket
         self.ws_socket = None  # Подключение к серверу WebSocket
         self.ws_thread = None # Поток получения сообщений из WebSocket
         self.ws_ready = False  # WebSocket готов принимать запросы

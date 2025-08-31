@@ -1956,7 +1956,7 @@ class AlorPy:
     # Запросы WebSocket
 
     def send_websocket(self, request):
-        """Отправка асинхронного запроса WebSocket
+        """Отправка запроса через командный WebSocket
 
         :param request: Запрос JSON
         :return: Ответ JSON

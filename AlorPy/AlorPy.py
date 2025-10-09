@@ -1,4 +1,6 @@
 import logging  # Будем вести лог
+import os
+import pickle  # Хранение торгового токена
 from typing import Union, Any  # Объединение типов, любой тип
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 from datetime import datetime, UTC
@@ -9,18 +11,16 @@ from threading import Thread  # Подписки сервера WebSockets бу�
 
 from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
 import requests.adapters  # Настройки запросов/ответов
-from requests import post, get, put, delete, Response  # Запросы/ответы от сервера запросов
+from requests import post, get, put, delete, Response  # Запросы/ответы через HTTP API
 from jwt import decode  # Декодирование токена JWT для получения договоров и портфелей
 from urllib3.exceptions import MaxRetryError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения
-from websockets.sync.client import connect
-from websockets.exceptions import ConnectionClosed  # Работа с сервером WebSockets
-
-from AlorPy import Config  # Файл конфигурации
+from websockets.sync.client import connect  # Подключение к серверу WebSockets в синхронном режиме
+from websockets.exceptions import ConnectionClosed  # Событие закрытия соединения сервера WebSockets
 
 
 # noinspection PyShadowingBuiltins
 class AlorPy:
-    """Работа с Alor OpenAPI V2 https://alor.dev/docs из Python"""
+    """Работа с АЛОР Брокер API https://alor.dev/docs из Python"""
     requests.adapters.DEFAULT_RETRIES = 10  # Настройка кол-ва попыток
     requests.adapters.DEFAULT_POOL_TIMEOUT = 10  # Настройка таймаута запроса в секундах
     tz_msk = timezone('Europe/Moscow')  # Время UTC будем приводить к московскому времени
@@ -28,7 +28,7 @@ class AlorPy:
     exchanges = ('MOEX', 'SPBX',)  # Биржи
     logger = logging.getLogger('AlorPy')  # Будем вести лог
 
-    def __init__(self, refresh_token=Config.refresh_token, demo=False):
+    def __init__(self, refresh_token=None, demo=False):
         """Инициализация
 
         :param str refresh_token: Токен
@@ -40,12 +40,12 @@ class AlorPy:
         self.cws_socket = None  # Подключение к серверу WebSocket
         self.ws_server = f'wss://api{"dev" if demo else ""}.alor.ru/ws'  # Сервис подписок и событий WebSocket
         self.ws_socket = None  # Подключение к серверу WebSocket
-        self.ws_thread = None # Поток получения сообщений из WebSocket
+        self.ws_thread = None  # Поток получения сообщений из WebSocket
         self.ws_ready = False  # WebSocket готов принимать запросы
         self.ws_running = False  # Флаг управления потоком WebSocket
-        self.ws_reconnect_timeout = 5 # Задержка между попытками подключиться к серверу, секунды
+        self.ws_reconnect_timeout = 5  # Задержка между попытками подключиться к серверу, секунды
 
-        # События Alor OpenAPI V2
+        # События АЛОР Брокер API
         self.on_change_order_book = self.default_handler  # Биржевой стакан
         self.on_new_bar = self.default_handler  # Новый бар
         self.on_new_quotes = self.default_handler  # Котировки
@@ -71,7 +71,18 @@ class AlorPy:
         self.on_error = lambda response: self.logger.debug(f'WebSocket Thread: {response}')  # Ошибка (Thread)
         self.on_exit = lambda: self.logger.debug(f'WebSocket Thread: Завершение')  # Выход (Thread)
 
-        self.refresh_token = refresh_token  # Токен
+        config_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.pkl')  # Полный путь к файлу конфигурации
+        if refresh_token is None:  # Если токен не указан
+            try:
+                with open(config_filename, 'rb') as file:  # Пытаемся открыть файл конфигурации
+                    self.refresh_token = pickle.load(file)
+            except IOError:
+                self.logger.fatal('Токен не найден')
+        else:  # Если указан токен
+            self.refresh_token = refresh_token  # Токен
+            with open(config_filename, 'wb') as file:  # Создаем файл конфигурации
+                pickle.dump(self.refresh_token, file)
+
         self.jwt_token = None  # Токен JWT
         self.jwt_token_decoded = dict()  # Информация по портфелям
         self.jwt_token_issued = 0  # UNIX время в секундах выдачи токена JWT
@@ -1997,12 +2008,12 @@ class AlorPy:
         :return: Уникальный идентификатор подписки
         """
         if not self.ws_ready and not self.ws_running:  # Если WebSocket не готов принимать запросы
-            self.ws_running = True # Запуск потока только один раз
+            self.ws_running = True  # Запуск потока только один раз
             self.on_entering()  # Событие начала входа (Main)
             self.ws_thread = Thread(target=self.websocket_loop)
             self.ws_thread.start()  # Создаем и запускаем поток управления подписками
         while not self.ws_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
-            sleep(self.ws_reconnect_timeout/10) # Подождем, пока WebSocket не будет готов принимать запросы
+            sleep(self.ws_reconnect_timeout/10)  # Подождем, пока WebSocket не будет готов принимать запросы
 
         guid = str(uuid4())  # Уникальный идентификатор подписки
         self.subscribe_call(request, guid)
@@ -2012,10 +2023,10 @@ class AlorPy:
         """Запуск и управление задачей подписок"""
         self.on_enter()  # Событие входа (Thread)
         while self.ws_running:  # Будем держать соединение с сервером WebSocket до отмены
-            self.websocket_handler()  # Запускаем функцию подключения к серверу WebSocket и получения с него подписок 
-            if self.ws_running: # Если отключение не было запрошено пользователем
+            self.websocket_handler()  # Запускаем функцию подключения к серверу WebSocket и получения с него подписок
+            if self.ws_running:  # Если отключение не было запрошено пользователем
                 self.logger.debug(f'websocket_loop: попытка переподключения к вебсокету через {self.ws_reconnect_timeout} секунд')
-                sleep(self.ws_reconnect_timeout) # выжидаем время до следующей попытки подключиться 
+                sleep(self.ws_reconnect_timeout)  # выжидаем время до следующей попытки подключиться
         self.on_exit()  # Событие выхода (Thread)
 
     def websocket_handler(self):
@@ -2128,9 +2139,9 @@ class AlorPy:
         """Закрытие соединения с сервером WebSocket"""
         self.ws_running = False
         if self.ws_socket:  # Если запущена задача управления подписками WebSocket
-            self.ws_socket.close()  # то отменяем закрываем соединение. 
-        if self.cws_socket: # Если был открыт командный WebSocket
-            self.cws_socket.close() # Закрываем его
+            self.ws_socket.close()  # то отменяем закрываем соединение.
+        if self.cws_socket:  # Если был открыт командный WebSocket
+            self.cws_socket.close()  # Закрываем его
 
     # Функции конвертации
 

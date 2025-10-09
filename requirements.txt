@@ -1,6 +1,0 @@
-pytz
-requests
-PyJWT
-urllib3
-websockets
-pandas

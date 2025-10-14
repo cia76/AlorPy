@@ -1,7 +1,7 @@
 import logging  # Будем вести лог
 import os
 import pickle  # Хранение торгового токена
-from typing import Union, Any  # Объединение типов, любой тип
+from typing import Any  # Любой тип
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
 from datetime import datetime, UTC
 from time import time_ns, sleep  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
@@ -2147,9 +2147,9 @@ class AlorPy:
 
     @staticmethod
     def alor_board_to_board(alor_board):
-        """Канонический код режима торгов из кода режима торгов Алор
+        """Канонический код режима торгов из кода режима торгов Алора
 
-        :param str alor_board: Код режима торгов Алор
+        :param str alor_board: Код режима торгов Алора
         :return: Канонический код режима торгов
         """
         if alor_board == 'RFUD':  # Для фьючерсов
@@ -2160,10 +2160,10 @@ class AlorPy:
 
     @staticmethod
     def board_to_alor_board(board):
-        """Код режима торгов Алор из канонического кода режима торгов
+        """Код режима торгов Алора из канонического кода режима торгов
 
         :param str board: Канонический код режима торгов
-        :return: Код режима торгов Алор
+        :return: Код режима торгов Алора
         """
         if board == 'SPBFUT':  # Для фьючерсов
             return 'RFUD'
@@ -2171,7 +2171,7 @@ class AlorPy:
             return 'ROPD'
         return board
 
-    def dataname_to_alor_board_symbol(self, dataname) -> tuple[Union[str, None], str]:
+    def dataname_to_alor_board_symbol(self, dataname) -> tuple[str | None, str]:
         """Код режима торгов Алора и тикер из названия тикера
 
         :param str dataname: Название тикера
@@ -2199,7 +2199,7 @@ class AlorPy:
         """
         return f'{self.alor_board_to_board(alor_board)}.{symbol}'
 
-    def get_account(self, board, account_id=0) -> Union[dict, None]:
+    def get_account(self, board, account_id=0) -> dict | None:
         """Счет из кода режима торгов и номера счета
 
         :param str board: Код режима торгов
@@ -2208,7 +2208,7 @@ class AlorPy:
         """
         return next((account for account in self.accounts if account['account_id'] == account_id and board in account['boards']), None)
 
-    def get_exchange(self, alor_board, symbol):
+    def get_exchange(self, alor_board, symbol) -> str | None:
         """Биржа тикера из кода режима торгов Алора и тикера
 
         :param str alor_board: Код режима торгов Алор
@@ -2219,10 +2219,9 @@ class AlorPy:
             si = self.get_symbol_info(exchange, symbol)  # Получаем информацию о тикере
             if si and si['board'] == alor_board:  # Если информация о тикере найдена, и режим торгов есть на бирже
                 return exchange  # то биржа найдена
-        self.logger.warning(f'Биржа для {alor_board}.{symbol} не найдена')
         return None  # Если биржа не была найдена, то возвращаем пустое значение
 
-    def get_symbol_info(self, exchange, symbol, reload=False):
+    def get_symbol_info(self, exchange, symbol, reload=False) -> dict | None:
         """Спецификация тикера
 
         :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа
@@ -2233,13 +2232,12 @@ class AlorPy:
         if reload or (exchange, symbol) not in self.symbols:  # Если нужно получить информацию из Алор или нет информации о тикере в справочнике
             symbol_info = self.get_symbol(exchange, symbol)  # Получаем информацию о тикере из Алор
             if not symbol_info:  # Если тикер не найден
-                self.logger.warning(f'Информация о {exchange}.{symbol} не найдена')
                 return None  # то возвращаем пустое значение
             self.symbols[(exchange, symbol)] = symbol_info  # Заносим информацию о тикере в справочник
         return self.symbols[(exchange, symbol)]  # Возвращаем значение из справочника
 
     @staticmethod
-    def timeframe_to_alor_timeframe(tf) -> tuple[Union[str, int], bool]:
+    def timeframe_to_alor_timeframe(tf) -> tuple[str | int, bool]:
         """Перевод временнОго интервала во временной интервал Алора
 
         :param str tf: Временной интервал https://ru.wikipedia.org/wiki/Таймфрейм
@@ -2268,7 +2266,7 @@ class AlorPy:
             return f'M{int(tf) // 60}', True  # переводим из секунд в минуты
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
-    def price_to_valid_price(self, exchange, symbol, alor_price) -> Union[int, float]:
+    def price_to_valid_price(self, exchange, symbol, alor_price) -> int | float:
         """Перевод цены в цену, которую примет Алор в заявке
 
         :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа
@@ -2284,7 +2282,7 @@ class AlorPy:
             return round(valid_price, decimals)  # то округляем цену кратно шага цены, возвращаем ее
         return int(valid_price)  # Если кол-во десятичных знаков = 0, то переводим цену в целое число
 
-    def price_to_alor_price(self, exchange, symbol, price) -> Union[int, float]:
+    def price_to_alor_price(self, exchange, symbol, price) -> int | float:
         """Перевод цены в рублях за штуку в цену Алор
 
         :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа

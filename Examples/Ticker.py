@@ -17,10 +17,10 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     # Формат короткого имени для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>. Пример: SiU3, RIU3
     # Формат полного имени для фьючерсов: <Код тикера заглавными буквами>-<Месяц экспирации: 3, 6, 9, 12>.<Последние 2 цифры года>. Пример: SI-9.23, RTS-9.23
-    datanames = ('TQBR.SBER', 'TQBR.HYDR', 'SPBFUT.SiU4', 'SPBFUT.RIU4', 'SPBFUT.BRU4', 'SPBFUT.CNYRUBF')  # Кортеж тикеров
+    datanames = ('TQBR.SBER', 'TQBR.HYDR', 'SPBFUT.SiZ5', 'SPBFUT.RIZ5', 'SPBFUT.BRZ5', 'SPBFUT.CNYRUBF')  # Кортеж тикеров
 
     for dataname in datanames:  # Пробегаемся по всем тикерам
-        alor_board, symbol = ap_provider.dataname_to_alor_board_symbol(dataname)  # Код режима торгов и тикер
+        alor_board, symbol = ap_provider.dataname_to_alor_board_symbol(dataname)  # Код режима торгов Алора и тикер
         exchange = ap_provider.get_exchange(alor_board, symbol)  # Биржа тикера
         if not exchange:  # Если биржа не получена (тикер не найден)
             logger.warning(f'Биржа для тикера {alor_board}.{symbol} не найдена')

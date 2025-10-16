@@ -2303,7 +2303,7 @@ class AlorPy:
                 lot_price = price * lot_size  # Цена в рублях за лот
                 alor_price = lot_price * min_price_step / step_price  # Цена
         elif primary_board == 'CETS':  # Для валют
-            alor_price = price / si.lot * si['facevalue']  # Цена
+            alor_price = price / si['lot'] * si['facevalue']  # Цена
         return self.price_to_valid_price(exchange, symbol, alor_price)  # Возращаем цену, которую примет Алор в заявке
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:

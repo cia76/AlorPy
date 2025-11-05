@@ -2367,7 +2367,7 @@ class AlorPy:
             return size  # то возвращаем кол-во в штуках
         return size // lot_size  # В остальных случаях возвращаем кол-во в лотах
 
-    def msk_datetime_to_utc_timestamp(self, dt) -> int:
+    def msk_datetime_to_timestamp(self, dt) -> int:
         """Перевод московского времени в кол-во секунд, прошедших с 01.01.1970 00:00 UTC
 
         :param datetime dt: Московское время
@@ -2376,7 +2376,7 @@ class AlorPy:
         dt_msk = self.tz_msk.localize(dt)  # Заданное время ставим в зону МСК
         return int(dt_msk.timestamp())  # Переводим в кол-во секунд, прошедших с 01.01.1970 в UTC
 
-    def utc_timestamp_to_msk_datetime(self, seconds) -> datetime:
+    def timestamp_to_msk_datetime(self, seconds) -> datetime:
         """Перевод кол-ва секунд, прошедших с 01.01.1970 00:00 UTC в московское время
 
         :param int seconds: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC

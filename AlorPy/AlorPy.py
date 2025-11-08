@@ -47,7 +47,7 @@ class AlorPy:
 
         # События АЛОР Брокер API
         self.on_change_order_book = self.default_handler  # Биржевой стакан
-        self.on_new_bar = self.default_handler  # Новый бар
+        self.on_new_bar = Event()  # Новый бар
         self.on_new_quotes = self.default_handler  # Котировки
         self.on_all_trades = self.default_handler  # Все сделки
         self.on_position = self.default_handler  # Позиции по ценным бумагам и деньгам
@@ -2076,7 +2076,7 @@ class AlorPy:
                             subscription['prev'] = response  # то запоминаем пришедший бар
                         elif seconds > prev_seconds:  # Пришел новый бар
                             self.logger.debug(f'websocket_handler: OnNewBar {subscription["prev"]}')
-                            self.on_new_bar(subscription['prev'])
+                            self.on_new_bar.trigger(subscription['prev'])
                             subscription['prev'] = response  # Запоминаем пришедший бар
                     else:  # Если пришло первое значение
                         subscription['prev'] = response  # то запоминаем пришедший бар
@@ -2406,3 +2406,25 @@ class AlorPy:
         dt_utc = utc.localize(dt) if dt.tzinfo is None else dt  # Задаем временнУю зону UTC если не задана
         dt_msk = dt_utc.astimezone(self.tz_msk)  # Переводим в МСК
         return dt_msk if tzinfo else dt_msk.replace(tzinfo=None)
+
+
+class Event(object):
+    """Обработка событий. По статье https://www.pythontutorials.net/blog/does-python-classes-support-events-like-other-languages/"""
+    def __init__(self):
+        self._callbacks = []  # Список функций обратного вызова - функции, которые будут вызываться на событие
+
+    def subscribe(self, callback):
+        """Добавление функции обратного вызова (подписка)"""
+        if callback not in self._callbacks:  # Если этой фукнции еще нет
+            self._callbacks.append(callback)  # то добавляем ее в список функций обратного вызова
+
+    def unsubscribe(self, callback):
+        """Удаление функции обратного вызова (отмена подписки)"""
+        if callback in self._callbacks:  # Если эта функция есть
+            self._callbacks.remove(callback)  # то удаляем ее из списка функций обратного вызова
+
+    def trigger(self, *args, **kwargs):
+        """Запуск всех функций обратного вызова с аргументами"""
+        # Iterate over a copy of the list to allow unsubscribing during iteration
+        for callback in self._callbacks[:]:  # Пробегаемся по копии списка функций обратного вызова, чтобы разрешить удаление, пока функции выполняются
+            callback(*args, **kwargs)  # Выполняем функцию обратного вызова

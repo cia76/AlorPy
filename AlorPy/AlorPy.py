@@ -46,19 +46,19 @@ class AlorPy:
         self.ws_reconnect_timeout = 5  # Задержка между попытками подключиться к серверу, секунды
 
         # События АЛОР Брокер API
-        self.on_change_order_book = self.default_handler  # Биржевой стакан
+        self.on_change_order_book = Event()  # Биржевой стакан
         self.on_new_bar = Event()  # Новый бар
-        self.on_new_quotes = self.default_handler  # Котировки
-        self.on_all_trades = self.default_handler  # Все сделки
-        self.on_position = self.default_handler  # Позиции по ценным бумагам и деньгам
-        self.on_summary = self.default_handler  # Сводная информация по портфелю
-        self.on_risk = self.default_handler  # Портфельные риски
-        self.on_spectra_risk = self.default_handler  # Риски срочного рынка (FORTS)
-        self.on_trade = self.default_handler  # Сделки
-        self.on_stop_order = self.default_handler  # Стоп заявки
-        self.on_stop_order_v2 = self.default_handler  # Стоп заявки v2
-        self.on_order = self.default_handler  # Заявки
-        self.on_symbol = self.default_handler  # Информация о финансовых инструментах
+        self.on_new_quotes = Event()  # Котировки
+        self.on_all_trades = Event()  # Все сделки
+        self.on_position = Event()  # Позиции по ценным бумагам и деньгам
+        self.on_summary = Event()  # Сводная информация по портфелю
+        self.on_risk = Event()  # Портфельные риски
+        self.on_spectra_risk = Event()  # Риски срочного рынка (FORTS)
+        self.on_trade = Event()  # Сделки
+        self.on_stop_order = Event()  # Стоп заявки
+        self.on_stop_order_v2 = Event()  # Стоп заявки v2
+        self.on_order = Event()  # Заявки
+        self.on_symbol = Event()  # Информация о финансовых инструментах
 
         # События WebSocket Thread
         self.on_entering = lambda: self.logger.debug(f'WebSocket Main: Запуск')  # Начало входа (Main)
@@ -1997,10 +1997,6 @@ class AlorPy:
 
     # Подписки WebSocket
 
-    def default_handler(self, response=None):
-        """Пустой обработчик события по умолчанию. Его можно заменить на пользовательский"""
-        pass
-
     def subscribe(self, request) -> str:
         """Запуск WebSocket, если не запущен. Отправка запроса подписки на сервер WebSocket
 
@@ -2067,7 +2063,7 @@ class AlorPy:
                 opcode = subscription['opcode']  # Разбираем по типу подписки
                 self.logger.debug(f'websocket_handler: Пришли данные подписки {opcode} - {guid} - {response}')
                 if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
-                    self.on_change_order_book(response)
+                    self.on_change_order_book.trigger(response)
                 elif opcode == 'BarsGetAndSubscribe':  # Новый бар
                     if subscription['prev']:  # Если есть предыдущее значение
                         seconds = response['data']['time']  # Время пришедшего бара
@@ -2081,27 +2077,27 @@ class AlorPy:
                     else:  # Если пришло первое значение
                         subscription['prev'] = response  # то запоминаем пришедший бар
                 elif opcode == 'QuotesSubscribe':  # Котировки
-                    self.on_new_quotes(response)
+                    self.on_new_quotes.trigger(response)
                 elif opcode == 'AllTradesGetAndSubscribe':  # Все сделки
-                    self.on_all_trades(response)
+                    self.on_all_trades.trigger(response)
                 elif opcode == 'PositionsGetAndSubscribeV2':  # Позиции по ценным бумагам и деньгам
-                    self.on_position(response)
+                    self.on_position.trigger(response)
                 elif opcode == 'SummariesGetAndSubscribeV2':  # Сводная информация по портфелю
-                    self.on_summary(response)
+                    self.on_summary.trigger(response)
                 elif opcode == 'RisksGetAndSubscribe':  # Портфельные риски
-                    self.on_risk(response)
+                    self.on_risk.trigger(response)
                 elif opcode == 'SpectraRisksGetAndSubscribe':  # Риски срочного рынка (FORTS)
-                    self.on_spectra_risk(response)
+                    self.on_spectra_risk.trigger(response)
                 elif opcode == 'TradesGetAndSubscribeV2':  # Сделки
-                    self.on_trade(response)
+                    self.on_trade.trigger(response)
                 elif opcode == 'StopOrdersGetAndSubscribe':  # Стоп заявки
-                    self.on_stop_order(response)
+                    self.on_stop_order.trigger(response)
                 elif opcode == 'StopOrdersGetAndSubscribeV2':  # Стоп заявки v2
-                    self.on_stop_order_v2(response)
+                    self.on_stop_order_v2.trigger(response)
                 elif opcode == 'OrdersGetAndSubscribeV2':  # Заявки
-                    self.on_order(response)
+                    self.on_order.trigger(response)
                 elif opcode == 'InstrumentsGetAndSubscribeV2':  # Информация о финансовых инструментах
-                    self.on_symbol(response)
+                    self.on_symbol.trigger(response)
         except ConnectionClosed:  # Отключились от сервера WebSockets
             self.on_disconnect()  # Событие отключения от сервера (Thread)
         except (OSError, TimeoutError, MaxRetryError):  # При системной ошибке, таймауте на websockets, достижении максимального кол-ва попыток подключения

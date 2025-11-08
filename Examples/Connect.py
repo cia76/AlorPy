@@ -8,7 +8,7 @@ from AlorPy import AlorPy  # Работа с АЛОР Брокер API
 def on_new_bar(response):  # Обработчик события прихода нового бара
     response_data = response['data']  # Данные бара
     utc_timestamp = response_data['time']  # Время в АЛОР Брокер API передается в секундах, прошедших с 01.01.1970 00:00 UTC
-    dt_msk = datetime.fromtimestamp(utc_timestamp, UTC) if type(tf) is str else ap_provider.utc_timestamp_to_msk_datetime(utc_timestamp)  # Дневные бары и выше ставим на начало дня по UTC. Остальные - по МСК
+    dt_msk = datetime.fromtimestamp(utc_timestamp, UTC) if type(tf) is str else ap_provider.timestamp_to_msk_datetime(utc_timestamp)  # Дневные бары и выше ставим на начало дня по UTC. Остальные - по МСК
     str_dt_msk = dt_msk.strftime('%d.%m.%Y') if type(tf) is str else dt_msk.strftime('%d.%m.%Y %H:%M:%S')  # Для дневных баров и выше показываем только дату. Для остальных - дату и время по МСК
     # subscription = ap_provider.subscriptions[response['guid']]  # Получаем данные подписки
     logger.info(f'{str_dt_msk} O:{response_data["open"]} H:{response_data["high"]} L:{response_data["low"]} C:{response_data["close"]} V:{response_data["volume"]}')
@@ -43,8 +43,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
     tf = 60  # 60 = 1 минута, 300 = 5 минут, 3600 = 1 час, 'D' = день, 'W' = неделя, 'M' = месяц, 'Y' = год
     days = 3  # Кол-во последних календарных дней, за которые берем историю
     logger.info(f'Подписка на {tf} бары тикера: {exchange}.{symbol} с историей в днях: {days}')
-    ap_provider.on_new_bar = on_new_bar  # Обработчик события прихода нового бара
-    seconds_from = ap_provider.msk_datetime_to_utc_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
+    ap_provider.on_new_bar.subscribe(on_new_bar)  # Подписываемся на новые бары
+    seconds_from = ap_provider.msk_datetime_to_timestamp(datetime.now() - timedelta(days=days))  # За последние дни. В секундах, прошедших с 01.01.1970 00:00 UTC
     guid = ap_provider.bars_get_and_subscribe(exchange, symbol, tf, seconds_from=seconds_from, frequency=1_000_000_000)  # Подписываемся на бары, получаем guid подписки
     subscription = ap_provider.subscriptions[guid]  # Получаем данные подписки
     logger.info(f'Подписка на сервере: {guid} {subscription}')
@@ -52,6 +52,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
 
     # Выход
     input('\nEnter - выход\n')
+    ap_provider.on_new_bar.unsubscribe(on_new_bar)  # Отменяем подписку на новые бары
     ap_provider.unsubscribe(guid)  # Отписываемся от получения новых баров
     logger.info(f'Отмена подписки {guid}. Закрытие WebSocket по всем правилам займет некоторое время')
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

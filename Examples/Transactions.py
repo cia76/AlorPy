@@ -5,6 +5,18 @@ from time import sleep  # Задержка в секундах перед вып
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
+def _on_order(response): logger.info(f'Заявка - {response["data"]}')
+
+
+def _on_stop_order(response): logger.info(f'Стоп заявка - {response["data"]}')
+
+
+def _on_position(response): logger.info(f'Позиция - {response["data"]}')
+
+
+def _on_trade(response): logger.info(f'Сделка - {response["data"]}')
+
+
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     logger = logging.getLogger('AlorPy.Transactions')  # Будем вести лог
     ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
@@ -35,11 +47,10 @@ if __name__ == '__main__':  # Точка входа при запуске это
     last_price = quotes['last_price']  # Последняя цена сделки
     logger.info(f'Последняя цена сделки {exchange}.{symbol}: {last_price}')
 
-    # Обработчики подписок
-    ap_provider.on_order = lambda response: logger.info(f'Заявка - {response["data"]}')  # Обработка заявок
-    ap_provider.on_stop_order = lambda response: logger.info(f'Стоп заявка - {response["data"]}')  # Обработка стоп заявок
-    ap_provider.on_position = lambda response: logger.info(f'Позиция - {response["data"]}')  # Обработка позиций
-    ap_provider.on_trade = lambda response: logger.info(f'Сделка - {response["data"]}')  # Обработка сделок
+    ap_provider.on_order.subscribe(_on_order)  # Подписываемся на заявки
+    ap_provider.on_stop_order.subscribe(_on_stop_order)  # Подписываемся на стоп заявки
+    ap_provider.on_position.subscribe(_on_position)  # Подписываемся на позиции
+    ap_provider.on_trade.subscribe(_on_trade)  # Подписываемся на сделки
 
     # Создание подписок
     orders_guid = ap_provider.orders_get_and_subscribe_v2(portfolio, exchange)  # Подписка на заявки
@@ -109,11 +120,10 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logger.info(f'Подписка на позиции {ap_provider.unsubscribe(positions_guid)} отменена')
     logger.info(f'Подписка на сделки {ap_provider.unsubscribe(trades_guid)} отменена')
 
-    # Сброс обработчиков подписок
-    ap_provider.on_order = ap_provider.default_handler  # Заявки
-    ap_provider.on_stop_order = ap_provider.default_handler  # Стоп заявки
-    ap_provider.on_position = ap_provider.default_handler  # Позиции
-    ap_provider.on_trade = ap_provider.default_handler  # Сделки
+    ap_provider.on_order.unsubscribe(_on_order)  # Отменяем подписку на заявки
+    ap_provider.on_stop_order.unsubscribe(_on_stop_order)  # Отменяем подписку на стоп заявки
+    ap_provider.on_position.unsubscribe(_on_position)  # Отменяем подписку на позиции
+    ap_provider.on_trade.unsubscribe(_on_trade)  # Отменяем подписку на сделки
 
     # Выход
     ap_provider.close_web_socket()  # Перед выходом закрываем соединение с WebSocket

@@ -5,16 +5,16 @@ from time import sleep  # Задержка в секундах перед вып
 from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
-def _on_order(response): logger.info(f'Заявка - {response["data"]}')
+def _on_order(order): logger.info(f'Заявка - {order["data"]}')
 
 
-def _on_stop_order(response): logger.info(f'Стоп заявка - {response["data"]}')
+def _on_stop_order(stop_order): logger.info(f'Стоп заявка - {stop_order["data"]}')
 
 
-def _on_position(response): logger.info(f'Позиция - {response["data"]}')
+def _on_position(position): logger.info(f'Позиция - {position["data"]}')
 
 
-def _on_trade(response): logger.info(f'Сделка - {response["data"]}')
+def _on_trade(trade): logger.info(f'Сделка - {trade["data"]}')
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
@@ -31,21 +31,15 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # события
     logging.getLogger('websockets').setLevel(logging.CRITICAL + 1)  # в этих библиотеках
 
-    exchange = 'MOEX'  # Код биржи MOEX или SPBX
+    dataname = 'TQBR.SBER'  # Тикер
 
-    symbol = 'SBER'  # Тикер
-    class_code = 'TQBR'  # Акции ММВБ
-
-    # Алор понимает только такой формат фьючерсов. В остальных случаях он возвращает None после постановки заявки. Заявку не ставит
-    # symbol = 'SI-6.24'  # Для фьючерсов: <Код тикера>-<Месяц экспирации: 3, 6, 9, 12>.<Две последнии цифры года>
-    # symbol = 'RTS-6.24'
-    # class_code = 'SPBFUT'  # Фьючерсы
-
-    portfolio = ap_provider.get_account(class_code)['portfolio']  # Название портфеля по коду режима торгов
+    alor_board, symbol = ap_provider.dataname_to_alor_board_symbol(dataname)  # Код режима торгов Алора и код и тикер
+    exchange = ap_provider.get_exchange(alor_board, symbol)  # Код биржи
+    portfolio = ap_provider.get_account(alor_board)['portfolio']  # Название портфеля по коду режима торгов
 
     quotes = ap_provider.get_quotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
     last_price = quotes['last_price']  # Последняя цена сделки
-    logger.info(f'Последняя цена сделки {exchange}.{symbol}: {last_price}')
+    logger.info(f'Последняя цена сделки {dataname}: {last_price}')
 
     ap_provider.on_order.subscribe(_on_order)  # Подписываемся на заявки
     ap_provider.on_stop_order.subscribe(_on_stop_order)  # Подписываемся на стоп заявки
@@ -100,7 +94,7 @@ if __name__ == '__main__':  # Точка входа при запуске это
     # Новая стоп заявка
     stop_price = ap_provider.price_to_valid_price(exchange, symbol, last_price * 1.01)  # Стоп цена на 1% выше последней цены сделки
     logger.info(f'Заявка {exchange}.{symbol} на покупку минимального лота по стоп цене {stop_price}')
-    response = ap_provider.create_stop_order(portfolio, exchange, symbol, 'buy', 1, stop_price, class_code, 'MoreOrEqual')
+    response = ap_provider.create_stop_order(portfolio, exchange, symbol, 'buy', 1, stop_price, alor_board, 'MoreOrEqual')
     logger.debug(response)
     order_id = response['orderNumber']  # Номер заявки
     logger.info(f'Номер заявки: {order_id}')

@@ -24,12 +24,13 @@ if __name__ == '__main__':  # Точка входа при запуске это
     logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # события
     logging.getLogger('websockets').setLevel(logging.CRITICAL + 1)  # в этих библиотеках
 
-    exchange = 'MOEX'  # Код биржи MOEX или SPBX
-    symbol = 'SBER'  # Тикер
-    # symbol = 'SiH4'  # Для фьючерсов: <Код тикера><Месяц экспирации: 3-H, 6-M, 9-U, 12-Z><Последняя цифра года>
+    dataname = 'TQBR.SBER'  # Тикер
+
+    alor_board, symbol = ap_provider.dataname_to_alor_board_symbol(dataname)  # Код режима торгов Алора и код и тикер
+    exchange = ap_provider.get_exchange(alor_board, symbol)  # Код биржи
 
     # Стакан
-    logger.info(f'Текущий стакан {exchange}.{symbol}')
+    logger.info(f'Текущий стакан {dataname}')
     order_book = ap_provider.get_order_book(exchange, symbol)  # Текущий стакан с максимальной глубиной 20 получаем через запрос
     logger.debug(order_book)
     if order_book['bids'] and order_book['asks']:
@@ -49,25 +50,25 @@ if __name__ == '__main__':  # Точка входа при запуске это
         logger.info(f'Лучшее предложение, продажа по: {closest_ask_to_sell}, покупка по: {closest_bid_to_buy}')
 
     sleep_secs = 5  # Кол-во секунд получения стакана
-    logger.info(f'{sleep_secs} секунд стакана')
+    logger.info(f'Секунд стакана: {sleep_secs}')
     ap_provider.on_change_order_book.subscribe(_on_change_order_book)  # Подписываемся на стакан
     guid = ap_provider.order_book_get_and_subscribe(exchange, symbol)  # Получаем код пописки
-    logger.info(f'Подписка на стакан {guid} тикера {exchange}.{symbol} создана')
+    logger.info(f'Подписка на стакан {guid} тикера {dataname} создана')
     sleep(sleep_secs)  # Ждем кол-во секунд получения стакана
     logger.info(f'Подписка на стакан {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от стакана
     ap_provider.on_change_order_book.unsubscribe(_on_change_order_book)  # Отменяем подписку на стакан
 
     # Котировки
-    logger.info(f'Текущие котировки {exchange}.{symbol}')
+    logger.info(f'Текущие котировки {dataname}')
     quotes = ap_provider.get_quotes(f'{exchange}:{symbol}')[0]  # Последнюю котировку получаем через запрос
     logger.debug(quotes)
     logger.info(f'Последняя цена сделки: {quotes["last_price"]}')
 
     sleep_secs = 5  # Кол-во секунд получения котировок
-    logger.info(f'{sleep_secs} секунд котировок')
+    logger.info(f'Секунд котировок: {sleep_secs}')
     ap_provider.on_new_quotes.subscribe(_on_new_quotes)  # Подписываемся на новые котировки
     guid = ap_provider.quotes_subscribe(exchange, symbol)  # Получаем код пописки
-    logger.info(f'Подписка на котировки {guid} тикера {exchange}.{symbol} создана')
+    logger.info(f'Подписка на котировки {guid} тикера {dataname} создана')
     sleep(sleep_secs)  # Ждем кол-во секунд получения обезличенных сделок
     logger.info(f'Подписка на котировки {ap_provider.unsubscribe(guid)} отменена')  # Отписываеся от котировок
     ap_provider.on_new_quotes.unsubscribe(_on_new_quotes)  # Отменяем подписку на котировки

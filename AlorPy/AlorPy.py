@@ -13,7 +13,7 @@ from pytz import timezone, utc  # Работаем с временнОй зон�
 import requests.adapters  # Настройки запросов/ответов
 from requests import post, get, put, delete, Response  # Запросы/ответы через HTTP API
 from jwt import decode  # Декодирование токена JWT для получения договоров и портфелей
-from urllib3.exceptions import MaxRetryError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения
+from urllib3.exceptions import MaxRetryError, SSLError  # Соединение с сервером не установлено за максимальное кол-во попыток подключения, ошибка SSL
 from websockets.sync.client import connect  # Подключение к серверу WebSockets в синхронном режиме
 from websockets.exceptions import ConnectionClosed  # Событие закрытия соединения сервера WebSockets
 
@@ -127,17 +127,25 @@ class AlorPy:
         """
         now = int(datetime.timestamp(datetime.now()))  # Текущая дата и время в виде UNIX времени в секундах
         if self.jwt_token is None or now - self.jwt_token_issued > self.jwt_token_ttl:  # Если токен JWT не был выдан или был просрочен
-            response = post(url=f'{self.oauth_server}/refresh', params={'token': self.refresh_token})  # Запрашиваем новый JWT токен с сервера аутентификации
+            try:
+                response = post(url=f'{self.oauth_server}/refresh', params={'token': self.refresh_token})  # Запрашиваем новый JWT токен с сервера аутентификации
+            except SSLError:  # Ошибка соединения SSL
+                self.on_error('Ошибка соединения SSL')  # Событие ошибки
+                self.jwt_token = None  # Сбрасываем токен JWT
+                self.jwt_token_decoded = None  # Сбрасываем данные о портфелях
+                self.jwt_token_issued = 0  # Сбрасываем время выдачи токена JWT
+                return self.jwt_token
             if response.status_code != 200:  # Если при получении токена возникла ошибка
                 self.on_error(f'Ошибка получения JWT токена: {response.status_code}')  # Событие ошибки
                 self.jwt_token = None  # Сбрасываем токен JWT
                 self.jwt_token_decoded = None  # Сбрасываем данные о портфелях
                 self.jwt_token_issued = 0  # Сбрасываем время выдачи токена JWT
-            else:  # Токен получен
-                token = response.json()  # Читаем данные JSON
-                self.jwt_token = token['AccessToken']  # Получаем токен JWT
-                self.jwt_token_decoded = decode(self.jwt_token, options={'verify_signature': False})  # Получаем из него данные о портфелях
-                self.jwt_token_issued = now  # Дата выдачи токена JWT
+                return self.jwt_token
+            # Токен получен
+            token = response.json()  # Читаем данные JSON
+            self.jwt_token = token['AccessToken']  # Получаем токен JWT
+            self.jwt_token_decoded = decode(self.jwt_token, options={'verify_signature': False})  # Получаем из него данные о портфелях
+            self.jwt_token_issued = now  # Дата выдачи токена JWT
         return self.jwt_token
 
     # О клиенте

@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='AlorPy',
-      version='2025.11.01',  # Внутренняя версия формата <Год>.<Месяц>.<Номер>, т.к. Алор версии не ставит
+      version='2025.11.02',  # Внутренняя версия формата <Год>.<Месяц>.<Номер>, т.к. Алор версии не ставит
       author='Чечет Игорь Александрович',
       description='Библиотека-обертка, которая позволяет работать с АЛОР Брокер API брокера Алор из Python',
       url='https://github.com/cia76/AlorPy',
-      packages=['AlorPy'],
+      packages=find_packages(),
       install_requires=[
             'pytz',  # ВременнЫе зоны
             'requests',  # Запросы/ответы через HTTP API

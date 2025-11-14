@@ -1,7 +1,7 @@
 import logging  # Выводим лог на консоль и в файл
 from datetime import datetime, timedelta, UTC
 
-from AlorPy import AlorPy  # Работа с АЛОР Брокер API
+from AlorPy.AlorPy import AlorPy  # Работа с АЛОР Брокер API
 
 
 def on_new_bar(response):  # Обработчик события прихода нового бара

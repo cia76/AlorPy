@@ -5,7 +5,7 @@ import os.path
 
 import pandas as pd
 
-from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
+from AlorPy.AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
 logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог. Определяем здесь, т.к. возможен внешний вызов ф-ии
@@ -110,7 +110,7 @@ def save_candles_to_file(ap_provider, class_code, security_codes, tf='D1',
         else:  # Если получили бары из файла
             last_date_time: datetime = file_bars.index[-1]  # Дата и время последнего полученного бара по МСК
             # Возможно, последний бар был получен, когда он еще не был завершен. Поэтому, запросим новые бары вместе с последним по UTC
-            seconds_from = ap_provider.msk_datetime_to_utc_timestamp(last_date_time) if intraday else int(last_date_time.timestamp())
+            seconds_from = ap_provider.msk_datetime_to_timestamp(last_date_time) if intraday else int(last_date_time.timestamp())
         pd_bars = get_candles_from_provider(ap_provider, class_code, security_code, tf, seconds_from)  # Получаем бары из провайдера
         if pd_bars.empty:  # Если бары не получены
             logger.info('Новых бар нет')

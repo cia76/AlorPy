@@ -2,7 +2,7 @@ import logging  # Выводим лог на консоль и в файл
 from datetime import datetime  # Дата и время
 from time import sleep  # Задержка в секундах перед выполнением операций
 
-from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
+from AlorPy.AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
 def _on_order(order): logger.info(f'Заявка - {order["data"]}')

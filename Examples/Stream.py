@@ -2,7 +2,7 @@ import logging  # Выводим лог на консоль и в файл
 from datetime import datetime  # Дата и время
 from time import sleep  # Подписка на события по времени
 
-from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
+from AlorPy.AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
 def _on_change_order_book(response): logger.info(f'Стакан - {response["data"]}')

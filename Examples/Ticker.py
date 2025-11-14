@@ -1,7 +1,7 @@
 import logging  # Выводим лог на консоль и в файл
 from datetime import datetime  # Дата и время
 
-from AlorPy.AlorPy import AlorPy  # Работа с Alor OpenAPI V2
+from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта

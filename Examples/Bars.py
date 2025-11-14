@@ -5,7 +5,7 @@ import os.path
 
 import pandas as pd
 
-from AlorPy.AlorPy import AlorPy  # Работа с Alor OpenAPI V2
+from AlorPy import AlorPy  # Работа с Alor OpenAPI V2
 
 
 logger = logging.getLogger('AlorPy.Bars')  # Будем вести лог. Определяем здесь, т.к. возможен внешний вызов ф-ии

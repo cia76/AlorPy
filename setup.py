@@ -7,7 +7,7 @@ setup(name='AlorPy',
       url='https://github.com/cia76/AlorPy',
       packages=find_packages(),
       install_requires=[
-            'pytz',  # ВременнЫе зоны
+            'keyring',  # Безопасное хранение торгового токена
             'requests',  # Запросы/ответы через HTTP API
             'PyJWT',  # Декодирование токена JWT для получения договоров и портфелей
             'urllib3',  # Соединение с сервером не установлено за максимальное кол-во попыток подключения

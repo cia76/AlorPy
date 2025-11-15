@@ -19,8 +19,8 @@ def on_new_bar(response):  # Обработчик события прихода 
 
 if __name__ == '__main__':  # Точка входа при запуске этого скрипта
     logger = logging.getLogger('AlorPy.Connect')  # Будем вести лог
+    # ap_provider = AlorPy('<Токен>')  # При первом подключении нужно передать токен
     ap_provider = AlorPy()  # Подключаемся ко всем торговым счетам
-    # ap_provider = AlorPy(demo=True)  # Подключаемся к демо счетам
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Формат сообщения
                         datefmt='%d.%m.%Y %H:%M:%S',  # Формат даты

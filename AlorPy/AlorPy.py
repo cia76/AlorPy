@@ -1,15 +1,14 @@
 import logging  # Будем вести лог
-import os
-import pickle  # Хранение торгового токена
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo  # ВременнАя зона
 from typing import Any  # Любой тип
 from math import log10  # Кол-во десятичных знаков будем получать из шага цены через десятичный логарифм
-from datetime import datetime, UTC
 from time import time_ns, sleep  # Текущее время в наносекундах, прошедших с 01.01.1970 UTC
 from uuid import uuid4  # Номера подписок должны быть уникальными во времени и пространстве
 from json import loads, JSONDecodeError, dumps  # Сервер WebSockets работает с JSON сообщениями
 from threading import Thread  # Подписки сервера WebSockets будем получать в отдельном потоке
 
-from pytz import timezone, utc  # Работаем с временнОй зоной и UTC
+import keyring  # Безопасное хранение торгового токена
 import requests.adapters  # Настройки запросов/ответов
 from requests import post, get, put, delete, Response  # Запросы/ответы через HTTP API
 from jwt import decode  # Декодирование токена JWT для получения договоров и портфелей
@@ -23,7 +22,7 @@ class AlorPy:
     """Работа с АЛОР Брокер API https://alor.dev/docs из Python"""
     requests.adapters.DEFAULT_RETRIES = 10  # Настройка кол-ва попыток
     requests.adapters.DEFAULT_POOL_TIMEOUT = 10  # Настройка таймаута запроса в секундах
-    tz_msk = timezone('Europe/Moscow')  # Время UTC будем приводить к московскому времени
+    tz_msk = ZoneInfo('Europe/Moscow')  # Время UTC будем приводить к московскому времени
     jwt_token_ttl = 60  # Время жизни токена JWT в секундах
     exchanges = ('MOEX', 'SPBX',)  # Биржи
     logger = logging.getLogger('AlorPy')  # Будем вести лог
@@ -70,17 +69,13 @@ class AlorPy:
         self.on_error = lambda response: self.logger.debug(f'WebSocket Thread: {response}')  # Ошибка (Thread)
         self.on_exit = lambda: self.logger.debug(f'WebSocket Thread: Завершение')  # Выход (Thread)
 
-        config_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.pkl')  # Полный путь к файлу конфигурации
         if refresh_token is None:  # Если токен не указан
-            try:
-                with open(config_filename, 'rb') as file:  # Пытаемся открыть файл конфигурации
-                    self.refresh_token = pickle.load(file)
-            except IOError:
-                self.logger.fatal('Токен не найден')
+            self.refresh_token = keyring.get_password('AlorPy', 'refresh_token')  # то пробуем получить его из системного хранилища
+            if self.refresh_token is None:  # Если токен не найден
+                self.logger.fatal('Токен не найден в системном хранилище. Вызовите ap_provider = AlorPy(''<Токен>'')')
         else:  # Если указан токен
-            self.refresh_token = refresh_token  # Токен
-            with open(config_filename, 'wb') as file:  # Создаем файл конфигурации
-                pickle.dump(self.refresh_token, file)
+            self.refresh_token = refresh_token  # то запоминаем токен
+            keyring.set_password('AlorPy', 'refresh_token', self.refresh_token)  # Сохраняем токен в системном хранилище
 
         self.jwt_token = None  # Токен JWT
         self.jwt_token_decoded = dict()  # Информация по портфелям
@@ -2365,18 +2360,20 @@ class AlorPy:
 
         :param datetime dt: Московское время
         :return: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
+        :rtype: int
         """
-        dt_msk = self.tz_msk.localize(dt)  # Заданное время ставим в зону МСК
+        dt_msk = dt.replace(tzinfo=self.tz_msk)  # Заданное время ставим в зону МСК
         return int(dt_msk.timestamp())  # Переводим в кол-во секунд, прошедших с 01.01.1970 в UTC
 
     def timestamp_to_msk_datetime(self, seconds) -> datetime:
-        """Перевод кол-ва секунд, прошедших с 01.01.1970 00:00 UTC в московское время
+        """Перевод кол-ва секунд, прошедших с 01.01.1970 00:00 UTC, в московское время
 
         :param int seconds: Кол-во секунд, прошедших с 01.01.1970 00:00 UTC
         :return: Московское время без временнОй зоны
+        :rtype: datetime
         """
-        dt_utc = datetime.fromtimestamp(seconds, UTC)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
-        return self.utc_to_msk_datetime(dt_utc)  # Переводим время из UTC в московское
+        dt_utc = datetime.fromtimestamp(seconds, timezone.utc)  # Переводим кол-во секунд, прошедших с 01.01.1970 в UTC
+        return dt_utc.astimezone(self.tz_msk).replace(tzinfo=None)  # Заданное время ставим в зону МСК. Убираем временнУю зону
 
     def msk_to_utc_datetime(self, dt, tzinfo=False) -> datetime:
         """Перевод времени из московского в UTC
@@ -2384,9 +2381,10 @@ class AlorPy:
         :param datetime dt: Московское время
         :param bool tzinfo: Отображать временнУю зону
         :return: Время UTC
+        :rtype: datetime
         """
-        dt_msk = self.tz_msk.localize(dt)  # Задаем временнУю зону МСК
-        dt_utc = dt_msk.astimezone(utc)  # Переводим в UTC
+        dt_msk = dt.replace(tzinfo=self.tz_msk)  # Заданное время ставим в зону МСК
+        dt_utc = dt_msk.astimezone(timezone.utc)  # Переводим в зону UTC
         return dt_utc if tzinfo else dt_utc.replace(tzinfo=None)
 
     def utc_to_msk_datetime(self, dt, tzinfo=False) -> datetime:
@@ -2395,9 +2393,10 @@ class AlorPy:
         :param datetime dt: Время UTC
         :param bool tzinfo: Отображать временнУю зону
         :return: Московское время
+        :rtype: datetime
         """
-        dt_utc = utc.localize(dt) if dt.tzinfo is None else dt  # Задаем временнУю зону UTC если не задана
-        dt_msk = dt_utc.astimezone(self.tz_msk)  # Переводим в МСК
+        dt_utc = dt.replace(tzinfo=timezone.utc)  # Заданное время ставим в зону UTC
+        dt_msk = dt_utc.astimezone(self.tz_msk)  # Переводим в зону МСК
         return dt_msk if tzinfo else dt_msk.replace(tzinfo=None)
 
 

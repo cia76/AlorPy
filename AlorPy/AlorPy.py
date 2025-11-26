@@ -2292,7 +2292,7 @@ class AlorPy:
         elif primary_board == 'RFUD':  # Для фьючерсов
             lot_size = si['facevalue']  # Лот
             min_price_step = si['minstep']  # Шаг цены
-            price = alor_price / lot_size // min_price_step * min_price_step
+            price = alor_price // min_price_step * min_price_step / lot_size
         elif primary_board == 'CETS':  # Для валют
             price = alor_price * si['lot'] / si['facevalue']
         else:  # Для акций

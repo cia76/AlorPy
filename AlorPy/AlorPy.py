@@ -2265,15 +2265,16 @@ class AlorPy:
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         primary_board = si['primary_board']  # Режим торгов
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
-            return price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+            alor_price = price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif primary_board == 'RFUD':  # Для рынка фьючерсов
             lot_size = si['facevalue']  # Лот
-            step_price = si['pricestep']  # Стоимость шага цены
             min_price_step = si['minstep']  # Шаг цены
-            return price * lot_size * min_price_step / step_price
+            alor_price = price * lot_size // min_price_step * min_price_step
         elif primary_board == 'CETS':  # Для валют
-            return price / si['lot'] * si['facevalue']
-        return price
+            alor_price = price / si['lot'] * si['facevalue']
+        else:  # Для акций
+            alor_price = price
+        return round(alor_price, si['decimals'])  # Округляем по кол-ву десятичных знаков тикера
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
         """Перевод цены Алор в цену в рублях за штуку
@@ -2286,15 +2287,16 @@ class AlorPy:
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         primary_board = si['primary_board']  # Режим торгов
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
-            return alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+            price = alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif primary_board == 'RFUD':  # Для фьючерсов
             lot_size = si['facevalue']  # Лот
-            step_price = si['pricestep']  # Стоимость шага цены
             min_price_step = si['minstep']  # Шаг цены
-            return alor_price // min_price_step * step_price / lot_size
+            price = alor_price / lot_size // min_price_step * min_price_step
         elif primary_board == 'CETS':  # Для валют
-            return alor_price * si['lot'] / si['facevalue']
-        return alor_price
+            price = alor_price * si['lot'] / si['facevalue']
+        else:  # Для акций
+            price = alor_price
+        return price
 
     def lots_to_size(self, exchange, symbol, lots) -> int:
         """Перевод лотов в штуки

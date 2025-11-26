@@ -2274,7 +2274,8 @@ class AlorPy:
             alor_price = price / si['lot'] * si['facevalue']
         else:  # Для акций
             alor_price = price
-        return round(alor_price, si['decimals'])  # Округляем по кол-ву десятичных знаков тикера
+        decimals = si['decimals']  # Кол-во десятичных знаков
+        return round(alor_price, decimals) if decimals > 0 else int(alor_price)  # Округляем по кол-ву десятичных знаков тикера
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
         """Перевод цены Алор в цену в рублях за штуку
@@ -2296,7 +2297,7 @@ class AlorPy:
             price = alor_price * si['lot'] / si['facevalue']
         else:  # Для акций
             price = alor_price
-        return price
+        return int(price) if price.is_integer() else price
 
     def lots_to_size(self, exchange, symbol, lots) -> int:
         """Перевод лотов в штуки

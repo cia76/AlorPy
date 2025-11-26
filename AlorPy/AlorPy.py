@@ -2254,22 +2254,6 @@ class AlorPy:
             return f'M{int(tf) // 60}', True  # переводим из секунд в минуты
         raise NotImplementedError  # С остальными временнЫми интервалами не работаем
 
-    def price_to_valid_price(self, exchange, symbol, alor_price) -> int | float:
-        """Перевод цены в цену, которую примет Алор в заявке
-
-        :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа
-        :param str symbol: Тикер:param str class_code: Код режима торгов
-        :param float alor_price: Цена в Алор
-        :return: Цена, которую примет Алор в зявке
-        """
-        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
-        min_price_step = si['minstep']  # Шаг цены
-        valid_price = alor_price // min_price_step * min_price_step  # Цена должна быть кратна шагу цены
-        decimals = si['decimals']  # Кол-во десятичных знаков
-        if decimals > 0:  # Если задано кол-во десятичных знаков
-            return round(valid_price, decimals)  # то округляем цену кратно шага цены, возвращаем ее
-        return int(valid_price)  # Если кол-во десятичных знаков = 0, то переводим цену в целое число
-
     def price_to_alor_price(self, exchange, symbol, price) -> int | float:
         """Перевод цены в рублях за штуку в цену Алор
 
@@ -2278,21 +2262,18 @@ class AlorPy:
         :param float price: Цена в рублях за штуку
         :return: Цена в Алор
         """
-        si = self.get_symbol_info(exchange, symbol)  # Информация о тикере
-        min_price_step = si['minstep']  # Шаг цены
-        alor_price = price  # Изначально считаем, что цена не изменится
-        primary_board = si['primary_board']  # Рынок тикера
+        si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
+        primary_board = si['primary_board']  # Режим торгов
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
-            alor_price = price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
+            return price * 100 / si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif primary_board == 'RFUD':  # Для рынка фьючерсов
             lot_size = si['facevalue']  # Лот
             step_price = si['pricestep']  # Стоимость шага цены
-            if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
-                lot_price = price * lot_size  # Цена в рублях за лот
-                alor_price = lot_price * min_price_step / step_price  # Цена
+            min_price_step = si['minstep']  # Шаг цены
+            return price * lot_size * min_price_step / step_price
         elif primary_board == 'CETS':  # Для валют
-            alor_price = price / si['lot'] * si['facevalue']  # Цена
-        return self.price_to_valid_price(exchange, symbol, alor_price)  # Возращаем цену, которую примет Алор в заявке
+            return price / si['lot'] * si['facevalue']
+        return price
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
         """Перевод цены Алор в цену в рублях за штуку
@@ -2303,16 +2284,14 @@ class AlorPy:
         :return: Цена в рублях за штуку
         """
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
-        primary_board = si['primary_board']  # Код площадки
+        primary_board = si['primary_board']  # Режим торгов
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             return alor_price / 100 * si['facevalue']  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif primary_board == 'RFUD':  # Для фьючерсов
             lot_size = si['facevalue']  # Лот
             step_price = si['pricestep']  # Стоимость шага цены
-            if lot_size > 1 and step_price:  # Если есть лот и стоимость шага цены
-                min_price_step = si['minstep']  # Шаг цены
-                lot_price = alor_price // min_price_step * step_price  # Цена за лот
-                return lot_price / lot_size  # Цена за штуку
+            min_price_step = si['minstep']  # Шаг цены
+            return alor_price // min_price_step * step_price / lot_size
         elif primary_board == 'CETS':  # Для валют
             return alor_price * si['lot'] / si['facevalue']
         return alor_price

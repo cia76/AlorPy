@@ -2278,7 +2278,7 @@ class AlorPy:
             alor_price = price
         decimals = si['decimals']  # Кол-во десятичных знаков
         alor_price = round(alor_price, decimals)  # Проверяем цену в Алор на корректность. Округляем по кол-ву десятичных знаков тикера
-        return int(alor_price) if price.is_integer() else alor_price
+        return int(alor_price) if alor_price.is_integer() else alor_price
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
         """Перевод цены Алор в цену в рублях за штуку

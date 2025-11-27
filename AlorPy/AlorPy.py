@@ -422,7 +422,7 @@ class AlorPy:
             params['offset'] = offset
         return self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}', params=params, headers=self.get_headers()))
 
-    def get_symbol(self, exchange, symbol, instrument_group=None, format='Simple'):  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-symbol-get
+    def get_symbol(self, exchange, symbol, instrument_group=None, format='Simple') -> dict | None:  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-symbol-get
         """Выбранный торговый инструмент
 
         :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа
@@ -435,7 +435,8 @@ class AlorPy:
         if instrument_group:
             params['instrumentGroup'] = instrument_group
         result: dict = self.check_result(get(url=f'{self.api_server}/md/v2/Securities/{exchange}/{symbol}', params=params, headers=self.get_headers()))  # Результат в виде словаря
-        result['decimals'] = int(log10(1 / result['minstep']) + 0.99)  # Кол-во десятичных знаков получаем из шага цены, добавляем в полученный словарь
+        if result is not None:  # Если данные тикера получены
+            result['decimals'] = int(log10(1 / result['minstep']) + 0.99)  # Кол-во десятичных знаков получаем из шага цены, добавляем в полученный словарь
         return result
 
     def get_available_boards(self, exchange, symbol):  # https://alor.dev/docs/api/http/md-v-2-securities-exchange-symbol-available-boards-get
@@ -2215,13 +2216,13 @@ class AlorPy:
         :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа
         :param str symbol: Тикер
         :param bool reload: Получить информацию из Алор
-        :return: Значение из кэша/Алор или None, если тикер не найден
+        :return: Спецификация тикера из кэша/Алор или None, если тикер не найден
         """
         if reload or (exchange, symbol) not in self.symbols:  # Если нужно получить информацию из Алор или нет информации о тикере в справочнике
-            symbol_info = self.get_symbol(exchange, symbol)  # Получаем информацию о тикере из Алор
-            if not symbol_info:  # Если тикер не найден
+            si = self.get_symbol(exchange, symbol)  # Получаем информацию о тикере из Алор
+            if si is None:  # Если тикер не найден
                 return None  # то возвращаем пустое значение
-            self.symbols[(exchange, symbol)] = symbol_info  # Заносим информацию о тикере в справочник
+            self.symbols[(exchange, symbol)] = si  # Заносим информацию о тикере в справочник
         return self.symbols[(exchange, symbol)]  # Возвращаем значение из справочника
 
     @staticmethod

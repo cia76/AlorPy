@@ -2296,7 +2296,7 @@ class AlorPy:
         elif primary_board == 'CETS':  # Для валют
             price = alor_price * si['lot'] / si['facevalue']
         else:  # Для акций
-            price = alor_price
+            price = round(alor_price, si['decimals'])
         return int(price) if price.is_integer() else price
 
     def lots_to_size(self, exchange, symbol, lots) -> int:

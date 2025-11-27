@@ -2270,7 +2270,8 @@ class AlorPy:
             alor_price = price * 100 / nominal  # Пункты цены для котировок облигаций представляют собой проценты номинала облигации
         elif primary_board == 'RFUD':  # Для рынка фьючерсов
             min_price_step = si['minstep']  # Шаг цены
-            lot_size = si['facevalue']  # Рамер лота
+            cfi_code = si['cfiCode']  # Тип ценной бумаги согласно стандарту ISO 10962
+            lot_size = 1 if cfi_code == 'FFCCSX' else si['facevalue']  # Рамер лота в штуках. Для вечных фьючерсов не используется
             alor_price = price * lot_size // min_price_step * min_price_step  # Цена -> % от номинала облигации
         elif primary_board == 'CETS':  # Для валют
             alor_price = price
@@ -2297,7 +2298,8 @@ class AlorPy:
             price = alor_price / 100 * nominal  # % от номинала облигации -> Цена
         elif primary_board == 'RFUD':  # Для фьючерсов
             min_price_step = si['minstep']  # Шаг цены
-            lot_size = si['facevalue']  # Рамер лота
+            cfi_code = si['cfiCode']  # Тип ценной бумаги согласно стандарту ISO 10962
+            lot_size = 1 if cfi_code == 'FFCCSX' else si['facevalue']  # Рамер лота в штуках. Для вечных фьючерсов не используется
             price = alor_price // min_price_step * min_price_step / lot_size
         elif primary_board == 'CETS':  # Для валют
             price = alor_price

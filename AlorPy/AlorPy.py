@@ -2262,7 +2262,6 @@ class AlorPy:
         :param float price: Цена в рублях за штуку
         :return: Цена в Алор
         """
-        price = round(price, 2)  # Цена в рублях за штуку
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         primary_board = si['primary_board']  # Режим торгов
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
@@ -2303,7 +2302,7 @@ class AlorPy:
             price = alor_price
         else:  # Для акций
             price = alor_price
-        return round(price, 2)  # Цена в рублях за штуку
+        return price  # Цена в рублях за штуку
 
     def lots_to_size(self, exchange, symbol, lots) -> int:
         """Перевод лотов в штуки

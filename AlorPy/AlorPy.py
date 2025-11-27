@@ -2262,6 +2262,7 @@ class AlorPy:
         :param float price: Цена в рублях за штуку
         :return: Цена в Алор
         """
+        price = round(price, 2)  # Цена в рублях за штуку
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         primary_board = si['primary_board']  # Режим торгов
         if primary_board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
@@ -2270,7 +2271,7 @@ class AlorPy:
         elif primary_board == 'RFUD':  # Для рынка фьючерсов
             min_price_step = si['minstep']  # Шаг цены
             lot_size = si['facevalue']  # Рамер лота
-            alor_price = price * lot_size // min_price_step * min_price_step
+            alor_price = price * lot_size // min_price_step * min_price_step  # Цена -> % от номинала облигации
         elif primary_board == 'CETS':  # Для валют
             alor_price = price
         else:  # Для акций
@@ -2279,7 +2280,7 @@ class AlorPy:
         alor_price = round(alor_price, decimals)  # Проверяем цену в Алор на корректность. Округляем по кол-ву десятичных знаков тикера
         return int(alor_price) if price.is_integer() else alor_price
 
-    def alor_price_to_price(self, exchange, symbol, alor_price) -> int | float:
+    def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
         """Перевод цены Алор в цену в рублях за штуку
 
         :param str exchange: Код биржи: 'MOEX' — Московская биржа, 'SPBX' — СПБ Биржа
@@ -2302,7 +2303,7 @@ class AlorPy:
             price = alor_price
         else:  # Для акций
             price = alor_price
-        return int(price) if price.is_integer() else price
+        return round(price, 2)  # Цена в рублях за штуку
 
     def lots_to_size(self, exchange, symbol, lots) -> int:
         """Перевод лотов в штуки

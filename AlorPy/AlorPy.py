@@ -2264,20 +2264,20 @@ class AlorPy:
         :return: Цена в Алор
         """
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
-        decimals = si['decimals']  # Кол-во десятичных знаков
         board = si['primary_board']  # Режим торгов
         if board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             nominal = si['facevalue']  # Номинал облигации. Обычно, 1000 руб.
             alor_price = price * 100 / nominal  # Цена -> % от номинала облигации
-        elif board == 'RFUD':  # Для рынка фьючерсов
-            min_price_step = si['minstep']  # Шаг цены
-            lot_size = 1 if si['cfiCode'] == 'FFCCSX' else si['facevalue']  # Рамер лота в штуках. Для вечных фьючерсов (тип ценной бумаги согласно стандарту ISO 10962) не используется
-            alor_price = price * lot_size // min_price_step * min_price_step
+        elif board == 'RFUD':  # Для фьючерсов
+            lot_size = 1 if si['cfiCode'] in ('FCXCSX', 'FFCCSX') else si['facevalue']  # Рамер лота в штуках. Для фьючерсов на сырье и вечных фьючерсов (тип ценной бумаги согласно стандарту ISO 10962) не используется
+            alor_price = price * lot_size
         elif board == 'CETS':  # Для валют
             alor_price = price
         else:  # Для акций
             alor_price = price
-        alor_price = round(alor_price, decimals)  # Проверяем цену в Алор на корректность. Округляем по кол-ву десятичных знаков тикера
+        decimals = si['decimals']  # Кол-во десятичных знаков
+        min_price_step = si['minstep']  # Шаг цены
+        alor_price = round(alor_price // min_price_step * min_price_step, decimals)  # Проверяем цену в Алор на корректность. Округляем по кол-ву десятичных знаков тикера
         return int(alor_price) if alor_price.is_integer() else alor_price
 
     def alor_price_to_price(self, exchange, symbol, alor_price) -> float:
@@ -2290,15 +2290,15 @@ class AlorPy:
         """
         si = self.get_symbol_info(exchange, symbol)  # Спецификация тикера
         decimals = si['decimals']  # Кол-во десятичных знаков
-        alor_price = round(alor_price, decimals)  # Проверяем цену в Алор на корректность. Округляем по кол-ву десятичных знаков тикера
+        min_price_step = si['minstep']  # Шаг цены
+        alor_price = round(alor_price // min_price_step * min_price_step, decimals)  # Проверяем цену в Алор на корректность. Округляем по кол-ву десятичных знаков тикера
         board = si['primary_board']  # Режим торгов
         if board in ('TQOB', 'TQCB', 'TQRD', 'TQIR'):  # Для облигаций (Т+ Гособлигации, Т+ Облигации, Т+ Облигации Д, Т+ Облигации ПИР)
             nominal = si['facevalue']  # Номинал облигации. Обычно, 1000 руб.
             price = alor_price / 100 * nominal  # % от номинала облигации -> Цена
         elif board == 'RFUD':  # Для фьючерсов
-            min_price_step = si['minstep']  # Шаг цены
-            lot_size = 1 if si['cfiCode'] == 'FFCCSX' else si['facevalue']  # Рамер лота в штуках. Для вечных фьючерсов (тип ценной бумаги согласно стандарту ISO 10962) не используется
-            price = alor_price // min_price_step * min_price_step / lot_size
+            lot_size = 1 if si['cfiCode'] in ('FCXCSX', 'FFCCSX') else si['facevalue']  # Рамер лота в штуках. Для фьючерсов на сырье и вечных фьючерсов (тип ценной бумаги согласно стандарту ISO 10962) не используется
+            price = alor_price / lot_size
         elif board == 'CETS':  # Для валют
             price = alor_price
         else:  # Для акций

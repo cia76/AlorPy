@@ -66,7 +66,6 @@ class AlorPy:
         self.on_ready = lambda: self.logger.debug(f'WebSocket Thread: Готов')  # Готовность к работе (Thread)
         self.on_disconnect = lambda: self.logger.debug(f'WebSocket Thread: Отключен от сервера')  # Отключение от сервера (Thread)
         self.on_timeout = lambda: self.logger.debug(f'WebSocket Thread: Таймаут')  # Таймаут/максимальное кол-во попыток подключения (Thread)
-        self.on_error = lambda response: self.logger.debug(f'WebSocket Thread: {response}')  # Ошибка (Thread)
         self.on_exit = lambda: self.logger.debug(f'WebSocket Thread: Завершение')  # Выход (Thread)
 
         if refresh_token is None:  # Если токен не указан
@@ -124,13 +123,13 @@ class AlorPy:
             try:
                 response = post(url=f'{self.oauth_server}/refresh', params={'token': self.refresh_token})  # Запрашиваем новый JWT токен с сервера аутентификации
             except SSLError:  # Ошибка соединения SSL
-                self.on_error('Ошибка соединения SSL')  # Событие ошибки
+                self.logger.error('Ошибка соединения SSL')  # Событие ошибки
                 self.jwt_token = None  # Сбрасываем токен JWT
                 self.jwt_token_decoded = None  # Сбрасываем данные о портфелях
                 self.jwt_token_issued = 0  # Сбрасываем время выдачи токена JWT
                 return self.jwt_token
             if response.status_code != 200:  # Если при получении токена возникла ошибка
-                self.on_error(f'Ошибка получения JWT токена: {response.status_code}')  # Событие ошибки
+                self.logger.error(f'Ошибка получения JWT токена: {response.status_code}')  # Событие ошибки
                 self.jwt_token = None  # Сбрасываем токен JWT
                 self.jwt_token_decoded = None  # Сбрасываем данные о портфелях
                 self.jwt_token_issued = 0  # Сбрасываем время выдачи токена JWT
@@ -1954,11 +1953,11 @@ class AlorPy:
         :return: Справочник из JSON, текст, None в случае веб ошибки
         """
         if not response:  # Если ответ не пришел. Например, при таймауте
-            self.on_error('Ошибка сервера: Таймаут')  # Событие ошибки
+            self.logger.error('Ошибка сервера: Таймаут')  # Событие ошибки
             return None  # то возвращаем пустое значение
         content = response.content.decode('utf-8')  # Результат запроса
         if response.status_code != 200:  # Если статус ошибки
-            self.on_error(f'Ошибка сервера: {response.status_code} Запрос: {response.request.path_url} Ответ: {content}')  # Событие ошибки
+            self.logger.error(f'Ошибка сервера: {response.status_code} Запрос: {response.request.path_url} Ответ: {content}')  # Событие ошибки
             return None  # то возвращаем пустое значение
         self.logger.debug(f'Запрос : {response.request.path_url}')
         self.logger.debug(f'Ответ  : {content}')
@@ -1994,7 +1993,7 @@ class AlorPy:
             return response  # то возвращаем значение в виде текста
         http_code = json_response['httpCode']  # Код 200 или ошибки
         if http_code != 200:  # Если в результате запроса произошла ошибка
-            self.on_error(f'Ошибка сервера: {http_code} {response["message"]}')  # Событие ошибки
+            self.logger.error(f'Ошибка сервера: {http_code} {response["message"]}')  # Событие ошибки
             return None  # то возвращаем пустое значение
         return json_response  # Возвращаем JSON
 
@@ -2092,7 +2091,7 @@ class AlorPy:
             except (OSError, TimeoutError, MaxRetryError):  # При системной ошибке, таймауте на websockets, достижении максимального кол-ва попыток подключения
                 self.on_timeout()  # Событие таймаута/максимального кол-ва попыток подключения (Thread)
             except Exception as ex:  # При других типах ошибок
-                self.on_error(f'Ошибка {ex}')  # Событие ошибки (Thread)
+                self.logger.error(f'Ошибка получения подписки {ex}')  # Событие ошибки (Thread)
             finally:
                 self.ws_ready = False  # Не готов принимать запросы
                 self.ws_socket = None  # Сбрасываем подключение сервера подписок и событий WebSocket

@@ -1953,11 +1953,11 @@ class AlorPy:
         :return: Справочник из JSON, текст, None в случае веб ошибки
         """
         if not response:  # Если ответ не пришел. Например, при таймауте
-            self.logger.error('Ошибка сервера: Таймаут')  # Событие ошибки
+            self.logger.error('Ошибка запроса: Таймаут')  # Событие ошибки
             return None  # то возвращаем пустое значение
         content = response.content.decode('utf-8')  # Результат запроса
         if response.status_code != 200:  # Если статус ошибки
-            self.logger.error(f'Ошибка сервера: {response.status_code} Запрос: {response.request.path_url} Ответ: {content}')  # Событие ошибки
+            self.logger.error(f'Ошибка запроса: {response.status_code} Запрос: {response.request.path_url} Ответ: {content}')  # Событие ошибки
             return None  # то возвращаем пустое значение
         self.logger.debug(f'Запрос : {response.request.path_url}')
         self.logger.debug(f'Ответ  : {content}')

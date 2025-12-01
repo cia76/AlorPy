@@ -1952,7 +1952,7 @@ class AlorPy:
         :param Response response: Результат запроса
         :return: Справочник из JSON, текст, None в случае веб ошибки
         """
-        if not response:  # Если ответ не пришел. Например, при таймауте
+        if response is None:  # Если ответ не пришел. Например, при таймауте
             self.logger.error('Ошибка запроса: Таймаут')  # Событие ошибки
             return None  # то возвращаем пустое значение
         content = response.content.decode('utf-8')  # Результат запроса

@@ -27,9 +27,8 @@ if __name__ == '__main__':  # Точка входа при запуске это
                         level=logging.DEBUG,  # Уровень логируемых событий NOTSET/DEBUG/INFO/WARNING/ERROR/CRITICAL
                         handlers=[logging.FileHandler('Transactions.log', encoding='utf-8'), logging.StreamHandler()])  # Лог записываем в файл и выводим на консоль
     logging.Formatter.converter = lambda *args: datetime.now(tz=ap_provider.tz_msk).timetuple()  # В логе время указываем по МСК
-    logging.getLogger('asyncio').setLevel(logging.CRITICAL + 1)  # Не пропускать в лог
-    logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # события
-    logging.getLogger('websockets').setLevel(logging.CRITICAL + 1)  # в этих библиотеках
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL + 1)  # Не пропускать в лог
+    logging.getLogger('websockets').setLevel(logging.CRITICAL + 1)  # события в этих библиотеках
 
     dataname = 'TQBR.SBER'  # Тикер
 

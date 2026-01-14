@@ -59,14 +59,14 @@ class AlorPy:
         self.on_symbol = Event()  # Информация о финансовых инструментах
 
         # События WebSocket Thread
-        self.on_entering = lambda: self.logger.debug(f'WebSocket Main: Запуск')  # Начало входа (Main)
-        self.on_enter = lambda: self.logger.debug(f'WebSocket Thread: Запущен')  # Вход (Thread)
-        self.on_connect = lambda: self.logger.debug(f'WebSocket Thread: Подключен к серверу')  # Подключение к серверу (Thread)
-        self.on_resubscribe = lambda: self.logger.debug(f'WebSocket Thread: Возобновление подписок ({len(self.subscriptions)})')  # Возобновление подписок (Thread)
-        self.on_ready = lambda: self.logger.debug(f'WebSocket Thread: Готов')  # Готовность к работе (Thread)
-        self.on_disconnect = lambda: self.logger.debug(f'WebSocket Thread: Отключен от сервера')  # Отключение от сервера (Thread)
-        self.on_timeout = lambda: self.logger.debug(f'WebSocket Thread: Таймаут')  # Таймаут/максимальное кол-во попыток подключения (Thread)
-        self.on_exit = lambda: self.logger.debug(f'WebSocket Thread: Завершение')  # Выход (Thread)
+        self.on_entering = Event()  # Начало входа
+        self.on_enter = Event()  # Вход
+        self.on_connect = Event()  # Подключение к серверу
+        self.on_resubscribe = Event()  # Возобновление подписок
+        self.on_ready = Event()  # Готовность к работе
+        self.on_disconnect = Event()  # Отключение от сервера
+        self.on_timeout = Event()  # Таймаут/максимальное кол-во попыток подключения
+        self.on_exit = Event()  # Выход
 
         if refresh_token is None:  # Если токен не указан
             self.refresh_token = keyring.get_password('AlorPy', 'refresh_token')  # то пробуем получить его из системного хранилища
@@ -2007,7 +2007,8 @@ class AlorPy:
         """
         if not self.ws_ready and not self.ws_running:  # Если WebSocket не готов принимать запросы
             self.ws_running = True  # Запуск потока только один раз
-            self.on_entering()  # Событие начала входа (Main)
+            self.logger.debug(f'WebSocket Main: Запуск')
+            self.on_entering.trigger()  # Событие начала входа
             Thread(target=self.websocket_thread, name='WebSocketThread').start()  # Создаем и запускаем поток управления подписками
         while not self.ws_ready:  # Подключение к серверу WebSocket выполняется в отдельном потоке
             sleep(self.ws_reconnect_timeout/10)  # Подождем, пока WebSocket не будет готов принимать запросы
@@ -2017,7 +2018,8 @@ class AlorPy:
 
     def websocket_thread(self):
         """Поток управления подписками"""
-        self.on_enter()  # Событие входа (Thread)
+        self.logger.debug(f'WebSocket Thread: Запущен')
+        self.on_enter.trigger()  # Событие входа
         while self.ws_running:  # Будем держать соединение с сервером WebSocket до отмены
             try:
                 # Для всех подписок используем 1 WebSocket. У Алора нет ограничений на кол-во соединений
@@ -2025,31 +2027,34 @@ class AlorPy:
                 # Это может быть из-за медленного компьютера или слабого канала связи
                 # В любом из этих случаев создание дополнительных подключений проблему не решит
                 self.ws_socket = connect(uri=self.ws_server)  # Пробуем подключиться к серверу подписок и событий WebSocket
-                self.on_connect()  # Событие подключения к серверу (Thread)
+                self.logger.debug(f'WebSocket Thread: Подключен к серверу')
+                self.on_connect.trigger()  # Событие подключения к серверу
 
                 if len(self.subscriptions) > 0:  # Если есть подписки, то будем их возобновлять
-                    self.on_resubscribe()  # Событие возобновления подписок (Thread)
+                    self.logger.debug(f'WebSocket Thread: Возобновление подписок ({len(self.subscriptions)})')
+                    self.on_resubscribe.trigger()  # Событие возобновления подписок
                     for guid, request in self.subscriptions.items():  # Пробегаемся по всем подпискам
                         self.subscribe_call(request, guid)  # Переподписываемся с тем же уникальным идентификатором
                 self.ws_ready = True  # Готов принимать запросы
-                self.on_ready()  # Событие готовности к работе (Thread)
+                self.logger.debug(f'WebSocket Thread: Готов')
+                self.on_ready.trigger()  # Событие готовности к работе
 
                 while self.ws_running:  # Получаем подписки до отмены
                     response_json = self.ws_socket.recv()  # Ожидаем ответ с сервера подписок и событий WebSocket
                     try:
                         response = loads(response_json)  # Переводим JSON в словарь
                     except JSONDecodeError:  # Если вместо JSON сообщений получаем текст (проверка на всякий случай)
-                        self.logger.warning(f'websocket_handler: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
+                        self.logger.warning(f'WebSocket Thread: Пришли данные подписки не в формате JSON {response_json}. Пропуск')
                         continue  # то его не разбираем, пропускаем
                     if 'data' not in response:  # Если пришло сервисное сообщение о подписке/отписке
                         continue  # то его не разбираем, пропускаем
                     guid = response['guid']  # GUID подписки
                     if guid not in self.subscriptions:  # Если подписка не найдена
-                        self.logger.debug(f'websocket_handler: Поступившая подписка с кодом {guid} не найдена. Пропуск')
+                        self.logger.debug(f'WebSocket Thread: Поступившая подписка с кодом {guid} не найдена. Пропуск')
                         continue  # то мы не можем сказать, что это за подписка, пропускаем ее
                     subscription = self.subscriptions[guid]  # Поиск подписки по GUID
                     opcode = subscription['opcode']  # Разбираем по типу подписки
-                    self.logger.debug(f'websocket_handler: Пришли данные подписки {opcode} - {guid} - {response}')
+                    self.logger.debug(f'WebSocket Thread: Пришли данные подписки {opcode} - {guid} - {response}')
                     if opcode == 'OrderBookGetAndSubscribe':  # Биржевой стакан
                         self.on_change_order_book.trigger(response)
                     elif opcode == 'BarsGetAndSubscribe':  # Новый бар
@@ -2059,7 +2064,7 @@ class AlorPy:
                             if seconds == prev_seconds:  # Пришла обновленная версия текущего бара
                                 subscription['prev'] = response  # то запоминаем пришедший бар
                             elif seconds > prev_seconds:  # Пришел новый бар
-                                self.logger.debug(f'websocket_handler: OnNewBar {subscription["prev"]}')
+                                self.logger.debug(f'WebSocket Thread: OnNewBar {subscription["prev"]}')
                                 self.on_new_bar.trigger(subscription['prev'])
                                 subscription['prev'] = response  # Запоминаем пришедший бар
                         else:  # Если пришло первое значение
@@ -2087,18 +2092,23 @@ class AlorPy:
                     elif opcode == 'InstrumentsGetAndSubscribeV2':  # Информация о финансовых инструментах
                         self.on_symbol.trigger(response)
             except ConnectionClosed:  # Отключились от сервера WebSockets
-                self.on_disconnect()  # Событие отключения от сервера (Thread)
-            except (OSError, TimeoutError, MaxRetryError):  # При системной ошибке, таймауте на websockets, достижении максимального кол-ва попыток подключения
-                self.on_timeout()  # Событие таймаута/максимального кол-ва попыток подключения (Thread)
+                self.logger.debug(f'WebSocket Thread: Отключен от сервера')
+                self.on_disconnect.trigger()  # Событие отключения от сервера
+            except OSError as ex:  # При системной ошибке
+                self.logger.error(f'WebSocket Thread: Системная ошибка {ex}')
+            except (TimeoutError, MaxRetryError) as ex:  # При таймауте на websockets, достижении максимального кол-ва попыток подключения
+                self.logger.debug(f'WebSocket Thread: Таймаут {ex}')
+                self.on_timeout.trigger()  # Событие таймаута/максимального кол-ва попыток подключения
             except Exception as ex:  # При других типах ошибок
-                self.logger.error(f'Ошибка получения подписки {ex}')  # Событие ошибки (Thread)
+                self.logger.error(f'WebSocket Thread: Ошибка {ex}')  # Событие ошибки
             finally:
                 self.ws_ready = False  # Не готов принимать запросы
                 self.ws_socket = None  # Сбрасываем подключение сервера подписок и событий WebSocket
             if self.ws_running:  # Если отключение не было запрошено пользователем
-                self.logger.debug(f'websocket_loop: попытка переподключения к вебсокету через {self.ws_reconnect_timeout} секунд')
+                self.logger.debug(f'WebSocket Thread: попытка переподключения к вебсокету через {self.ws_reconnect_timeout} секунд')
                 sleep(self.ws_reconnect_timeout)  # выжидаем время до следующей попытки подключиться
-        self.on_exit()  # Событие выхода (Thread)
+        self.logger.debug(f'WebSocket Thread: Завершение')
+        self.on_exit.trigger()  # Событие выхода
 
     def subscribe_call(self, request, guid):
         """Отправка запроса (пере)подписки на сервер WebSocket

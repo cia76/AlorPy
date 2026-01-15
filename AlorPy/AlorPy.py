@@ -1,4 +1,5 @@
 import logging  # Будем вести лог
+import ssl
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo  # ВременнАя зона
 from typing import Any  # Любой тип
@@ -2026,7 +2027,10 @@ class AlorPy:
                 # Но подключение сбрасывается, если в очереди соединения находится более 5000 непрочитанных сообщений
                 # Это может быть из-за медленного компьютера или слабого канала связи
                 # В любом из этих случаев создание дополнительных подключений проблему не решит
-                self.ws_socket = connect(uri=self.ws_server)  # Пробуем подключиться к серверу подписок и событий WebSocket
+                ssl_context = ssl.create_default_context()  # Контекст SSL
+                ssl_context.check_hostname = False  # Не проверяем имя сервера
+                ssl_context.verify_mode = ssl.CERT_NONE  # Не проверяем сертификат
+                self.ws_socket = connect(uri=self.ws_server, ssl=ssl_context)  # Пробуем подключиться к серверу подписок и событий WebSocket
                 self.logger.debug(f'WebSocket Thread: Подключен к серверу')
                 self.on_connect.trigger()  # Событие подключения к серверу
 

@@ -96,11 +96,11 @@ class AlorPy:
                         type = 'fx'  # Тип счета
                         exchanges = (self.exchanges[0],)  # Биржа MOEX
                         boards = ('CETS_SU', 'INDXC', 'CETS')  # Режимы торгов
-                    elif portfolio.startswith('750'):  # Портфель счета срочного рынка начинается с 750 и имеет формат 750****
+                    elif portfolio.startswith('75'):  # Портфель счета срочного рынка начинается с 75 и имеет формат 75*****
                         type = 'derivatives'  # Тип счета
                         exchanges = (self.exchanges[0],)  # Биржа MOEX
                         boards = ('SPBOPT', 'OPTCOMDTY', 'OPTSPOT', 'SPBFUT', 'OPTCURNCY', 'RFUD', 'ROPD')  # Режимы торгов RFUD=SBPFUT, ROPD=SPBOPT
-                    elif portfolio.startswith('E'):  # Портфель Единой Денежной Позиции начинается с E и имеет формат D12345
+                    elif portfolio.startswith('E'):  # Портфель Единой Денежной Позиции начинается с E и имеет формат E12345
                         type = 'all'  # Тип счета
                         exchanges = (self.exchanges[0],)  # Биржа MOEX
                         boards = ('TQRD', 'TQOY', 'TQIF', 'TQBR', 'MTQR', 'TQOB', 'TQIR', 'EQRP_INFO', 'TQTF', 'FQDE', 'INDX', 'TQOD', 'FQBR', 'TQCB', 'TQPI', 'TQBD',

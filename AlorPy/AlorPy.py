@@ -100,6 +100,12 @@ class AlorPy:
                         type = 'derivatives'  # Тип счета
                         exchanges = (self.exchanges[0],)  # Биржа MOEX
                         boards = ('SPBOPT', 'OPTCOMDTY', 'OPTSPOT', 'SPBFUT', 'OPTCURNCY', 'RFUD', 'ROPD')  # Режимы торгов RFUD=SBPFUT, ROPD=SPBOPT
+                    elif portfolio.startswith('E'):  # Портфель Единой Денежной Позиции начинается с E и имеет формат D12345
+                        type = 'all'  # Тип счета
+                        exchanges = (self.exchanges[0],)  # Биржа MOEX
+                        boards = ('TQRD', 'TQOY', 'TQIF', 'TQBR', 'MTQR', 'TQOB', 'TQIR', 'EQRP_INFO', 'TQTF', 'FQDE', 'INDX', 'TQOD', 'FQBR', 'TQCB', 'TQPI', 'TQBD',
+                                  'CETS_SU', 'INDXC', 'CETS',
+                                  'SPBOPT', 'OPTCOMDTY', 'OPTSPOT', 'SPBFUT', 'OPTCURNCY', 'RFUD', 'ROPD')  # Режимы торгов
                     else:  # Неизвестный портфель
                         logging.warning(f'Не определен тип счета для договора {agreement}, портфеля {portfolio}')
                         continue  # Переходим к следующему портфелю, дальше не продолжаем

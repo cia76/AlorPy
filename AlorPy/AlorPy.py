@@ -824,7 +824,7 @@ class AlorPy:
     # Условные заявки
 
     def create_stop_order(self, portfolio, exchange, symbol, side, quantity, trigger_price,
-                          instrument_group=None, condition='Less', stop_end_unix_time=0, allow_margin=None, protecting_seconds=15, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-post
+                          instrument_group=None, condition='Less', stop_end_unix_time=0, allow_margin=None, protecting_seconds=15, comment=None, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-post
         """Создать стоп-заявку
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -838,6 +838,7 @@ class AlorPy:
         :param int stop_end_unix_time: Срок действия (UTC) в формате Unix Time Seconds
         :param bool allow_margin: Флаг, подтверждающий согласие клиента с начальным уровнем риска (КНУР) на выставление заявки с потенциальной непокрытой позицией
         :param int protecting_seconds: Защитное время. Непрерывный период времени в секундах, в течение которого рыночная цена инструмента должна соответствовать указанным в заявке цене и условию срабатывания (1-300)
+        :param str comment: Пользовательский комментарий к заявке. Максимальная длина комментария — 100 символов
         :param bool activate: Флаг указывает, создать активную заявку, или не активную. Не активная заявка отображается в системе, но не участвует в процессе выставления на биржу, пока не станет активной
         :return: Запрос создаёт от имени указанного портфеля стоп-заявку c указанными в теле сообщения характеристиками
         """
@@ -850,11 +851,13 @@ class AlorPy:
                   'instrument': instrument, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'protectingSeconds': protecting_seconds, 'activate': activate}
         if allow_margin:
             params['allowMargin'] = allow_margin
+        if comment:
+            params['comment'] = comment
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stop', headers=headers, json=params))
 
     def create_stop_limit_order(self, portfolio, exchange, symbol, side, quantity, trigger_price, price,
                                 instrument_group=None, condition='Less', stop_end_unix_time=0, time_in_force=None, allow_margin=None,
-                                iceberg_fixed=None, iceberg_variance=None, protecting_seconds=15, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-limit-post
+                                iceberg_fixed=None, iceberg_variance=None, protecting_seconds=15, comment=None, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-limit-post
         """Создать стоп-лимитную заявку
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -872,6 +875,7 @@ class AlorPy:
         :param int iceberg_fixed: Видимая постоянная часть айсберг-заявки в лотах, указанная при создании лимитной заявки
         :param int iceberg_variance: Амплитуда отклонения (в % от icebergFixed) случайной надбавки к видимой части айсберг-заявки. Только срочный рынок
         :param int protecting_seconds: Защитное время. Непрерывный период времени в секундах, в течение которого рыночная цена инструмента должна соответствовать указанным в заявке цене и условию срабатывания (1-300)
+        :param str comment: Пользовательский комментарий к заявке. Максимальная длина комментария — 100 символов
         :param bool activate: Флаг указывает, создать активную заявку, или не активную. Не активная заявка отображается в системе, но не участвует в процессе выставления на биржу, пока не станет активной
         :return: Запрос создаёт от имени указанного портфеля стоп-лимитную заявку c указанными в теле сообщения характеристиками
         """
@@ -890,10 +894,12 @@ class AlorPy:
             params['icebergFixed'] = iceberg_fixed
         if iceberg_variance:
             params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
         return self.check_result(post(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit', headers=headers, json=params))
 
     def edit_stop_order(self, portfolio, exchange, order_id, symbol, side, quantity, trigger_price,
-                        instrument_group=None, condition='Less', stop_end_unix_time=0, allow_margin=None, protecting_seconds=15, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-stop-order-id-put
+                        instrument_group=None, condition='Less', stop_end_unix_time=0, allow_margin=None, protecting_seconds=15, comment=None, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-stop-order-id-put
         """Изменить стоп-заявку
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -908,6 +914,7 @@ class AlorPy:
         :param int stop_end_unix_time: Срок действия (UTC) в формате Unix Time Seconds
         :param bool allow_margin: Флаг, подтверждающий согласие клиента с начальным уровнем риска (КНУР) на выставление заявки с потенциальной непокрытой позицией
         :param int protecting_seconds: Защитное время. Непрерывный период времени в секундах, в течение которого рыночная цена инструмента должна соответствовать указанным в заявке цене и условию срабатывания (1-300)
+        :param str comment: Пользовательский комментарий к заявке. Максимальная длина комментария — 100 символов
         :param bool activate: Флаг указывает, создать активную заявку, или не активную. Не активная заявка отображается в системе, но не участвует в процессе выставления на биржу, пока не станет активной
         :return: Запрос создаёт новую стоп-заявку с изменёнными характеристиками, автоматически отменив созданную ранее. Для определения отменяемой заявки используется её номер в параметре orderid
         """
@@ -920,11 +927,13 @@ class AlorPy:
                   'instrument': instrument, 'user': {'portfolio': portfolio, 'exchange': exchange}, 'protectingSeconds': protecting_seconds, 'activate': activate}
         if allow_margin:
             params['allowMargin'] = allow_margin
+        if comment:
+            params['comment'] = comment
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stop/{order_id}', headers=headers, json=params))
 
     def edit_stop_limit_order(self, portfolio, exchange, order_id, symbol, side, quantity, trigger_price, price,
                               instrument_group=None, condition='Less', stop_end_unix_time=0, time_in_force=None, allow_margin=None,
-                              iceberg_fixed=None, iceberg_variance=None, protecting_seconds=15, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-limit-stop-order-id-put
+                              iceberg_fixed=None, iceberg_variance=None, protecting_seconds=15, comment=None, activate=True):  # https://alor.dev/docs/api/http/commandapi-warptrans-trade-v-2-client-orders-actions-stop-limit-stop-order-id-put
         """Изменить стоп-лимитную заявку
 
         :param str portfolio: Идентификатор клиентского портфеля
@@ -943,6 +952,7 @@ class AlorPy:
         :param int iceberg_fixed: Видимая постоянная часть айсберг-заявки в лотах
         :param int iceberg_variance: Амплитуда отклонения (в % от icebergFixed) случайной надбавки к видимой части айсберг-заявки. Только срочный рынок
         :param int protecting_seconds: Защитное время. Непрерывный период времени в секундах, в течение которого рыночная цена инструмента должна соответствовать указанным в заявке цене и условию срабатывания (1-300)
+        :param str comment: Пользовательский комментарий к заявке. Максимальная длина комментария — 100 символов
         :param bool activate: Флаг указывает, создать активную заявку, или не активную. Не активная заявка отображается в системе, но не участвует в процессе выставления на биржу, пока не станет активной
         :return: Запрос создаёт новую стоп-лимитную заявку с изменёнными характеристиками, автоматически отменив созданную ранее. Для определения отменяемой заявки используется её номер в параметре orderid
         """
@@ -961,6 +971,8 @@ class AlorPy:
             params['icebergFixed'] = iceberg_fixed
         if iceberg_variance:
             params['icebergVariance'] = iceberg_variance
+        if comment:
+            params['comment'] = comment
         return self.check_result(put(url=f'{self.api_server}/commandapi/warptrans/TRADE/v2/client/orders/actions/stopLimit/{order_id}', headers=headers, json=params))
 
     # Группы заявок

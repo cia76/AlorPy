@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "AlorPy"
+version = "2026.02.03"
+description = "Библиотека-обертка, которая позволяет работать с АЛОР Брокер API брокера Алор из Python"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+  {name = "Чечет Игорь Александрович"}
+]
+classifiers = [
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Education",
+  "Topic :: Office/Business :: Financial :: Investment"
+]
+dependencies = [
+  "keyring>=25.7.0",
+  "requests",
+  "PyJWT",
+  "urllib3",
+  "websockets"
+]
+
+[project.urls]
+Homepage = "https://github.com/cia76/AlorPy"
+Repository = "https://github.com/cia76/AlorPy"
+
+[tool.setuptools]
+packages = ["AlorPy"]
